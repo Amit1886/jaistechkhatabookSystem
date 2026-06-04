@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 
 from django.contrib.auth.decorators import login_required
+from django.db.utils import OperationalError
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import JsonResponse
@@ -30,7 +31,30 @@ def _default_range(request):
 @login_required
 def trial_balance(request):
     date_from, date_to = _default_range(request)
-    data = gl_reports.trial_balance(owner=request.user, date_from=date_from, date_to=date_to)
+    db_not_ready = False
+    try:
+        data = gl_reports.trial_balance(owner=request.user, date_from=date_from, date_to=date_to)
+    except OperationalError as e:
+        # Friendly fallback for dev DBs that haven't been migrated yet.
+        msg = str(e).lower()
+        if "no such table" in msg or "does not exist" in msg:
+            db_not_ready = True
+            data = {
+                "rows": [],
+                "totals": {
+                    "opening_debit": gl_reports.DECIMAL_ZERO,
+                    "opening_credit": gl_reports.DECIMAL_ZERO,
+                    "period_debit": gl_reports.DECIMAL_ZERO,
+                    "period_credit": gl_reports.DECIMAL_ZERO,
+                    "closing_debit": gl_reports.DECIMAL_ZERO,
+                    "closing_credit": gl_reports.DECIMAL_ZERO,
+                },
+                "date_from": date_from,
+                "date_to": date_to,
+                "warning": "Database tables missing. Run migrations to enable ledger reports.",
+            }
+        else:
+            raise
 
     wants_json = (request.GET.get("format") or "").lower() == "json" or "application/json" in (request.headers.get("Accept") or "")
     if wants_json:
@@ -67,6 +91,7 @@ def trial_balance(request):
             "totals": data.get("totals", {}),
             "date_from": date_from,
             "date_to": date_to,
+            "db_not_ready": db_not_ready,
         },
     )
 

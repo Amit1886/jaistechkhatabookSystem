@@ -1,0 +1,107 @@
+{% load feature_tags %}
+<div class="container-fluid py-2 unified-list-screen" data-ajax-list-wrap data-ajax-url="{{ request.path }}" data-export-scope>
+  <div class="unified-list-card">
+    <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>{{ page_title|default:"Order List" }}</h3>
+        <div class="unified-subtitle">Status badges + quick actions</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'commerce:add_order' %}" class="btn unified-btn-primary">Add Order</a>
+        {% if base_order_type == "PURCHASE" %}
+          {% feature_allowed 'ai.ocr' as ai_ocr_allowed %}
+          {% if ai_ocr_allowed %}
+            <a href="{% url 'ai_ocr:dashboard' %}" class="btn unified-btn-outline">Upload Invoice Image</a>
+          {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="btn unified-btn-outline locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Upload Invoice Image</a>
+          {% endif %}
+        {% endif %}
+        <a href="{% url 'commerce:sales_voucher_create' %}" class="btn unified-btn-outline">Create Voucher</a>
+        <a href="{% url 'commerce:sales_voucher_quick_create' %}" class="btn unified-btn-outline">Voucher Entry</a>
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#orderTable" data-export-name="orders">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#orderTable" data-export-name="orders">Excel</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#orderTable">PDF</button>
+      </div>
+    </div>
+
+    <div class="unified-list-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" data-ajax-form>
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="orderQ">Search</label>
+          <input id="orderQ" name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search party/notes/source">
+        </div>
+
+        {% if not base_order_type %}
+        <div style="min-width:160px;">
+          <label class="unified-label" for="orderType">Type</label>
+          <select id="orderType" name="type" class="form-select">
+            <option value="">All</option>
+            <option value="SALE" {% if type == 'SALE' %}selected{% endif %}>Sale</option>
+            <option value="PURCHASE" {% if type == 'PURCHASE' %}selected{% endif %}>Purchase</option>
+          </select>
+        </div>
+        {% endif %}
+
+        <div style="min-width:180px;">
+          <label class="unified-label" for="orderStatus">Status</label>
+          <select id="orderStatus" name="status" class="form-select">
+            <option value="">All</option>
+            <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="accepted" {% if status == 'accepted' %}selected{% endif %}>Accepted</option>
+            <option value="partial" {% if status == 'partial' %}selected{% endif %}>Partial</option>
+            <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Rejected</option>
+            <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            <option value="completed" {% if status == 'completed' %}selected{% endif %}>Completed</option>
+            <option value="fulfilled" {% if status == 'fulfilled' %}selected{% endif %}>Fulfilled</option>
+          </select>
+        </div>
+        <div style="min-width:180px;">
+          <label class="unified-label" for="orderSource">Source</label>
+          <select id="orderSource" name="source" class="form-select">
+            <option value="">All</option>
+            <option value="Online Store" {% if source == 'Online Store' %}selected{% endif %}>Online</option>
+            <option value="WhatsApp" {% if source == 'WhatsApp' %}selected{% endif %}>WhatsApp</option>
+            <option value="Manual" {% if source == 'Manual' %}selected{% endif %}>Manual</option>
+          </select>
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="fromDate">From</label>
+          <input id="fromDate" name="from" type="date" class="form-control" value="{{ date_from|date:'Y-m-d' }}">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="toDate">To</label>
+          <input id="toDate" name="to" type="date" class="form-control" value="{{ date_to|date:'Y-m-d' }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <button type="button" class="btn unified-btn-outline" data-ajax-reset>Reset</button>
+        </div>
+      </form>
+
+      <div class="small text-muted mb-2" data-ajax-loading style="display:none;">Loading…</div>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" id="orderTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Party</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th class="text-end">Amount</th>
+              <th>Date</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody data-ajax-tbody>
+            {% include "commerce/partials/order_list_rows.html" %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-2" data-ajax-pagination>
+        {% include "core/includes/ajax_pagination.html" with page_obj=page_obj %}
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,168 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+{% load enterprise_admin_menu %}
+
+{% block branding %}
+  <div class="be-admin-brand">
+    <a href="{% url 'admin:index' %}">
+      <span class="be-admin-brand-mark">B</span>
+      <span class="be-admin-brand-copy">
+        <strong>{{ site_header|default:_('Django administration') }}</strong>
+        <small>Enterprise Control Center</small>
+      </span>
+    </a>
+  </div>
+{% endblock %}
+
+{% block nav-global %}
+  {% if user.is_active and user.is_staff %}
+    <div class="be-admin-topbar">
+      <label class="be-admin-search" aria-label="Global admin search">
+        <span>Search</span>
+        <input id="beAdminGlobalSearch" type="search" placeholder="Search users, modules, settings..." autocomplete="off">
+      </label>
+      <button type="button" class="be-admin-icon-btn" id="beAdminThemeToggle" title="Toggle theme">Theme</button>
+      <a href="{% url 'admin:khataapp_contactmessage_changelist' %}" id="billentraLeadBell" class="be-admin-notification">
+        <span class="be-admin-bell">
+          <span>!</span>
+          <span id="billentraLeadDot"></span>
+        </span>
+        <span>Leads</span>
+        <span id="billentraLeadCount" class="be-admin-count">0</span>
+      </a>
+      <a href="/superadmin/core_settings/desktoprelease/desktop-logs/" class="be-admin-link">Desktop Logs</a>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block breadcrumbs %}
+  <div class="be-admin-breadcrumbs">
+    {{ block.super }}
+  </div>
+{% endblock %}
+
+{% block sidebar %}
+  {% enterprise_admin_menu as enterprise_menu %}
+  <aside class="main-sidebar elevation-4 be-enterprise-sidebar" id="jazzy-sidebar">
+    <a href="{{ enterprise_menu.dashboard_url }}" class="brand-link be-jazzy-brand">
+      <span class="be-admin-brand-mark">B</span>
+      <span class="brand-text font-weight-light">Billentra</span>
+    </a>
+    <div class="sidebar">
+      <div class="be-side-head">
+        <div class="be-side-toolbar">
+          <span class="be-side-section-title">Control Center</span>
+          <button type="button" class="be-side-collapse" data-be-sidebar-toggle title="Collapse sidebar" aria-label="Collapse sidebar">
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <a class="be-dashboard-link" href="{{ enterprise_menu.dashboard_url }}">
+          <span class="be-side-icon">DB</span>
+          <span>Dashboard</span>
+        </a>
+        <label class="be-side-search" aria-label="Search management menus">
+          <span>Find</span>
+          <input data-be-menu-search type="search" placeholder="Search management...">
+        </label>
+      </div>
+      <div class="be-side-groups" data-be-menu-groups>
+        {% for group in enterprise_menu.groups %}
+          <section class="be-side-group" data-group="{{ group.title|lower }}">
+            <button class="be-side-group-toggle" type="button" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}">
+              <span class="be-side-icon">{{ group.icon }}</span>
+              <span class="be-side-title">{{ group.title }}</span>
+              <span class="be-side-count">{{ group.count }}</span>
+            </button>
+            <div class="be-side-items">
+              {% for item in group.items %}
+                <a class="be-side-item" href="{{ item.url }}" data-label="{{ item.label|lower }} {{ item.model_key }}">
+                  <span class="be-side-item-icon">{{ item.icon }}</span>
+                  <span class="be-side-item-label">{{ item.label }}</span>
+                  {% if item.add_url %}
+                    <span class="be-side-add" data-add-url="{{ item.add_url }}">Add</span>
+                  {% endif %}
+                </a>
+              {% endfor %}
+            </div>
+          </section>
+        {% endfor %}
+      </div>
+    </div>
+  </aside>
+{% endblock %}
+
+{% block nav-sidebar %}
+  {% enterprise_admin_menu as enterprise_menu %}
+  <nav id="nav-sidebar" class="be-enterprise-sidebar" aria-label="Enterprise management navigation">
+    <div class="be-side-head">
+      <div class="be-side-toolbar">
+        <span class="be-side-section-title">Control Center</span>
+        <button type="button" class="be-side-collapse" data-be-sidebar-toggle title="Collapse sidebar" aria-label="Collapse sidebar">
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      <a class="be-dashboard-link" href="{{ enterprise_menu.dashboard_url }}">
+        <span class="be-side-icon">DB</span>
+        <span>Dashboard</span>
+      </a>
+      <label class="be-side-search" aria-label="Search management menus">
+        <span>Find</span>
+        <input data-be-menu-search type="search" placeholder="Search management...">
+      </label>
+    </div>
+    <div class="be-side-groups" data-be-menu-groups>
+      {% for group in enterprise_menu.groups %}
+        <section class="be-side-group" data-group="{{ group.title|lower }}">
+          <button class="be-side-group-toggle" type="button" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}">
+            <span class="be-side-icon">{{ group.icon }}</span>
+            <span class="be-side-title">{{ group.title }}</span>
+            <span class="be-side-count">{{ group.count }}</span>
+          </button>
+          <div class="be-side-items">
+            {% for item in group.items %}
+              <a class="be-side-item" href="{{ item.url }}" data-label="{{ item.label|lower }} {{ item.model_key }}">
+                <span class="be-side-item-icon">{{ item.icon }}</span>
+                <span class="be-side-item-label">{{ item.label }}</span>
+                {% if item.add_url %}
+                  <span class="be-side-add" data-add-url="{{ item.add_url }}">Add</span>
+                {% endif %}
+              </a>
+            {% endfor %}
+          </div>
+        </section>
+      {% endfor %}
+    </div>
+  </nav>
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="/static/vendor/notus/styles/django_admin_notus.css">
+  <link rel="stylesheet" href="/static/enterprise_admin/enterprise_admin.css">
+  <script defer src="/static/enterprise_admin/enterprise_admin.js"></script>
+  <script>
+    (function () {
+      document.addEventListener("DOMContentLoaded", function () {
+        const countEl = document.getElementById("billentraLeadCount");
+        const dotEl = document.getElementById("billentraLeadDot");
+        const bellEl = document.getElementById("billentraLeadBell");
+        if (!countEl || !bellEl) return;
+
+        fetch("/superadmin/api/contact-leads-count/", { credentials: "same-origin" })
+          .then((res) => res.ok ? res.json() : Promise.reject())
+          .then((data) => {
+            const unread = Number(data && data.unread ? data.unread : 0);
+            countEl.textContent = unread;
+            bellEl.dataset.active = unread > 0 ? "true" : "false";
+            if (dotEl) dotEl.style.display = unread > 0 ? "block" : "none";
+          })
+          .catch(() => {
+            countEl.textContent = "0";
+            if (dotEl) dotEl.style.display = "none";
+          });
+      });
+    })();
+  </script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% for w in warehouses %}
+<tr>
+  <td class="fw-semibold">{{ w.name }}</td>
+  <td>{{ w.location|default:"-" }}</td>
+  <td class="text-end">{{ w.capacity|default:0 }}</td>
+  <td>{{ w.created_at|date:"d M Y" }}</td>
+  <td class="text-end">
+    <div class="dropdown">
+      <button type="button" class="btn unified-btn-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown">Actions</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{% url 'commerce:warehouse_view' w.id %}">View</a></li>
+        <li><a class="dropdown-item" href="{% url 'commerce:warehouse_edit' w.id %}">Edit</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <form method="post" action="{% url 'commerce:warehouse_delete' w.id %}" onsubmit="return confirm('Delete this warehouse?')" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item text-danger">Delete</button>
+          </form>
+        </li>
+      </ul>
+    </div>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="5" class="text-center text-muted py-4">No warehouses found.</td></tr>
+{% endfor %}

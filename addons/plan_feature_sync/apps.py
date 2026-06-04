@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 
 
 class PlanFeatureSyncConfig(AppConfig):
@@ -7,6 +8,8 @@ class PlanFeatureSyncConfig(AppConfig):
     verbose_name = "Addon: Plan -> Feature Sync"
 
     def ready(self):
+        if getattr(settings, "LIGHTWEIGHT_DEPLOYMENT", False):
+            return
+
         # Register signals (kept in addon to avoid touching billing/core apps).
         from . import signals  # noqa: F401
-

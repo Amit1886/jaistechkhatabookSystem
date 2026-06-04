@@ -1,0 +1,731 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Visual Flow Builder{% endblock %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+
+  <form id="csrfTokenForm" method="post" style="display:none;">
+    {% csrf_token %}
+  </form>
+
+  <div class="container-fluid py-3">
+    <div class="builder-header">
+      <div>
+        <h3 class="mb-0">Flow Builder: {{ flow.name }}</h3>
+        <p class="mb-1">Account: <b>{{ account.label|default:account.phone_number }}</b></p>
+        <p class="builder-hint mb-0">Quick keys: Ctrl+S to save, Esc to cancel linking.</p>
+      </div>
+      <div class="builder-actions">
+        <a class="flow-pill" href="{% url 'whatsapp:visual_flow_list' account_id=account.id %}">← Back</a>
+        <button class="flow-pill" type="button" onclick="addNode('message')">+ Message</button>
+        <button class="flow-pill" type="button" onclick="addNode('condition')">+ Condition</button>
+        <button class="flow-pill" type="button" onclick="addNode('action')">+ Action</button>
+        <button class="flow-pill" type="button" onclick="saveFlow()">Save</button>
+      </div>
+    </div>
+
+    <div class="builder-body">
+      <div class="builder-canvas" id="canvas">
+        <div class="canvas-inner" id="canvasInner">
+          <svg class="edge-layer" id="edgeLayer">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#1d4ed8"></path>
+              </marker>
+              <marker id="arrow-default" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#0f766e"></path>
+              </marker>
+            </defs>
+          </svg>
+        </div>
+      </div>
+
+      <div class="builder-side" id="builderSide">
+        <div class="side-block">
+          <div class="side-title">Connections</div>
+          <div class="side-form">
+            <div class="hint-line">Drag from blue dot to green dot to connect.</div>
+            <div class="hint-line">Click a line to edit/delete label.</div>
+            <label>Source</label>
+            <select id="edgeSource"></select>
+            <label>Target</label>
+            <select id="edgeTarget"></select>
+            <label>Condition Text</label>
+            <input id="edgeCondition" placeholder="e.g. price, order, help">
+            <label>Default?</label>
+            <select id="edgeDefault">
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+            <button class="flow-pill" type="button" onclick="addEdge()">Add Connection</button>
+          </div>
+        </div>
+
+        <div class="side-block">
+          <div class="side-title">Nodes</div>
+          <div id="nodeList" class="node-list"></div>
+        </div>
+
+        <div class="side-block">
+          <div class="side-title">Tools</div>
+          <div class="side-tools">
+            <button class="flow-pill" type="button" onclick="autoLayout()">Auto Layout</button>
+            <button class="flow-pill" type="button" onclick="resetView()">Reset View</button>
+            <button class="flow-pill" type="button" onclick="zoomIn()">Zoom In</button>
+            <button class="flow-pill" type="button" onclick="zoomOut()">Zoom Out</button>
+          </div>
+        </div>
+
+        <div class="side-block">
+          <div class="side-title">Templates</div>
+          <div class="side-tools">
+            <button class="flow-pill" type="button" onclick="applyTemplate('safe_menu')">Safe Menu (Demo)</button>
+            <button class="flow-pill" type="button" onclick="applyTemplate('welcome')">Welcome Flow</button>
+            <button class="flow-pill" type="button" onclick="applyTemplate('lead')">Lead Capture</button>
+            <button class="flow-pill" type="button" onclick="applyTemplate('support')">Support Flow</button>
+            <button class="flow-pill" type="button" onclick="applyTemplate('whatsapp')">Commerce Full Flow</button>
+          </div>
+          <div class="small text-muted mt-2">
+            Tip: If you add a <b>default</b> edge from <code>start</code>, your flow may override normal commerce commands.
+          </div>
+        </div>
+
+        <div class="side-block">
+          <div class="side-title">Mini Map</div>
+          <div class="minimap-wrap">
+            <svg id="minimap" class="minimap"></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script id="flow-data" type="application/json">
+  {
+    "nodes": {{ nodes_json|safe }},
+    "edges": {{ edges_json|safe }}
+  }
+  </script>
+
+  <style>
+  :root {
+    --n8n-primary: #ff6d5a;
+    --n8n-primary-soft: #ffe4df;
+    --n8n-blue: #2563eb;
+    --n8n-text: #1f2937;
+    --n8n-muted: #6b7280;
+    --n8n-border: #e5e7eb;
+    --n8n-bg: #f8f9fb;
+  }
+  .builder-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #ffffff; color: #0f172a; padding: 14px 16px; border-radius: 14px; border: 1px solid #e5e7eb; box-shadow: 0 6px 16px rgba(15,23,42,0.06); }
+  .builder-header h3 { margin: 0; }
+  .builder-header p { margin: 4px 0 0 0; font-size: 12px; color: var(--n8n-muted); }
+  .builder-hint { font-size: 11px; color: #9ca3af; }
+  .builder-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .builder-body { display: grid; grid-template-columns: 1fr 320px; gap: 12px; margin-top: 12px; }
+  .builder-canvas { position: relative; background: var(--n8n-bg); border: 1px solid var(--n8n-border); border-radius: 16px; min-height: 74vh; overflow: hidden; background-size: 28px 28px; background-image: linear-gradient(to right, rgba(148,163,184,0.16) 1px, transparent 1px), linear-gradient(to bottom, rgba(148,163,184,0.16) 1px, transparent 1px); }
+  .canvas-inner { position: absolute; left: 0; top: 0; right: 0; bottom: 0; transform-origin: 0 0; }
+  .edge-layer { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+  .builder-side { background: #ffffff; border: 1px solid var(--n8n-border); border-radius: 16px; padding: 12px; min-height: 74vh; overflow: auto; box-shadow: 0 6px 16px rgba(15,23,42,0.06); }
+  .side-block { border: 1px solid var(--n8n-border); border-radius: 14px; padding: 10px; margin-bottom: 10px; background: #ffffff; }
+  .side-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .hint-line { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+  .side-form label { font-size: 11px; color: #6b7280; margin-top: 6px; display: block; }
+  .side-form input, .side-form select { width: 100%; padding: 8px 10px; border: 1px solid var(--n8n-border); border-radius: 10px; font-size: 12px; outline: none; }
+  .flow-pill { background: #ffffff; border: 1px solid var(--n8n-border); color: #0f172a; padding: 8px 10px; border-radius: 999px; font-size: 12px; cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
+  .flow-pill:hover { border-color: #cbd5e1; transform: translateY(-1px); }
+  .node { position: absolute; min-width: 170px; background: #ffffff; border: 1px solid var(--n8n-border); border-radius: 14px; box-shadow: 0 10px 18px rgba(15,23,42,0.08); padding: 10px; user-select: none; }
+  .node .node-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .node .node-title { font-size: 12px; font-weight: 800; color: #0f172a; }
+  .node .node-type { font-size: 11px; color: #6b7280; }
+  .node .node-body { margin-top: 8px; font-size: 12px; color: #334155; }
+  .node .node-body input { width: 100%; padding: 8px 10px; border: 1px solid var(--n8n-border); border-radius: 12px; font-size: 12px; }
+  .node .node-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .node .mini-btn { font-size: 11px; padding: 6px 8px; border-radius: 999px; border: 1px solid var(--n8n-border); background: #fff; cursor: pointer; }
+  .port { width: 10px; height: 10px; border-radius: 999px; display: inline-block; }
+  .port.out { background: #2563eb; }
+  .port.in { background: #0f766e; }
+  .port-wrap { display: flex; gap: 6px; align-items: center; font-size: 11px; color: #64748b; }
+  .edge { stroke: #1d4ed8; stroke-width: 2.2; fill: none; marker-end: url(#arrow); pointer-events: stroke; }
+  .edge.default { stroke: #0f766e; marker-end: url(#arrow-default); }
+  .edge-label { font-size: 11px; fill: #334155; pointer-events: none; }
+  .edge-hit { stroke: transparent; stroke-width: 12; fill: none; pointer-events: stroke; }
+  .node-list-item { border: 1px solid var(--n8n-border); border-radius: 12px; padding: 8px; margin-bottom: 8px; }
+  .node-list-item .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .node-list-item .id { font-size: 11px; color: #64748b; }
+  .node-list-item input, .node-list-item select, .node-list-item textarea { width: 100%; border: 1px solid var(--n8n-border); border-radius: 10px; padding: 7px 8px; font-size: 12px; margin-top: 6px; }
+  .node-list-item textarea { min-height: 60px; resize: vertical; }
+  .minimap-wrap { background: #f8fafc; border: 1px solid var(--n8n-border); border-radius: 12px; padding: 6px; }
+  .minimap { width: 100%; height: 160px; display: block; }
+  @media (max-width: 992px) { .builder-body { grid-template-columns: 1fr; } .builder-side { min-height: auto; } }
+  </style>
+
+  <script>
+  // --- Flow Builder JS (adapted from admin builder) ---
+  const canvas = document.getElementById("canvas");
+  const canvasInner = document.getElementById("canvasInner");
+  const edgeLayer = document.getElementById("edgeLayer");
+  const nodeList = document.getElementById("nodeList");
+  const edgeSource = document.getElementById("edgeSource");
+  const edgeTarget = document.getElementById("edgeTarget");
+  const edgeCondition = document.getElementById("edgeCondition");
+  const edgeDefault = document.getElementById("edgeDefault");
+  const minimap = document.getElementById("minimap");
+
+  function getCsrfToken() {
+    const input = document.querySelector("#csrfTokenForm input[name=csrfmiddlewaretoken]");
+    return input ? input.value : "";
+  }
+
+  let panX = 0;
+  let panY = 0;
+  let zoom = 1;
+  let isPanning = false;
+  let panStart = { x: 0, y: 0 };
+  let linkMode = null;
+  let tempLine = null;
+  let draggingNode = null;
+  let dragOffset = { x: 0, y: 0 };
+  let saveTimer = null;
+
+  const initial = JSON.parse(document.getElementById("flow-data").textContent || "{}");
+  let nodes = Array.isArray(initial.nodes) ? initial.nodes : [];
+  let edges = Array.isArray(initial.edges) ? initial.edges : [];
+
+  const ACTION_TYPES = [
+    { value: "show_catalog", label: "Show Product Catalog" },
+    { value: "show_cart", label: "Show Cart" },
+    { value: "checkout", label: "Checkout" },
+    { value: "my_orders", label: "My Orders" },
+    { value: "track_order", label: "Track Latest Order" },
+    { value: "ai_reply", label: "AI Smart Reply" },
+    { value: "handoff_human", label: "Transfer to Human" },
+    { value: "send_message", label: "Send Text (custom)" }
+  ];
+
+  function applyPan() {
+    canvasInner.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+  }
+
+  function getNodeById(id) {
+    return nodes.find(n => n.node_id === id);
+  }
+
+  function updateEdgeSelectors() {
+    const opts = nodes.map(n => `<option value="${n.node_id}">${n.node_id}</option>`).join("");
+    edgeSource.innerHTML = opts;
+    edgeTarget.innerHTML = opts;
+  }
+
+  function renderMiniMap() {
+    if (!minimap) return;
+    minimap.innerHTML = "";
+    const pad = 20;
+    if (!nodes.length) return;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    nodes.forEach(n => {
+      minX = Math.min(minX, n.position_x);
+      minY = Math.min(minY, n.position_y);
+      maxX = Math.max(maxX, n.position_x + 180);
+      maxY = Math.max(maxY, n.position_y + 90);
+    });
+    const w = maxX - minX + pad * 2;
+    const h = maxY - minY + pad * 2;
+    minimap.setAttribute("viewBox", `${minX - pad} ${minY - pad} ${w} ${h}`);
+    // nodes
+    nodes.forEach(n => {
+      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      r.setAttribute("x", n.position_x);
+      r.setAttribute("y", n.position_y);
+      r.setAttribute("width", "180");
+      r.setAttribute("height", "90");
+      r.setAttribute("rx", "10");
+      r.setAttribute("fill", n.node_type === "start" ? "#fee2e2" : "#e0f2fe");
+      r.setAttribute("stroke", "#94a3b8");
+      minimap.appendChild(r);
+    });
+  }
+
+  function renderEdges() {
+    // keep defs
+    const defs = edgeLayer.querySelector("defs");
+    edgeLayer.innerHTML = "";
+    if (defs) edgeLayer.appendChild(defs);
+
+    edges.forEach((e, idx) => {
+      const src = getNodeById(e.source_id);
+      const tgt = getNodeById(e.target_id);
+      if (!src || !tgt) return;
+
+      const x1 = src.position_x + 170;
+      const y1 = src.position_y + 45;
+      const x2 = tgt.position_x + 10;
+      const y2 = tgt.position_y + 45;
+      const dx = Math.max(60, Math.abs(x2 - x1) * 0.5);
+      const c1x = x1 + dx;
+      const c1y = y1;
+      const c2x = x2 - dx;
+      const c2y = y2;
+      const d = `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`;
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d);
+      path.classList.add("edge");
+      if (e.is_default) path.classList.add("default");
+      path.setAttribute("data-idx", String(idx));
+
+      const hit = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      hit.setAttribute("d", d);
+      hit.classList.add("edge-hit");
+      hit.setAttribute("data-idx", String(idx));
+
+      hit.addEventListener("click", () => editEdge(idx));
+
+      edgeLayer.appendChild(path);
+      edgeLayer.appendChild(hit);
+
+      const labelText = (e.condition_text || "").trim() || (e.is_default ? "default" : "");
+      if (labelText) {
+        const midX = (x1 + x2) / 2;
+        const midY = (y1 + y2) / 2 - 8;
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.textContent = labelText;
+        txt.setAttribute("x", String(midX));
+        txt.setAttribute("y", String(midY));
+        txt.setAttribute("text-anchor", "middle");
+        txt.classList.add("edge-label");
+        edgeLayer.appendChild(txt);
+      }
+    });
+  }
+
+  function renderNodes() {
+    // remove nodes (keep svg)
+    const keepSvg = edgeLayer;
+    canvasInner.innerHTML = "";
+    canvasInner.appendChild(keepSvg);
+
+    nodes.forEach(n => {
+      const el = document.createElement("div");
+      el.className = "node";
+      el.style.left = `${n.position_x}px`;
+      el.style.top = `${n.position_y}px`;
+      el.setAttribute("data-node", n.node_id);
+
+      const title = document.createElement("div");
+      title.className = "node-top";
+      title.innerHTML = `
+        <div>
+          <div class="node-title">${n.node_id}</div>
+          <div class="node-type">${n.node_type}</div>
+        </div>
+        <div class="port-wrap">
+          <span class="port out" title="drag to link" data-port="out"></span>
+          <span class="port in" title="link target" data-port="in"></span>
+        </div>
+      `;
+
+      const body = document.createElement("div");
+      body.className = "node-body";
+      const input = document.createElement("input");
+      input.value = (n.data && n.data.text) ? n.data.text : "";
+      input.placeholder = "Reply text";
+      input.addEventListener("input", () => {
+        n.data = n.data || {};
+        n.data.text = input.value;
+        scheduleAutoSave();
+        renderNodeList();
+      });
+      body.appendChild(input);
+
+      const actions = document.createElement("div");
+      actions.className = "node-actions";
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "mini-btn";
+      del.textContent = "Delete";
+      del.addEventListener("click", () => deleteNode(n.node_id));
+      actions.appendChild(del);
+
+      const setStart = document.createElement("button");
+      setStart.type = "button";
+      setStart.className = "mini-btn";
+      setStart.textContent = "Make Start";
+      setStart.addEventListener("click", () => makeStart(n.node_id));
+      actions.appendChild(setStart);
+
+      el.appendChild(title);
+      el.appendChild(body);
+      el.appendChild(actions);
+      canvasInner.appendChild(el);
+
+      // Dragging nodes
+      el.addEventListener("mousedown", (evt) => {
+        const port = evt.target && evt.target.getAttribute && evt.target.getAttribute("data-port");
+        if (port) return; // ports handle separately
+        draggingNode = n.node_id;
+        const rect = el.getBoundingClientRect();
+        dragOffset.x = evt.clientX - rect.left;
+        dragOffset.y = evt.clientY - rect.top;
+      });
+
+      // Link ports
+      const outPort = el.querySelector(".port.out");
+      const inPort = el.querySelector(".port.in");
+      outPort.addEventListener("mousedown", (evt) => startLink(evt, n.node_id));
+      inPort.addEventListener("mouseup", (evt) => finishLink(evt, n.node_id));
+    });
+
+    updateEdgeSelectors();
+    renderEdges();
+    renderNodeList();
+    renderMiniMap();
+  }
+
+  function renderNodeList() {
+    nodeList.innerHTML = "";
+    nodes.forEach(n => {
+      const item = document.createElement("div");
+      item.className = "node-list-item";
+      item.innerHTML = `
+        <div class="top">
+          <div><b>${n.node_id}</b> <span class="id">(${n.node_type})</span></div>
+        </div>
+      `;
+
+      if (n.node_type === "action") {
+        n.data = n.data || {};
+        const sel = document.createElement("select");
+        sel.innerHTML = ACTION_TYPES.map(a => `<option value="${a.value}">${a.label}</option>`).join("");
+        sel.value = (n.data.action || n.data.action_type || "show_catalog");
+        sel.addEventListener("change", () => {
+          n.data.action = sel.value;
+          scheduleAutoSave();
+          renderNodeList();
+        });
+        item.appendChild(sel);
+
+        const txt = document.createElement("textarea");
+        txt.value = (n.data && n.data.text) ? n.data.text : "";
+        txt.placeholder = "Custom message (used only for 'Send Text')";
+        txt.style.display = (sel.value === "send_message") ? "block" : "none";
+        txt.addEventListener("input", () => {
+          n.data = n.data || {};
+          n.data.text = txt.value;
+          scheduleAutoSave();
+        });
+        item.appendChild(txt);
+      } else {
+        const txt = document.createElement("input");
+        txt.value = (n.data && n.data.text) ? n.data.text : "";
+        txt.placeholder = "Reply text";
+        txt.addEventListener("input", () => {
+          n.data = n.data || {};
+          n.data.text = txt.value;
+          scheduleAutoSave();
+        });
+        item.appendChild(txt);
+      }
+
+      nodeList.appendChild(item);
+    });
+  }
+
+  function startLink(evt, sourceId) {
+    evt.preventDefault();
+    evt.stopPropagation();
+    linkMode = { source: sourceId };
+    if (tempLine) tempLine.remove();
+    tempLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    tempLine.setAttribute("d", "M0 0 L0 0");
+    tempLine.setAttribute("stroke", "#94a3b8");
+    tempLine.setAttribute("stroke-width", "2");
+    tempLine.setAttribute("fill", "none");
+    edgeLayer.appendChild(tempLine);
+  }
+
+  function finishLink(evt, targetId) {
+    if (!linkMode) return;
+    evt.preventDefault();
+    evt.stopPropagation();
+    if (linkMode.source === targetId) { cancelLink(); return; }
+    edges.push({ source_id: linkMode.source, target_id: targetId, condition_text: "", is_default: false });
+    cancelLink();
+    renderEdges();
+    scheduleAutoSave();
+  }
+
+  function cancelLink() {
+    linkMode = null;
+    if (tempLine) { tempLine.remove(); tempLine = null; }
+  }
+
+  function editEdge(idx) {
+    const e = edges[idx];
+    if (!e) return;
+    const cond = prompt("Condition text (leave blank for none):", e.condition_text || "");
+    if (cond === null) return;
+    e.condition_text = cond;
+    const isDef = confirm("Mark as default edge?");
+    e.is_default = isDef;
+    const del = confirm("Delete this edge?");
+    if (del) edges.splice(idx, 1);
+    renderEdges();
+    scheduleAutoSave();
+  }
+
+  function addEdge() {
+    const s = edgeSource.value;
+    const t = edgeTarget.value;
+    if (!s || !t || s === t) return;
+    edges.push({
+      source_id: s,
+      target_id: t,
+      condition_text: edgeCondition.value || "",
+      is_default: edgeDefault.value === "true"
+    });
+    edgeCondition.value = "";
+    edgeDefault.value = "false";
+    renderEdges();
+    scheduleAutoSave();
+  }
+
+  function deleteNode(nodeId) {
+    if (!confirm("Delete node " + nodeId + "?")) return;
+    nodes = nodes.filter(n => n.node_id !== nodeId);
+    edges = edges.filter(e => e.source_id !== nodeId && e.target_id !== nodeId);
+    renderNodes();
+    scheduleAutoSave();
+  }
+
+  function makeStart(nodeId) {
+    nodes.forEach(n => {
+      if (n.node_id === nodeId) n.node_type = "start";
+      else if (n.node_type === "start") n.node_type = "message";
+    });
+    renderNodes();
+    scheduleAutoSave();
+  }
+
+  function addNode(type) {
+    const id = (type === "message" ? "msg_" : type === "condition" ? "cond_" : "act_") + (nodes.length + 1);
+    nodes.push({
+      node_id: id,
+      node_type: type,
+      data: type === "action" ? { action: "show_catalog", text: "" } : { text: type === "condition" ? "Condition" : "New reply" },
+      position_x: 60 + (nodes.length * 10),
+      position_y: 60 + (nodes.length * 8)
+    });
+    renderNodes();
+    scheduleAutoSave();
+  }
+
+  function autoLayout() {
+    // Simple vertical layout
+    const start = nodes.find(n => n.node_type === "start") || nodes.find(n => n.node_id === "start");
+    let x = 40, y = 40;
+    if (start) { start.position_x = x; start.position_y = y; }
+    y += 120;
+    nodes.filter(n => n !== start).forEach(n => { n.position_x = x + 220; n.position_y = y; y += 120; });
+    renderNodes();
+    scheduleAutoSave();
+  }
+
+  function resetView() {
+    panX = 0; panY = 0; zoom = 1;
+    applyPan();
+    renderEdges();
+    renderMiniMap();
+  }
+
+  function zoomIn() { zoom = Math.min(2.4, zoom + 0.1); applyPan(); renderEdges(); renderMiniMap(); }
+  function zoomOut() { zoom = Math.max(0.35, zoom - 0.1); applyPan(); renderEdges(); renderMiniMap(); }
+
+  function scheduleAutoSave() {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      fetch("{% url 'whatsapp:visual_flow_save' account_id=account.id flow_id=flow.id %}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrfToken() },
+        body: JSON.stringify({ nodes, edges })
+      });
+    }, 1200);
+  }
+
+  function saveFlow() {
+    fetch("{% url 'whatsapp:visual_flow_save' account_id=account.id flow_id=flow.id %}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrfToken() },
+      body: JSON.stringify({ nodes, edges })
+    })
+    .then(r => r.json())
+    .then((d) => alert(d && d.success ? "Saved." : "Save failed."))
+    .catch(() => alert("Save failed."));
+  }
+
+  function applyTemplate(name) {
+    if (!confirm("Replace current flow with template?")) return;
+
+    if (name === "safe_menu") {
+      nodes = [
+        { node_id: "start", node_type: "start", data: { text: "Start" }, position_x: 40, position_y: 40 },
+        { node_id: "welcome", node_type: "message", data: { text: "Welcome! Reply with:\\n1 View Products\\n2 Place Order\\n3 My Orders\\n4 Customer Support\\n\\nTip: type products/cart/checkout anytime." }, position_x: 280, position_y: 40 },
+        { node_id: "products", node_type: "message", data: { text: "Browse catalog: products\\nOpen category: category <name>" }, position_x: 280, position_y: 160 },
+        { node_id: "order", node_type: "message", data: { text: "Order: add 2 <product>\\nCart: cart\\nCheckout: checkout" }, position_x: 280, position_y: 280 },
+        { node_id: "orders", node_type: "message", data: { text: "Orders: orders\\nTrack: track" }, position_x: 280, position_y: 400 },
+        { node_id: "support", node_type: "message", data: { text: "Support: share your issue. Human agent will contact you." }, position_x: 280, position_y: 520 }
+      ];
+      edges = [
+        { source_id: "start", target_id: "welcome", condition_text: "hi", is_default: false },
+        { source_id: "start", target_id: "welcome", condition_text: "hello", is_default: false },
+        { source_id: "start", target_id: "welcome", condition_text: "help", is_default: false },
+        { source_id: "start", target_id: "welcome", condition_text: "menu", is_default: false },
+        { source_id: "start", target_id: "welcome", condition_text: "start", is_default: false },
+        { source_id: "welcome", target_id: "products", condition_text: "1", is_default: false },
+        { source_id: "welcome", target_id: "order", condition_text: "2", is_default: false },
+        { source_id: "welcome", target_id: "orders", condition_text: "3", is_default: false },
+        { source_id: "welcome", target_id: "support", condition_text: "4", is_default: false },
+        { source_id: "products", target_id: "welcome", condition_text: "menu", is_default: false },
+        { source_id: "order", target_id: "welcome", condition_text: "menu", is_default: false },
+        { source_id: "orders", target_id: "welcome", condition_text: "menu", is_default: false },
+        { source_id: "support", target_id: "welcome", condition_text: "menu", is_default: false }
+      ];
+    }
+
+    if (name === "welcome") {
+      nodes = [
+        { node_id: "start", node_type: "start", data: { text: "Start" }, position_x: 40, position_y: 40 },
+        { node_id: "welcome", node_type: "message", data: { text: "Welcome! Type menu to see options." }, position_x: 260, position_y: 40 },
+        { node_id: "help", node_type: "message", data: { text: "You can type: products, cart, checkout, orders, support." }, position_x: 260, position_y: 140 }
+      ];
+      edges = [
+        { source_id: "start", target_id: "welcome", condition_text: "", is_default: true },
+        { source_id: "welcome", target_id: "help", condition_text: "help", is_default: false }
+      ];
+    }
+
+    if (name === "lead") {
+      nodes = [
+        { node_id: "start", node_type: "start", data: { text: "Start" }, position_x: 40, position_y: 40 },
+        { node_id: "intro", node_type: "message", data: { text: "Thanks for contacting us! Please share:\\n1 Name\\n2 City\\n3 Requirement" }, position_x: 260, position_y: 40 },
+        { node_id: "thanks", node_type: "message", data: { text: "Got it. Our team will call you shortly. Type menu for options." }, position_x: 260, position_y: 160 }
+      ];
+      edges = [
+        { source_id: "start", target_id: "intro", condition_text: "", is_default: true },
+        { source_id: "intro", target_id: "thanks", condition_text: "", is_default: true }
+      ];
+    }
+
+    if (name === "support") {
+      nodes = [
+        { node_id: "start", node_type: "start", data: { text: "Start" }, position_x: 40, position_y: 40 },
+        { node_id: "support", node_type: "message", data: { text: "Support: Please share your issue. A human agent will contact you." }, position_x: 260, position_y: 40 },
+        { node_id: "ticket", node_type: "message", data: { text: "Ticket created. Type menu to go back." }, position_x: 260, position_y: 160 }
+      ];
+      edges = [
+        { source_id: "start", target_id: "support", condition_text: "", is_default: true },
+        { source_id: "support", target_id: "ticket", condition_text: "", is_default: true }
+      ];
+    }
+
+    if (name === "whatsapp") {
+      nodes = [
+        { node_id: "start", node_type: "start", data: { text: "Start" }, position_x: 40, position_y: 40 },
+        { node_id: "welcome", node_type: "message", data: { text: "Welcome! Type products to browse." }, position_x: 260, position_y: 40 },
+        { node_id: "catalog", node_type: "message", data: { text: "Categories: Grocery, Dairy, Snacks" }, position_x: 260, position_y: 140 },
+        { node_id: "add", node_type: "message", data: { text: "Add items like: add 2 sugar" }, position_x: 260, position_y: 240 },
+        { node_id: "cart", node_type: "message", data: { text: "Type cart to view total." }, position_x: 260, position_y: 340 },
+        { node_id: "checkout", node_type: "message", data: { text: "Type checkout to place order." }, position_x: 260, position_y: 440 },
+        { node_id: "payment", node_type: "message", data: { text: "Select payment: cash, upi, cod, netbanking." }, position_x: 260, position_y: 540 },
+        { node_id: "done", node_type: "end", data: { text: "Order placed. Thank you!" }, position_x: 260, position_y: 640 }
+      ];
+      edges = [
+        { source_id: "start", target_id: "welcome", condition_text: "", is_default: true },
+        { source_id: "welcome", target_id: "catalog", condition_text: "products", is_default: false },
+        { source_id: "catalog", target_id: "add", condition_text: "category", is_default: false },
+        { source_id: "add", target_id: "cart", condition_text: "cart", is_default: false },
+        { source_id: "cart", target_id: "checkout", condition_text: "checkout", is_default: false },
+        { source_id: "checkout", target_id: "payment", condition_text: "pay", is_default: false },
+        { source_id: "payment", target_id: "done", condition_text: "cash", is_default: false }
+      ];
+    }
+
+    renderNodes();
+    scheduleAutoSave();
+  }
+
+  // Panning / moving
+  canvas.addEventListener("mousedown", (evt) => {
+    if (evt.button === 1 || evt.altKey) { // middle click or Alt
+      isPanning = true;
+      panStart.x = evt.clientX - panX;
+      panStart.y = evt.clientY - panY;
+    }
+  });
+
+  document.addEventListener("mousemove", (evt) => {
+    if (isPanning) {
+      panX = evt.clientX - panStart.x;
+      panY = evt.clientY - panStart.y;
+      applyPan();
+      renderEdges();
+      renderMiniMap();
+    }
+    if (draggingNode) {
+      const n = getNodeById(draggingNode);
+      if (!n) return;
+      const rect = canvas.getBoundingClientRect();
+      const rawX = (evt.clientX - rect.left - panX) / zoom - dragOffset.x;
+      const rawY = (evt.clientY - rect.top - panY) / zoom - dragOffset.y;
+      const grid = 12;
+      n.position_x = Math.round(rawX / grid) * grid;
+      n.position_y = Math.round(rawY / grid) * grid;
+      renderNodes();
+    }
+    if (linkMode && tempLine) {
+      const src = getNodeById(linkMode.source);
+      if (!src) return;
+      const rect = canvas.getBoundingClientRect();
+      const x1 = src.position_x + 170;
+      const y1 = src.position_y + 45;
+      const x2 = (evt.clientX - rect.left - panX) / zoom;
+      const y2 = (evt.clientY - rect.top - panY) / zoom;
+      tempLine.setAttribute("d", `M ${x1} ${y1} L ${x2} ${y2}`);
+    }
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (isPanning) isPanning = false;
+    if (draggingNode) { draggingNode = null; scheduleAutoSave(); }
+  });
+
+  document.addEventListener("keydown", (evt) => {
+    if (evt.key === "Escape") cancelLink();
+    if ((evt.ctrlKey || evt.metaKey) && evt.key.toLowerCase() === "s") {
+      evt.preventDefault();
+      saveFlow();
+    }
+  });
+
+  // Double click adds a message node at click
+  canvas.addEventListener("dblclick", (evt) => {
+    const rect = canvas.getBoundingClientRect();
+    const rawX = (evt.clientX - rect.left - panX) / zoom;
+    const rawY = (evt.clientY - rect.top - panY) / zoom;
+    const grid = 12;
+    const nx = Math.round(rawX / grid) * grid;
+    const ny = Math.round(rawY / grid) * grid;
+    const id = "msg_" + (nodes.length + 1);
+    nodes.push({ node_id: id, node_type: "message", data: { text: "New message" }, position_x: nx, position_y: ny });
+    renderNodes();
+    scheduleAutoSave();
+  });
+
+  // Init
+  applyPan();
+  renderNodes();
+  </script>
+{% endblock %}

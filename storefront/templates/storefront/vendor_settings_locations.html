@@ -1,0 +1,58 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Locations</div>
+        <div class="va-help">Warehouses and pickup locations used for shipping & inventory.</div>
+      </div>
+    </div>
+  </div>
+
+  <form method="post" class="va-panel p-3 mb-3">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Primary warehouse</div>
+        <select class="form-select" name="primary_warehouse_id">
+          <option value="">-- Select --</option>
+          {% for w in vendor_warehouses %}
+            <option value="{{ w.id }}" {% if vendor.primary_warehouse_id == w.id %}selected{% endif %}>
+              {{ w.name }}
+            </option>
+          {% endfor %}
+        </select>
+        <div class="va-help mt-1">Inventory alerts and shipment defaults use this warehouse.</div>
+      </div>
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Save</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="va-panel p-3">
+    <div class="va-section-title mb-2">Connected warehouses</div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Warehouse</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for w in vendor_warehouses %}
+            <tr>
+              <td class="fw-semibold">{{ w.name }}</td>
+              <td><span class="badge text-bg-light border">Connected</span></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="2" class="va-help">No warehouses linked yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

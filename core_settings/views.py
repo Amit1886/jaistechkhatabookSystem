@@ -19,6 +19,7 @@ from khataapp.models import UserProfile
 from billing.models import Plan, PlanPermissions
 from billing.models import FeatureRegistry, UserFeatureOverride
 from django.contrib.auth import get_user_model
+from validation.models import FraudAlert
 
 
 def party_disabled(request):
@@ -35,7 +36,7 @@ def settings_dashboard(request):
     plan_permissions = user_plan.get_permissions() if user_plan else None
 
     # 🔐 Subscription permission
-    if not has_feature(request.user, "settings"):
+    if (not (request.user.is_staff or request.user.is_superuser)) and (not has_feature(request.user, "settings.advanced")):
         return HttpResponse("❌ Your plan does not allow Settings access")
 
     company = CompanySettings.objects.first()
@@ -244,13 +245,20 @@ def user_permissions_view(request):
 
 @login_required
 def settings_center(request):
+    if (not (request.user.is_staff or request.user.is_superuser)) and (not has_feature(request.user, "settings.advanced")):
+        return HttpResponse("Your plan does not allow Settings access")
     payload = get_settings_payload(request.user)
     ai_hints = build_ai_hints(payload)
     status_cards = get_status_cards(payload)
+    if request.user.is_staff or request.user.is_superuser:
+        open_alerts = FraudAlert.objects.filter(status=FraudAlert.Status.OPEN).count()
+    else:
+        open_alerts = FraudAlert.objects.filter(owner=request.user, status=FraudAlert.Status.OPEN).count()
     return render(request, "core_settings/settings_dashboard.html", {
         "settings_payload": payload,
         "ai_hints": ai_hints,
         "status_cards": status_cards,
+        "open_alerts_count": open_alerts,
     })
 
 

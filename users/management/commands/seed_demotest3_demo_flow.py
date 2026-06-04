@@ -349,6 +349,61 @@ class Command(BaseCommand):
         self._set_saas_profile(user=risk_medium, role=UserRole.B2C_CUSTOMER, wallet="0", credit="0", commission="0")
         self._set_saas_profile(user=risk_high, role=UserRole.B2B_CUSTOMER, wallet="0", credit="0", commission="0")
 
+        # Billing Model Hierarchy demo values (visible in Profile + Demo Center)
+        try:
+            from billing.hierarchy import apply_billing_defaults_to_user
+
+            owner.billing_access_level = "user"
+            owner.billing_role_type = "vendor"
+            owner.billing_child_role = "shop_manager"
+            apply_billing_defaults_to_user(owner, overwrite=False)
+            # Link all demo users under the owner (one billing profile manages all)
+            for u in (customer, supplier, vendor, staff, salesman, delivery, risk_low, risk_medium, risk_high):
+                try:
+                    u.parent = owner
+                except Exception:
+                    pass
+            owner.save(
+                update_fields=[
+                    "billing_access_level",
+                    "billing_role_type",
+                    "billing_child_role",
+                    "permissions_json",
+                ]
+            )
+
+            customer.billing_access_level = ""
+            customer.billing_role_type = "customer"
+            customer.billing_child_role = "authorized_user"
+            apply_billing_defaults_to_user(customer, overwrite=False)
+            customer.save(update_fields=["parent", "billing_access_level", "billing_role_type", "billing_child_role", "permissions_json"])
+
+            supplier.billing_access_level = ""
+            supplier.billing_role_type = "supplier"
+            supplier.billing_child_role = "purchase_manager"
+            apply_billing_defaults_to_user(supplier, overwrite=False)
+            supplier.save(update_fields=["parent", "billing_access_level", "billing_role_type", "billing_child_role", "permissions_json"])
+
+            vendor.billing_access_level = ""
+            vendor.billing_role_type = "vendor"
+            vendor.billing_child_role = "inventory_manager"
+            apply_billing_defaults_to_user(vendor, overwrite=False)
+            vendor.save(update_fields=["parent", "billing_access_level", "billing_role_type", "billing_child_role", "permissions_json"])
+
+            staff.billing_access_level = ""
+            staff.billing_role_type = "sub_user"
+            staff.billing_child_role = "data_entry"
+            apply_billing_defaults_to_user(staff, overwrite=False)
+            staff.save(update_fields=["parent", "billing_access_level", "billing_role_type", "billing_child_role", "permissions_json"])
+
+            delivery.billing_access_level = ""
+            delivery.billing_role_type = "field_agent"
+            delivery.billing_child_role = "field_executive"
+            apply_billing_defaults_to_user(delivery, overwrite=False)
+            delivery.save(update_fields=["parent", "billing_access_level", "billing_role_type", "billing_child_role", "permissions_json"])
+        except Exception:
+            pass
+
         return DemoUsers(
             admin=admin,
             owner=owner,

@@ -1,0 +1,19 @@
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav class="d-flex gap-1 flex-wrap justify-content-end" data-ajax-pagination>
+  <button type="button" class="btn unified-btn-outline btn-sm" data-page="1" {% if page_obj.number == 1 %}disabled{% endif %}>First</button>
+  <button type="button" class="btn unified-btn-outline btn-sm" data-page="{% if page_obj.has_previous %}{{ page_obj.previous_page_number }}{% else %}1{% endif %}" {% if not page_obj.has_previous %}disabled{% endif %}>Prev</button>
+
+  {% for num in page_obj.paginator.page_range %}
+    {% if num == 1 or num == page_obj.paginator.num_pages or num|add:'-2' <= page_obj.number and num|add:'2' >= page_obj.number %}
+      <button type="button"
+              class="btn {% if num == page_obj.number %}unified-btn-primary{% else %}unified-btn-outline{% endif %} btn-sm"
+              data-page="{{ num }}">{{ num }}</button>
+    {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+      <span class="px-2 text-muted align-self-center">…</span>
+    {% endif %}
+  {% endfor %}
+
+  <button type="button" class="btn unified-btn-outline btn-sm" data-page="{% if page_obj.has_next %}{{ page_obj.next_page_number }}{% else %}{{ page_obj.paginator.num_pages }}{% endif %}" {% if not page_obj.has_next %}disabled{% endif %}>Next</button>
+  <button type="button" class="btn unified-btn-outline btn-sm" data-page="{{ page_obj.paginator.num_pages }}" {% if page_obj.number == page_obj.paginator.num_pages %}disabled{% endif %}>Last</button>
+</nav>
+{% endif %}

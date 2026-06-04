@@ -8,9 +8,22 @@
       <h3 class="fw-bold">Sales Order #{{ order.id }}</h3>
       <p class="text-muted mb-0">Source: {{ order.order_source|default:"Manual" }}</p>
     </div>
-    <a href="{% url 'commerce:sales_order_list' %}" class="btn btn-outline-secondary">
-      Back to Sales Orders
-    </a>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'commerce:sales_order_list' %}" class="btn btn-outline-secondary">Back to Sales Orders</a>
+      {% url 'commerce:download_invoice' order.id as order_pdf_url %}
+      <a href="{{ order_pdf_url }}" class="btn btn-outline-primary">Download PDF</a>
+      {% include "core/includes/document_action_bar.html" with doc_title="Sales Order" doc_pdf_url=order_pdf_url doc_pdf_inline_url=order_pdf_url|add:"?inline=1" %}
+      {% if order.storefront_order %}
+        <a href="{% url 'store-track' order.storefront_order.vendor.subdomain order.storefront_order.public_token %}"
+           target="_blank" rel="noopener" class="btn btn-outline-primary">
+          Storefront Tracking
+        </a>
+        <a href="{% url 'vendor-order-view' order.storefront_order.vendor.subdomain order.storefront_order.id %}"
+           target="_blank" rel="noopener" class="btn btn-outline-primary">
+          Vendor View
+        </a>
+      {% endif %}
+    </div>
   </div>
 
   <div class="card border-0 shadow-sm rounded-4 p-4">

@@ -453,15 +453,15 @@ def post_invoice(invoice_id: int) -> None:
         stock_lines: list[StockLine] = []
         for it in items:
             stock_lines.append(
-                StockLine(
-                    product_id=it.product_id,
-                    movement=StockLedger.Movement.OUT,
-                    quantity=_to_decimal(it.qty),
-                    date=voucher_date,
-                    reference_line_id=it.id,
-                    warehouse_id=None,
+                    StockLine(
+                        product_id=it.product_id,
+                        movement=StockLedger.Movement.OUT,
+                        quantity=_to_decimal(it.qty),
+                        date=voucher_date,
+                        reference_line_id=it.id,
+                        warehouse_id=getattr(order, "warehouse_id", None),
+                    )
                 )
-            )
         sync_stock_ledger(owner=owner, reference_type="commerce.Invoice", reference_id=invoice.id, lines=stock_lines)
 
     else:
@@ -497,15 +497,15 @@ def post_invoice(invoice_id: int) -> None:
         stock_lines = []
         for it in items:
             stock_lines.append(
-                StockLine(
-                    product_id=it.product_id,
-                    movement=StockLedger.Movement.IN,
-                    quantity=_to_decimal(it.qty),
-                    date=voucher_date,
-                    reference_line_id=it.id,
-                    warehouse_id=None,
+                    StockLine(
+                        product_id=it.product_id,
+                        movement=StockLedger.Movement.IN,
+                        quantity=_to_decimal(it.qty),
+                        date=voucher_date,
+                        reference_line_id=it.id,
+                        warehouse_id=getattr(order, "warehouse_id", None),
+                    )
                 )
-            )
         sync_stock_ledger(owner=owner, reference_type="commerce.Invoice", reference_id=invoice.id, lines=stock_lines)
 
 
@@ -518,6 +518,21 @@ def post_payment(payment_id: int) -> None:
         .first()
     )
     if not payment or not getattr(payment, "invoice", None) or not getattr(payment.invoice, "order", None):
+        return
+
+    if getattr(payment, "is_deleted", False):
+        invoice = payment.invoice
+        order = invoice.order
+        party = getattr(order, "party", None)
+        owner = getattr(order, "owner", None) or getattr(party, "owner", None)
+        if not owner:
+            return
+        LedgerTransaction.objects.filter(
+            owner=owner,
+            reference_type="commerce.Payment",
+            reference_id=payment.id,
+            voucher_type__in=[LedgerTransaction.VoucherType.RECEIPT, LedgerTransaction.VoucherType.PAYMENT],
+        ).delete()
         return
 
     invoice = payment.invoice
@@ -599,6 +614,19 @@ def post_khata_transaction(txn_id: int) -> None:
         .first()
     )
     if not txn or not getattr(txn, "party", None):
+        return
+
+    if getattr(txn, "is_deleted", False):
+        party = txn.party
+        owner = getattr(party, "owner", None)
+        if not owner:
+            return
+        LedgerTransaction.objects.filter(
+            owner=owner,
+            reference_type="khataapp.Transaction",
+            reference_id=txn.id,
+            voucher_type__in=[LedgerTransaction.VoucherType.RECEIPT, LedgerTransaction.VoucherType.PAYMENT],
+        ).delete()
         return
 
     party = txn.party
@@ -839,6 +867,138 @@ def post_journal_voucher(voucher_id: int) -> None:
         narration=voucher.narration,
         lines=lines,
     )
+
+
+def post_return_note(note_id: int) -> None:
+    from ledger.models import ReturnNote, ReturnNoteItem
+
+    note = (
+        ReturnNote.objects.select_related(
+            "owner",
+            "invoice",
+            "invoice__order",
+            "invoice__order__party",
+        )
+        .prefetch_related("items", "items__product")
+        .filter(id=note_id)
+        .first()
+    )
+    if not note or not getattr(note, "invoice", None) or not getattr(note.invoice, "order", None):
+        return
+
+    owner = note.owner
+    invoice = note.invoice
+    order = invoice.order
+    party = getattr(order, "party", None)
+    if not owner or not party:
+        return
+
+    # Only POSTED notes generate entries; draft/cancelled remove entries
+    if note.status != ReturnNote.Status.POSTED:
+        LedgerTransaction.objects.filter(
+            owner=owner,
+            reference_type="ledger.ReturnNote",
+            reference_id=note.id,
+            voucher_type__in=[
+                LedgerTransaction.VoucherType.CREDIT_NOTE,
+                LedgerTransaction.VoucherType.DEBIT_NOTE,
+            ],
+        ).delete()
+        void_stock_ledger(owner=owner, reference_type="ledger.ReturnNote", reference_id=note.id)
+        return
+
+    order_type = (getattr(order, "order_type", "") or "").upper()
+    is_sale = order_type == "SALE"
+    is_purchase = order_type == "PURCHASE"
+    if not (is_sale or is_purchase):
+        return
+
+    note_type = (getattr(note, "note_type", "") or "").lower()
+    if is_sale and note_type != ReturnNote.NoteType.CREDIT:
+        note_type = ReturnNote.NoteType.CREDIT
+    if is_purchase and note_type != ReturnNote.NoteType.DEBIT:
+        note_type = ReturnNote.NoteType.DEBIT
+
+    gst_type = (getattr(invoice, "gst_type", "") or "").upper()
+    tax_percent = _to_decimal(getattr(order, "tax_percent", None))
+
+    taxable_amount = _to_decimal(getattr(note, "taxable_amount", None))
+    tax_amount = _to_decimal(getattr(note, "tax_amount", None))
+    total_amount = _to_decimal(getattr(note, "total_amount", None))
+
+    if gst_type != "GST":
+        tax_amount = Decimal("0.00")
+        total_amount = taxable_amount
+
+    party_ac = get_or_create_party_account(owner, party)
+    if not party_ac:
+        return
+
+    voucher_date = getattr(note, "date", None) or timezone.now().date()
+
+    items = list(note.items.all())
+    stock_lines: list[StockLine] = []
+    for it in items:
+        qty = _to_decimal(getattr(it, "quantity", None))
+        if qty <= 0:
+            continue
+        stock_lines.append(
+            StockLine(
+                product_id=it.product_id,
+                movement=StockLedger.Movement.IN if is_sale else StockLedger.Movement.OUT,
+                quantity=qty,
+                date=voucher_date,
+                reference_line_id=it.id,
+                warehouse_id=getattr(order, "warehouse_id", None),
+            )
+        )
+
+    if is_sale:
+        sales_ac = get_or_create_system_account(owner, "SALES")
+        gst_ac = get_or_create_gst_account(owner, "output", tax_percent if tax_amount > 0 else None)
+        lines = [
+            GLLine(account=sales_ac, debit=taxable_amount, credit=Decimal("0.00"), description="Sales Return"),
+        ]
+        if tax_amount > 0:
+            lines.append(GLLine(account=gst_ac, debit=tax_amount, credit=Decimal("0.00"), description="Output GST Reversal"))
+        lines.append(
+            GLLine(account=party_ac, debit=Decimal("0.00"), credit=total_amount, party_id=party.id, description=f"{party.name}")
+        )
+
+        sync_gl_transaction(
+            owner=owner,
+            voucher_type=LedgerTransaction.VoucherType.CREDIT_NOTE,
+            reference_type="ledger.ReturnNote",
+            reference_id=note.id,
+            reference_no=f"CN-{note.id}",
+            date=voucher_date,
+            narration=(getattr(note, "narration", "") or "").strip() or f"Credit Note for {getattr(invoice, 'number', '')}".strip(),
+            lines=lines,
+        )
+
+    else:
+        purchase_ac = get_or_create_system_account(owner, "PURCHASE")
+        gst_ac = get_or_create_gst_account(owner, "input", tax_percent if tax_amount > 0 else None)
+        lines = [
+            GLLine(account=party_ac, debit=total_amount, credit=Decimal("0.00"), party_id=party.id, description=f"{party.name}"),
+        ]
+        lines.append(GLLine(account=purchase_ac, debit=Decimal("0.00"), credit=taxable_amount, description="Purchase Return"))
+        if tax_amount > 0:
+            lines.append(GLLine(account=gst_ac, debit=Decimal("0.00"), credit=tax_amount, description="Input GST Reversal"))
+
+        sync_gl_transaction(
+            owner=owner,
+            voucher_type=LedgerTransaction.VoucherType.DEBIT_NOTE,
+            reference_type="ledger.ReturnNote",
+            reference_id=note.id,
+            reference_no=f"DN-{note.id}",
+            date=voucher_date,
+            narration=(getattr(note, "narration", "") or "").strip() or f"Debit Note for {getattr(invoice, 'number', '')}".strip(),
+            lines=lines,
+        )
+
+    if stock_lines:
+        sync_stock_ledger(owner=owner, reference_type="ledger.ReturnNote", reference_id=note.id, lines=stock_lines)
 
 
 # -----------------------------

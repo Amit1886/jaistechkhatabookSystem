@@ -45,7 +45,7 @@
               <td>{{ stock.updated_at|date:"d M Y H:i" }}</td>
               <td>
                 <div class="unified-row-actions">
-                  <a href="{% url 'commerce:stock_view' stock.id %}" class="btn unified-btn-outline btn-sm">View</a>
+                  <a href="{% url 'commerce:product_detail' stock.product.id %}" class="btn unified-btn-outline btn-sm">View</a>
                 </div>
               </td>
             </tr>

@@ -1,0 +1,38 @@
+{% for inv in invoices %}
+<tr>
+  <td>{{ forloop.counter }}</td>
+  <td>{{ inv.number }}</td>
+  <td>#{{ inv.order.id }}</td>
+  <td>{{ inv.order.party.name }}</td>
+  <td>
+    {% if inv.order.order_type == 'PURCHASE' %}
+      <span class="badge bg-info text-dark">Purchase</span>
+    {% else %}
+      <span class="badge bg-primary">Sales</span>
+    {% endif %}
+  </td>
+  <td>
+    {% if inv.status == 'paid' %}
+      <span class="badge bg-success">Accepted</span>
+    {% elif inv.status == 'unpaid' %}
+      <span class="badge bg-warning text-dark">Pending</span>
+    {% else %}
+      <span class="badge bg-danger">Rejected</span>
+    {% endif %}
+  </td>
+  <td class="text-end fw-bold">{{ inv.amount }}</td>
+  <td>{{ inv.created_at|date:"d M Y" }}</td>
+  <td class="text-end">
+    <div class="dropdown">
+      <button type="button" class="btn unified-btn-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown">Actions</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{% url 'commerce:invoice_view' inv.id %}">View</a></li>
+        <li><a class="dropdown-item" href="{% url 'ledger:receipt' %}?reference_type=commerce.Invoice&reference_id={{ inv.id }}" target="_blank" rel="noopener">Receipt</a></li>
+        <li><a class="dropdown-item" href="{% url 'commerce:add_payment' %}?invoice_id={{ inv.id }}">Add Payment</a></li>
+      </ul>
+    </div>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="9" class="text-center text-muted py-4">No vouchers found.</td></tr>
+{% endfor %}

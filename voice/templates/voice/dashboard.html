@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Voice Accounting{% endblock %}
+
+{% block extra_css %}
+  {{ block.super }}
+  <style>
+    .voice-box { border: 1px solid #e5e7eb; border-radius: 14px; padding: 14px; background: #fff; }
+    body.dark .voice-box { background: #111827; border-color: #1f2937; }
+    .voice-result { font-size: 13px; color: #334155; }
+    body.dark .voice-result { color: #cbd5e1; }
+  </style>
+{% endblock %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+
+  <div class="container-fluid py-2 unified-screen">
+    <div class="unified-card">
+      <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <h3 class="mb-0">Voice Accounting</h3>
+          <div class="unified-subtitle">Speak commands like “expense diesel 500” and auto-create entries.</div>
+        </div>
+      </div>
+
+      <div class="unified-body">
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="voice-box shadow-sm">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="fw-bold">Command</div>
+                <div class="d-flex gap-2">
+                  <button id="voiceStartBtn" class="btn unified-btn-outline" type="button">Start Mic</button>
+                  <button id="voiceRunBtn" class="btn unified-btn-primary" type="button">Create Entry</button>
+                </div>
+              </div>
+              <div class="mt-2">
+                <textarea id="voiceText" class="form-control" rows="3" placeholder="Try: sale 5 milk 250"></textarea>
+                <div class="small text-muted mt-2">
+                  Examples: <code>sale 5 ice cream 250</code>, <code>expense diesel 500</code>, <code>receive payment 5000 from Ram Traders</code>
+                </div>
+              </div>
+              <div id="voiceResult" class="voice-result mt-3"></div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <h6 class="mb-2">Recent Voice Commands</h6>
+                <div class="unified-table-wrap">
+                  <table class="table unified-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Intent</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for v in recent %}
+                        <tr>
+                          <td>{{ v.id }}</td>
+                          <td>{{ v.parsed_intent|default:"-" }}</td>
+                          <td>
+                            {% if v.status == 'created' %}
+                              <span class="badge bg-success">Created</span>
+                            {% elif v.status == 'failed' %}
+                              <span class="badge bg-danger">Failed</span>
+                            {% else %}
+                              <span class="badge bg-info text-dark">{{ v.status }}</span>
+                            {% endif %}
+                          </td>
+                          <td>{{ v.created_at|date:"d M Y, H:i" }}</td>
+                        </tr>
+                      {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-4">No voice commands yet.</td></tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{% static 'js/voice_accounting.js' %}?v=20260314a" defer></script>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "central_engine/layout.html" %}
+
+{% block ce_title %}Analytics Snapshot{% endblock %}
+
+{% block ce_content %}
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-lg-5">
+      <div class="card ce-soft">
+        <div class="card-body">
+          <h5 class="fw-bold mb-2">Tips</h5>
+          <ul class="mb-0">
+            {% for t in tips %}
+              <li class="small">{{ t }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-7">
+      <div class="card ce-soft">
+        <div class="card-body">
+          <h5 class="fw-bold mb-2">Snapshot JSON</h5>
+          <pre class="small mb-0">{{ snapshot|pprint }}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

@@ -1,0 +1,78 @@
+{% extends "portal/base_portal.html" %}
+{% load static %}
+
+{% block extra_js %}
+  <script src="{% static 'js/portal_cart.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">{{ product.name }}</h3>
+        <div class="unified-subtitle">SKU: {{ product.sku }} • Stock: {{ product.stock }}</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'portal:catalog' %}" class="btn unified-btn-outline">Back</a>
+        <a href="{% url 'portal:cart' %}" class="btn unified-btn-outline">Cart</a>
+      </div>
+    </div>
+
+    <div class="unified-body">
+      <div class="row g-3">
+        <div class="col-lg-8">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              {% if product.image %}
+                <div class="mb-3 text-center">
+                  <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-height:220px;max-width:100%;object-fit:contain;border-radius:14px;">
+                </div>
+              {% endif %}
+              <div class="small text-muted mb-1">Description</div>
+              <div>{{ product.description|default:"-" }}</div>
+
+              <div class="row g-3 mt-2">
+                <div class="col-md-4">
+                  <div class="small text-muted">Price</div>
+                  <div class="fw-bold fs-4">{{ product.price }}</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="small text-muted">GST</div>
+                  <div class="fw-bold">{{ product.gst_rate }}%</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="small text-muted">Unit</div>
+                  <div class="fw-bold">{{ product.unit|default:"pcs" }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              <div class="small text-muted mb-2">Add to Cart</div>
+              <div class="input-group mb-2">
+                <span class="input-group-text">Qty</span>
+                <input type="number" min="1" class="form-control" id="pdQty" value="{% if in_cart %}{{ in_cart.qty }}{% else %}1{% endif %}" {% if product.stock|default:0 <= 0 %}disabled{% endif %}>
+              </div>
+              {% if product.stock|default:0 > 0 %}
+                <button type="button" class="btn unified-btn-primary w-100" data-add-cart data-product-id="{{ product.id }}" data-qty-input="#pdQty">
+                  Add / Update Cart
+                </button>
+              {% else %}
+                <button type="button" class="btn btn-secondary w-100" disabled>Out of stock</button>
+              {% endif %}
+              <div class="small text-muted mt-2">
+                {% if in_cart %}Currently in cart: <strong>{{ in_cart.qty }}</strong>{% else %}Not in cart yet.{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "central_engine/layout.html" %}
+{% load static %}
+
+{% block ce_title %}User Growth Dashboard{% endblock %}
+
+{% block ce_content %}
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-md-4">
+      <div class="card ce-metric-card ce-gradient-card">
+        <div class="card-body">
+          <div class="metric-label">Level</div>
+          <div class="metric-value">{{ engine.level }}</div>
+          <div class="small">Streak: {{ engine.daily_task_streak }} days</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card ce-metric-card">
+        <div class="card-body">
+          <div class="metric-label">Rewards (Coins)</div>
+          <div class="metric-value">{{ engine.total_rewards }}</div>
+          <div class="small text-muted">Points: {{ engine.reward_points }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card ce-metric-card">
+        <div class="card-body">
+          <div class="metric-label">Earnings</div>
+          <div class="metric-value">INR {{ engine.payment_commission_earned }}</div>
+          <div class="small text-muted">Referral: INR {{ engine.referral_earnings }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-8">
+      <div class="card ce-soft">
+        <div class="card-body">
+          <h5 class="mb-2 fw-bold">Daily Sales Trend (last 7 days)</h5>
+          <canvas id="salesChart" height="110"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-4">
+      <div class="card ce-soft">
+        <div class="card-body">
+          <h5 class="mb-2 fw-bold">Growth Tips</h5>
+          <ul class="mb-0">
+            {% for t in tips %}
+              <li class="small">{{ t }}</li>
+            {% endfor %}
+          </ul>
+          <hr>
+          <div class="small text-muted">
+            Weekly sales: INR {{ snapshot.weekly_sales }}<br>
+            Weekly payments: INR {{ snapshot.weekly_payments }}<br>
+            WhatsApp credits: {{ engine.whatsapp_credits }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    (function () {
+      const ctx = document.getElementById('salesChart');
+      if (!ctx) return;
+      const labels = {{ chart.labels_json|safe }};
+      const values = {{ chart.values_json|safe }};
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Sales',
+            data: values,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.15)',
+            fill: true,
+            tension: 0.35,
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { ticks: { callback: (v) => 'INR ' + v } }
+          }
+        }
+      });
+    })();
+  </script>
+{% endblock %}

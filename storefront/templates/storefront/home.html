@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="m-0">{{ vendor.name }}</h3>
+    <div class="text-muted small">Store: {{ vendor.subdomain }}</div>
+  </div>
+
+  <div class="row g-3">
+    {% for listing in listings %}
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <div class="fw-semibold">{{ listing.effective_title }}</div>
+            <div class="text-muted small">{{ listing.product.category.name|default:"" }}</div>
+            <div class="mt-2 fw-bold">₹{{ listing.effective_price }}</div>
+            <a class="stretched-link" href="{% url 'storefront-product-detail' listing.product.slug %}"></a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-info">No products online yet.</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,45 @@
+{% extends "core/pc_universal.html" %}
+{% load static %}
+
+{% block pc_title %}Duplicate Invoice Report{% endblock %}
+
+{% block pc_actions %}
+  <a class="btn btn-light fw-semibold" href="{% url 'smart_bi:duplicate_invoice_settings' %}">Duplicate Settings</a>
+{% endblock %}
+
+{% block pc_content %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Detected</th>
+          <th>Invoice</th>
+          <th>Customer</th>
+          <th class="text-end">Amount</th>
+          <th>Possible Duplicate</th>
+          <th class="text-end">Similarity</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+          <tr>
+            <td class="text-muted small">{{ log.created_at|date:"d M Y, H:i" }}</td>
+            <td class="fw-semibold">{{ log.invoice.number }}</td>
+            <td class="text-muted">{{ log.invoice.order.party.name }}</td>
+            <td class="text-end">₹{{ log.invoice.amount }}</td>
+            <td class="fw-semibold">{{ log.possible_duplicate.number }}</td>
+            <td class="text-end fw-semibold">{{ log.similarity_score }}%</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'commerce:invoice_view' log.invoice.id %}" target="_blank" rel="noopener">View New</a>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'commerce:invoice_view' log.possible_duplicate.id %}" target="_blank" rel="noopener">View Old</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No duplicate invoice alerts yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+

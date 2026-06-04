@@ -1,0 +1,132 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+{% block vendor_content %}
+  <div class="store-hero p-4 mb-4 shadow-soft">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="opacity-75">Promotions</div>
+        <h3 class="fw-bold mb-0">Coupons & Offers</h3>
+        <div class="opacity-75 small mt-1">{{ vendor.name }} · Manage which coupons are available in your store.</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-light btn-sm" href="{% url 'vendor-dashboard-ui' vendor.subdomain %}"><i class="bi bi-arrow-left me-1"></i>Back</a>
+        <a class="btn btn-light btn-sm" href="{% url 'store-cart' vendor.subdomain %}" target="_blank" rel="noopener"><i class="bi bi-cart3 me-1"></i>Test in Cart</a>
+        <a class="btn btn-outline-light btn-sm" href="{% url 'commerce:coupon_list' %}" target="_blank" rel="noopener"><i class="bi bi-gear me-1"></i>Admin Coupons</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-4">
+      <div class="card product-card shadow-soft">
+        <div class="card-body">
+          <div class="fw-bold mb-2">Mode</div>
+          {% if has_overrides %}
+            <div class="alert alert-warning small mb-3">Custom mode is ON. Only enabled coupons will work in your store.</div>
+          {% else %}
+            <div class="alert alert-info small mb-3">Admin defaults mode is ON. All active discount coupons work in your store.</div>
+          {% endif %}
+
+          <div class="d-flex gap-2 flex-wrap">
+            <form method="post" action="{% url 'vendor-coupons' vendor.subdomain %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="enable_all">
+              <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Enable all</button>
+            </form>
+            <form method="post" action="{% url 'vendor-coupons' vendor.subdomain %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="disable_all">
+              <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-slash-circle me-1"></i>Disable all</button>
+            </form>
+            <form method="post" action="{% url 'vendor-coupons' vendor.subdomain %}" onsubmit="return confirm('Reset to admin defaults?');">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="reset">
+              <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-arrow-counterclockwise me-1"></i>Use admin defaults</button>
+            </form>
+          </div>
+
+          <hr>
+          <div class="fw-bold mb-2">Refer & Earn (Demo)</div>
+          <div class="muted small">
+            Customer gets &#8377;{{ referral_bonus_customer }} wallet credit and referrer gets &#8377;{{ referral_bonus_referrer }} after successful order.
+            Add referral code at checkout.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-8">
+      <div class="card product-card shadow-soft">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div class="fw-bold">Coupons</div>
+            <form method="get" class="d-flex gap-2">
+              <input class="form-control form-control-sm" name="q" placeholder="Search code/title" value="{{ q|default:'' }}">
+              <button class="btn btn-sm btn-outline-primary" type="submit">Search</button>
+              {% if q %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-coupons' vendor.subdomain %}">Reset</a>{% endif %}
+            </form>
+          </div>
+
+          {% if not rows %}
+            <div class="alert alert-secondary mb-0">No coupons found.</div>
+          {% else %}
+            <div class="table-responsive">
+              <table class="table align-middle">
+                <thead>
+                  <tr class="small muted">
+                    <th>Code</th>
+                    <th>Discount</th>
+                    <th>Min</th>
+                    <th>Validity</th>
+                    <th class="text-end">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in rows %}
+                    {% with c=r.coupon %}
+                      <tr>
+                        <td style="min-width: 160px;">
+                          <div class="fw-semibold">{{ c.code }}</div>
+                          <div class="muted small">{{ c.title }}</div>
+                        </td>
+                        <td>
+                          {% if c.coupon_type == "discount" %}
+                            {% if c.discount_type == "percentage" %}
+                              <span class="pill small">{{ c.discount_value }}% OFF</span>
+                              {% if c.max_discount %}<span class="muted small ms-1">up to &#8377;{{ c.max_discount }}</span>{% endif %}
+                            {% else %}
+                              <span class="pill small">&#8377;{{ c.discount_value }} OFF</span>
+                            {% endif %}
+                          {% else %}
+                            <span class="pill small">Offer</span>
+                          {% endif %}
+                        </td>
+                        <td class="small">&#8377;{{ c.min_order_amount }}</td>
+                        <td class="small">
+                          <div class="muted">{{ c.valid_from|date:"d M" }}{% if c.valid_until %} → {{ c.valid_until|date:"d M" }}{% else %} → No expiry{% endif %}</div>
+                        </td>
+                        <td class="text-end" style="min-width: 160px;">
+                          <form method="post" action="{% url 'vendor-coupons' vendor.subdomain %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="coupon_id" value="{{ c.id }}">
+                            <input type="hidden" name="is_active" value="{% if r.enabled %}0{% else %}1{% endif %}">
+                            <button type="submit" class="btn btn-sm {% if r.enabled %}btn-outline-success{% else %}btn-outline-secondary{% endif %}">
+                              {% if r.enabled %}<i class="bi bi-check-circle me-1"></i>Enabled{% else %}<i class="bi bi-x-circle me-1"></i>Disabled{% endif %}
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    {% endwith %}
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% endif %}
+
+          <div class="muted small mt-3">
+            Tip: Create coupons in Billing Admin, then enable them here. Customers can apply codes in Cart/Checkout.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

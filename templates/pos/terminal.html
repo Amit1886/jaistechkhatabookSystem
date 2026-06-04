@@ -1,66 +1,131 @@
+{% extends "base.html" %}
 {% load static %}
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Universal POS</title>
-    <style>
-        :root {
-            --bg: #f4f1ea;
-            --ink: #1b1f24;
-            --panel: #ffffff;
-            --brand: #0d7a64;
-            --accent: #f1b24a;
-        }
-        body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: linear-gradient(120deg, #f4f1ea, #e8f3ef); color: var(--ink); }
-        .layout { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; padding: 12px; }
-        .panel { background: var(--panel); border-radius: 12px; padding: 12px; box-shadow: 0 6px 18px rgba(0,0,0,.08); }
-        .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn { border: 0; border-radius: 8px; padding: 10px 12px; background: var(--brand); color: #fff; cursor: pointer; }
-        .btn.alt { background: var(--accent); color: #111; }
-        .line-items { min-height: 260px; border: 1px dashed #cfd6dc; border-radius: 8px; padding: 8px; }
-        .total { font-size: 22px; font-weight: 700; }
-        @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } }
-        @media (max-width: 640px) { .btn { flex: 1 1 48%; } }
-    </style>
-</head>
-<body>
-    <div class="layout">
-        <section class="panel">
-            <h2>POS Billing</h2>
-            <input id="barcode-input" placeholder="Scan barcode / QR" style="width:100%;padding:10px;margin-bottom:8px;">
-            <div class="toolbar">
-                <button class="btn" data-shortcut="F1">F1 Add Item</button>
-                <button class="btn" data-shortcut="F2">F2 Qty</button>
-                <button class="btn" data-shortcut="F3">F3 Discount</button>
-                <button class="btn" data-shortcut="F4">F4 Customer</button>
-                <button class="btn alt" data-shortcut="F5">F5 Hold</button>
-                <button class="btn alt" data-shortcut="F6">F6 Retrieve</button>
-                <button class="btn" data-shortcut="F7">F7 Payment</button>
-                <button class="btn" data-shortcut="F8">F8 Print</button>
-                <button class="btn" data-shortcut="F9">F9 Reprint</button>
-            </div>
-            <div class="line-items" id="line-items"></div>
-        </section>
 
-        <aside class="panel">
-            <h3>Summary</h3>
-            <div class="total" id="total">Total: 0.00</div>
-            <p>Offline fallback uses localStorage queue.</p>
-            <button class="btn" id="sync-btn">Sync Pending Bills</button>
-        </aside>
+{% block title %}Universal POS{% endblock %}
+
+{% block extra_css %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/pos_terminal.css' %}?v=20260511a">
+{% endblock %}
+
+{% block content %}
+<div class="pos-shell" data-pos-shell>
+  <form style="display:none;">{% csrf_token %}</form>
+  <header class="pos-head">
+    <div>
+      <div class="pos-kicker">Universal POS</div>
+      <h2>Touch Billing Counter</h2>
+      <div class="pos-user-strip">
+        <span class="pos-online-dot"></span>
+        <strong>User, {{ demo_user_display.name|default:"Demotest3" }}</strong>
+        <span>{{ demo_user_display.role|default:"User" }}</span>
+        <span>{{ demo_user_display.business_name|default:"Main Branch" }}</span>
+        <span>Last login: {{ demo_user_display.last_login|date:"d M H:i"|default:"Current session" }}</span>
+      </div>
+    </div>
+    <div class="pos-head-actions">
+      <select id="pos-price-mode" class="pos-select" aria-label="Price mode">
+        <option value="retail">Retail</option>
+        <option value="wholesale">Wholesale</option>
+        <option value="b2b">B2B</option>
+      </select>
+      <button class="pos-chip" type="button" id="pos-fullscreen">Kiosk</button>
+      <button class="pos-chip" type="button" id="pos-hardware">Hardware</button>
+      <button class="pos-chip" type="button" id="pos-voice">Voice</button>
+      <button class="pos-chip" type="button" id="pos-designer">Design</button>
+      <span class="pos-status" id="pos-status">Ready</span>
+    </div>
+  </header>
+
+  <section class="pos-grid">
+    <div class="pos-catalog-panel">
+      <div class="pos-scan-row">
+        <input id="barcode-input" class="pos-scan-input" autocomplete="off" placeholder="Scan barcode, QR, SKU or product name">
+        <button class="pos-primary" type="button" id="pos-search-btn">Search</button>
+      </div>
+
+      <div class="pos-shortcuts">
+        <button type="button" data-pos-action="add-custom">F1 Add</button>
+        <button type="button" data-pos-action="qty">F2 Qty</button>
+        <button type="button" data-pos-action="discount">F3 Discount</button>
+        <button type="button" data-pos-action="customer">F4 Customer</button>
+        <button type="button" data-pos-action="hold" class="warn">F5 Hold</button>
+        <button type="button" data-pos-action="retrieve" class="warn">F6 Retrieve</button>
+        <button type="button" data-pos-action="payment">F7 Pay</button>
+        <button type="button" data-pos-action="print">F8 Print</button>
+        <button type="button" data-pos-action="clear" class="danger">Esc Clear</button>
+      </div>
+
+      <div class="pos-category-strip" id="pos-categories"></div>
+      <div class="pos-product-grid" id="pos-products" aria-live="polite"></div>
     </div>
 
-    <audio id="scan-sound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAA"></audio>
-    <script src="{% static 'js/scanner.js' %}"></script>
-    <script>
-        window.POSScanner.init({
-            inputId: "barcode-input",
-            lineItemsId: "line-items",
-            totalId: "total",
-            soundId: "scan-sound",
-        });
-    </script>
-</body>
-</html>
+    <aside class="pos-cart-panel">
+      <div class="pos-cart-title">
+        <div>
+          <h3>Current Bill</h3>
+          <span id="pos-customer-label">Walk-in Customer</span>
+        </div>
+        <button type="button" class="pos-link-btn" data-pos-action="customer">Change</button>
+      </div>
+
+      <div class="pos-cart-items" id="line-items"></div>
+
+      <div class="pos-summary">
+        <div><span>Items</span><strong id="pos-item-count">0</strong></div>
+        <div><span>Subtotal</span><strong id="pos-subtotal">0.00</strong></div>
+        <div><span>Discount</span><strong id="pos-discount">0.00</strong></div>
+        <div><span>GST</span><strong id="pos-tax">0.00</strong></div>
+        <div class="grand"><span>Total</span><strong id="total">0.00</strong></div>
+      </div>
+
+      <div class="pos-payment-buttons">
+        <button type="button" data-pay-mode="cash" class="active">Cash</button>
+        <button type="button" data-pay-mode="upi">UPI</button>
+        <button type="button" data-pay-mode="card">Card</button>
+        <button type="button" data-pay-mode="split">Split</button>
+      </div>
+
+      <div class="pos-cart-actions">
+        <button class="pos-secondary" type="button" id="sync-btn">Sync</button>
+        <button class="pos-secondary" type="button" data-pos-action="hold">Hold</button>
+        <button class="pos-primary" type="button" id="pay-btn">Checkout</button>
+        <button class="pos-secondary" type="button" id="print-btn">Print</button>
+      </div>
+      <div class="pos-central-links" id="pos-central-links" hidden></div>
+    </aside>
+  </section>
+
+  <section class="pos-bottom">
+    <div class="pos-held">
+      <div class="pos-section-title">Held Bills</div>
+      <div id="pos-held-list" class="pos-held-list"></div>
+    </div>
+    <div class="pos-device-strip">
+      <span class="enabled">Barcode</span>
+      <span class="enabled">QR</span>
+      <span class="enabled">Thermal Print</span>
+      <span class="enabled">Offline Queue</span>
+      <span class="enabled">Touch</span>
+      <span class="enabled">PWA Ready</span>
+    </div>
+  </section>
+</div>
+
+<div class="pos-modal" id="pos-modal" hidden>
+  <div class="pos-modal-card">
+    <div class="pos-modal-head">
+      <h3 id="pos-modal-title">POS</h3>
+      <button type="button" id="pos-modal-close">Close</button>
+    </div>
+    <div id="pos-modal-body"></div>
+  </div>
+</div>
+
+<audio id="scan-sound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAA"></audio>
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+  <script src="{% static 'js/pos_terminal.js' %}?v=20260511a"></script>
+{% endblock %}

@@ -1,895 +1,112 @@
 {% extends "base.html" %}
 {% load static %}
+
+{% block title %}Add Payment{% endblock %}
+
+{% block pc_badges %}
+  <span class="badge bg-warning text-dark fw-bold">Receipts</span>
+{% endblock %}
+
+{% block pc_actions %}
+  <a class="btn btn-outline-light btn-lg fw-bold" href="{% url 'commerce:payment_list' %}" accesskey="l" title="Alt+L">Payments</a>
+  <button type="button" class="btn btn-outline-light btn-lg fw-bold" data-bs-toggle="modal" data-bs-target="#voiceAccountingModal" title="Voice Accounting">🎤 Voice</button>
+  <button type="button" class="btn btn-warning btn-lg fw-bold" onclick="showKeyboardHelp()" title="F1">Shortcuts</button>
+{% endblock %}
+
 {% block content %}
+  {% include "core/includes/messages.html" %}
+  {% include "core/includes/keyboard_help_common.html" %}
 
-<link rel="stylesheet" href="{% static 'css/add_order.css' %}">
-<script src="{% static 'js/add_order_enhanced.js' %}" defer></script>
-
-<!-- KEYBOARD SHORTCUTS HELP MODAL -->
-<div id="keyboardHelp" class="keyboard-help-modal">
-  <div class="keyboard-help-content">
-
-    <h3 class="fw-bold text-primary mb-4"> Keyboard Shortcuts (PC Mode)</h3>
-
-    <h3 class="fw-bold text-primary mb-4">⌨️ Keyboard Shortcuts (PC Mode)</h3>
-
-    <div class="shortcuts-grid">
-      <div class="shortcut-item"><kbd class="fw-bold">F1</kbd> <span>Show Help</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F2</kbd> <span>Invoice Selection</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F3</kbd> <span>Amount Field</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F4</kbd> <span>Next Step</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F5</kbd> <span>Save Payment</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F6</kbd> <span>Save Draft</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F7</kbd> <span>Print Receipt</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Tab</kbd> <span>Next Field</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Shift+Tab</kbd> <span>Previous Field</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Ctrl+S</kbd> <span>Quick Save</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Esc</kbd> <span>Cancel/Close</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Ctrl+Z</kbd> <span>Undo Last Action</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Ctrl+Y</kbd> <span>Redo Last Action</span></div>
-    </div>
-    <div class="text-center mt-4">
-      <button class="btn btn-danger btn-lg fw-bold px-4" onclick="hideKeyboardHelp()">Close (Esc)</button>
-    </div>
-  </div>
-</div>
-
-<!-- SUCCESS POPUP MODAL -->
-<div id="successModal" class="modal fade" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content bg-success text-white">
-      <div class="modal-body text-center p-5">
-        <div class="mb-3">
-          <i class="fas fa-check-circle fa-4x text-white"></i>
+  <!-- VOICE ACCOUNTING MODAL -->
+  <div class="modal fade" id="voiceAccountingModal" tabindex="-1" aria-labelledby="voiceAccountingLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="voiceAccountingLabel">Voice Accounting</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <h3 class="fw-bold mb-3">Payment Added Successfully!</h3>
-        <p class="mb-4">Your payment has been recorded and processed.</p>
-        <button type="button" class="btn btn-light btn-lg fw-bold px-4" onclick="$('#successModal').modal('hide')">Continue</button>
+        <div class="modal-body">
+          <div class="small text-muted mb-2">Try: <code>receive payment 5000 from Ram Traders</code></div>
+          <textarea id="voiceText" class="form-control" rows="3" placeholder="Voice command will appear here..."></textarea>
+          <div id="voiceResult" class="mt-2 small"></div>
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <button id="voiceStartBtn" type="button" class="btn btn-outline-secondary">Start Mic</button>
+          <button id="voiceRunBtn" type="button" class="btn btn-primary">Create Entry</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<div class="container-fluid py-4 unified-screen busy-unified-add">
-  <div class="card shadow-lg border-0 order-card" id="mainPaymentCard">
+  <form method="post" enctype="multipart/form-data" class="row g-3" action="{% url 'commerce:add_payment' %}">
+    {% csrf_token %}
 
-    <!-- HEADER WITH MODE SWITCHER -->
-    <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center flex-wrap">
-      <div class="d-flex align-items-center gap-3">
-
-        <h2 class="mb-0 fw-bold text-shadow"> Smart Payment Processor</h2>
-        <span class="badge bg-warning text-dark fw-bold pulse-badge">AI Ready</span>
-        <button type="button" class="btn btn-warning btn-lg fw-bold shadow-lg" onclick="showKeyboardHelp()" title="F1">
-           Shortcuts
-
-        <h2 class="mb-0 fw-bold text-shadow">💰 Smart Payment Processor</h2>
-        <span class="badge bg-warning text-dark fw-bold pulse-badge">AI Ready</span>
-        <button type="button" class="btn btn-warning btn-lg fw-bold shadow-lg" onclick="showKeyboardHelp()" title="F1">
-          ⌨️ Shortcuts
-
-        </button>
-      </div>
-
-      <!-- MODE SWITCHER -->
-      <div class="mode-switcher d-flex gap-3">
-        <button type="button" class="btn btn-xl btn-outline-light active fw-bold shadow-lg pulse-button" data-mode="pc" id="pcMode">
-
-           PC Mode
-        </button>
-        <button type="button" class="btn btn-xl btn-outline-light fw-bold shadow-lg" data-mode="pos" id="posMode">
-           POS Mode
-        </button>
-        <button type="button" class="btn btn-xl btn-outline-light fw-bold shadow-lg" data-mode="mobile" id="mobileMode">
-           Mobile Mode
-
-          💻 PC Mode
-        </button>
-        <button type="button" class="btn btn-xl btn-outline-light fw-bold shadow-lg" data-mode="pos" id="posMode">
-          🏪 POS Mode
-        </button>
-        <button type="button" class="btn btn-xl btn-outline-light fw-bold shadow-lg" data-mode="mobile" id="mobileMode">
-          📱 Mobile Mode
-
-        </button>
-      </div>
-
-      <!-- THEME SELECTOR -->
-      <div class="theme-selector">
-        <select id="themeSelect" class="form-select form-select-lg fw-bold rainbow-border" aria-label="Theme Selector">
-
-          <option value="default"> Default Theme</option>
-          <option value="dark"> Dark Theme</option>
-          <option value="blue"> Blue Theme</option>
-          <option value="green"> Green Theme</option>
-          <option value="red"> Red Theme</option>
-          <option value="rainbow"> Rainbow Theme</option>
-          <option value="neon"> Neon Theme</option>
-
-          <option value="default">🎨 Default Theme</option>
-          <option value="dark">🌙 Dark Theme</option>
-          <option value="blue">🔵 Blue Theme</option>
-          <option value="green">🟢 Green Theme</option>
-          <option value="red">🔴 Red Theme</option>
-          <option value="rainbow">🌈 Rainbow Theme</option>
-          <option value="neon">⚡ Neon Theme</option>
-
-        </select>
-      </div>
-    </div>
-
-    <!-- STEP WIZARD INDICATOR -->
-    <div class="wizard-steps bg-gradient-light p-3 border-bottom border-3">
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="step-indicator d-flex align-items-center gap-2">
-          <span class="step step-circle active fw-bold" data-step="1">
-            <span class="step-number">1</span>
-            <span class="step-text">Invoice & Amount</span>
-          </span>
-
-          <span class="step-arrow fw-bold text-primary"></span>
-
-          <span class="step-arrow fw-bold text-primary">→</span>
-
-          <span class="step step-circle fw-bold" data-step="2">
-            <span class="step-number">2</span>
-            <span class="step-text">Payment Details</span>
-          </span>
-
-          <span class="step-arrow fw-bold text-primary"></span>
-
-          <span class="step-arrow fw-bold text-primary">→</span>
-
-          <span class="step step-circle fw-bold" data-step="3">
-            <span class="step-number">3</span>
-            <span class="step-text">Review & Save</span>
-          </span>
-        </div>
-        <div class="step-navigation">
-          <button type="button" class="btn btn-outline-primary btn-lg fw-bold shadow" id="prevStep" disabled>
-
-             Previous
-          </button>
-          <button type="button" class="btn btn-primary btn-lg fw-bold shadow pulse-button" id="nextStep">
-            Next 
-
-            ⬅️ Previous
-          </button>
-          <button type="button" class="btn btn-primary btn-lg fw-bold shadow pulse-button" id="nextStep">
-            Next ➡️
-
-          </button>
+    <div class="col-12">
+      <div class="card border-primary">
+        <div class="card-body">
+          <label for="invoice_id" class="form-label fw-bold">Invoice</label>
+          <select id="invoice_id" name="invoice_id" class="form-select form-select-lg fw-bold" required data-kb-primary="1" autofocus>
+            <option value="">-- Select Invoice --</option>
+            {% for invoice in invoices %}
+              <option value="{{ invoice.id }}" {% if initial_invoice_id|stringformat:'s' == invoice.id|stringformat:'s' %}selected{% endif %}>
+                {{ invoice.number }} - {{ invoice.order.party.name }} - &#8377;{{ invoice.amount }}
+              </option>
+            {% endfor %}
+          </select>
+          <small class="text-muted">Tip: press F2 to jump back to the first field.</small>
         </div>
       </div>
     </div>
 
-    <form method="POST" enctype="multipart/form-data" action="{% url 'commerce:add_payment' %}">
-      {% csrf_token %}
-
-      <!-- STEP 1: Invoice Selection & Amount -->
-      <div class="card-body step-content" id="step-1">
-        <div class="step-header text-center mb-4">
-
-          <h4 class="fw-bold text-primary"> Step 1: Invoice Selection & Amount</h4>
-
-          <h4 class="fw-bold text-primary">📄 Step 1: Invoice Selection & Amount</h4>
-
-          <p class="text-muted">Select invoice and enter payment amount</p>
-        </div>
-
-        <!-- INVOICE SELECTION -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-8">
-            <div class="card border-primary">
-              <div class="card-body">
-
-                <label for="invoice_id" class="form-label fw-bold"> Select Invoice (F2)</label>
-
-                <label for="invoice_id" class="form-label fw-bold">📋 Select Invoice (F2)</label>
-
-                <select id="invoice_id" name="invoice_id" class="form-select form-select-lg fw-bold" required title="Select Invoice" aria-label="Select Invoice">
-                  <option value="">Choose Invoice...</option>
-                  {% for invoice in invoices %}
-                  <option value="{{ invoice.id }}" data-amount="{{ invoice.amount }}" data-party="{{ invoice.order.party.name }}">
-
-                    INV-{{ invoice.number }} - {{ invoice.order.party.name }} - {{ invoice.amount }}
-
-                    INV-{{ invoice.number }} - {{ invoice.order.party.name }} - ₹{{ invoice.amount }}
-
-                  </option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <div class="card border-success">
-              <div class="card-body">
-
-                <label class="form-label fw-bold"> Quick Actions</label>
-                <div class="d-flex gap-2 flex-wrap">
-                  <button type="button" class="btn btn-outline-primary btn-sm" onclick="scanQR()">
-                     Scan QR
-                  </button>
-                  <button type="button" class="btn btn-outline-success btn-sm" onclick="autoFillAmount()">
-                     Auto-Fill
-
-                <label class="form-label fw-bold">🔍 Quick Actions</label>
-                <div class="d-flex gap-2 flex-wrap">
-                  <button type="button" class="btn btn-outline-primary btn-sm" onclick="scanQR()">
-                    📱 Scan QR
-                  </button>
-                  <button type="button" class="btn btn-outline-success btn-sm" onclick="autoFillAmount()">
-                    🤖 Auto-Fill
-
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- AMOUNT INPUT -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <div class="card border-success">
-              <div class="card-body">
-
-                <label for="amount" class="form-label fw-bold"> Payment Amount (F3)</label>
-                <div class="input-group">
-                  <span class="input-group-text fw-bold"></span>
-
-                <label for="amount" class="form-label fw-bold">💰 Payment Amount (F3)</label>
-                <div class="input-group">
-                  <span class="input-group-text fw-bold">₹</span>
-
-                  <input type="number" id="amount" name="amount" class="form-control form-control-lg fw-bold" step="0.01" min="0" placeholder="0.00" required title="Payment Amount" aria-label="Payment Amount">
-                </div>
-                <small class="text-muted">Enter the amount to be paid</small>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="card border-info">
-              <div class="card-body">
-
-                <label class="form-label fw-bold"> Invoice Summary</label>
-
-                <label class="form-label fw-bold">📊 Invoice Summary</label>
-
-                <div id="invoiceSummary" class="text-muted">
-                  <p>Select an invoice to see details</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- AI SUGGESTIONS -->
-        <div class="ai-suggestions-section mb-4">
-          <div class="ai-suggestions">
-            <div class="suggestion-item fw-bold">
-
-               <strong>AI Assistant:</strong> Based on the selected invoice, I've suggested the full outstanding amount. You can modify it as needed!
-
-              🤖 <strong>AI Assistant:</strong> Based on the selected invoice, I've suggested the full outstanding amount. You can modify it as needed!
-
-            </div>
-          </div>
+    <div class="col-md-4">
+      <div class="card border-success">
+        <div class="card-body">
+          <label for="amount" class="form-label fw-bold">Amount (&#8377;)</label>
+          <input type="number" step="0.01" min="0" id="amount" name="amount" class="form-control form-control-lg fw-bold" required placeholder="0.00">
         </div>
       </div>
+    </div>
 
-      <!-- STEP 2: Payment Details & Mode -->
-      <div class="card-body step-content" id="step-2" style="display: none;">
-        <div class="step-header text-center mb-4">
-
-          <h4 class="fw-bold text-success"> Step 2: Payment Details & Mode</h4>
-
-          <h4 class="fw-bold text-success">💳 Step 2: Payment Details & Mode</h4>
-
-          <p class="text-muted">Choose payment method and add reference details</p>
-        </div>
-
-        <!-- PAYMENT METHOD -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <div class="card border-warning">
-              <div class="card-body">
-
-                <label for="method" class="form-label fw-bold"> Payment Method</label>
-                <select id="method" name="method" class="form-select form-select-lg fw-bold" title="Payment Method" aria-label="Payment Method">
-                  <option value="">Select Method</option>
-                  <option value="cash"> Cash</option>
-                  <option value="card"> Credit/Debit Card</option>
-                  <option value="upi"> UPI</option>
-                  <option value="bank_transfer"> Bank Transfer</option>
-                  <option value="cheque"> Cheque</option>
-                  <option value="wallet"> Digital Wallet</option>
-
-                <label for="method" class="form-label fw-bold">💳 Payment Method</label>
-                <select id="method" name="method" class="form-select form-select-lg fw-bold" title="Payment Method" aria-label="Payment Method">
-                  <option value="">Select Method</option>
-                  <option value="cash">💵 Cash</option>
-                  <option value="card">💳 Credit/Debit Card</option>
-                  <option value="upi">📱 UPI</option>
-                  <option value="bank_transfer">🏦 Bank Transfer</option>
-                  <option value="cheque">📄 Cheque</option>
-                  <option value="wallet">📱 Digital Wallet</option>
-
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="card border-danger">
-              <div class="card-body">
-
-                <label for="reference" class="form-label fw-bold"> Reference/Transaction ID</label>
-
-                <label for="reference" class="form-label fw-bold">🔖 Reference/Transaction ID</label>
-
-                <input type="text" id="reference" name="reference" class="form-control form-control-lg fw-bold" placeholder="Enter reference number" title="Payment Reference" aria-label="Payment Reference">
-                <small class="text-muted">Transaction ID, Cheque No, UTR, etc.</small>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PAYMENT DATE & PROOF -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <div class="card border-info">
-              <div class="card-body">
-
-                <label for="payment_date" class="form-label fw-bold"> Payment Date</label>
-
-                <label for="payment_date" class="form-label fw-bold">📅 Payment Date</label>
-
-                <input type="date" id="payment_date" name="payment_date" class="form-control form-control-lg fw-bold" value="{% now 'Y-m-d' %}" title="Payment Date" aria-label="Payment Date">
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="card border-primary">
-              <div class="card-body">
-
-                <label for="payment_proof" class="form-label fw-bold"> Payment Proof (Optional)</label>
-
-                <label for="payment_proof" class="form-label fw-bold">📎 Payment Proof (Optional)</label>
-
-                <input type="file" id="payment_proof" name="payment_proof" class="form-control form-control-lg fw-bold" accept="image/*,application/pdf" title="Upload Payment Proof" aria-label="Payment Proof">
-                <small class="text-muted">Upload receipt, screenshot, or proof document</small>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- NOTES -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-12">
-            <div class="card border-secondary">
-              <div class="card-body">
-
-                <label for="note" class="form-label fw-bold"> Payment Notes</label>
-
-                <label for="note" class="form-label fw-bold">📝 Payment Notes</label>
-
-                <textarea id="note" name="note" class="form-control fw-bold" rows="3" placeholder="Add any notes about this payment..."></textarea>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PAYMENT METHOD SPECIFIC FIELDS -->
-        <div id="methodSpecificFields" class="row g-3 mb-3" style="display: none;">
-          <!-- UPI Fields -->
-          <div id="upiFields" class="col-md-12" style="display: none;">
-            <div class="card border-success">
-
-              <div class="card-header bg-success text-white fw-bold"> UPI Payment Details</div>
-
-              <div class="card-header bg-success text-white fw-bold">📱 UPI Payment Details</div>
-
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label for="upiId" class="form-label fw-bold">UPI ID</label>
-                    <input type="text" id="upiId" name="upi_id" class="form-control fw-bold" placeholder="merchant@upi">
-                  </div>
-                  <div class="col-md-6">
-                    <label for="upiRef" class="form-label fw-bold">UPI Reference</label>
-                    <input type="text" id="upiRef" name="upi_ref" class="form-control fw-bold" placeholder="Transaction reference">
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card Fields -->
-          <div id="cardFields" class="col-md-12" style="display: none;">
-            <div class="card border-warning">
-
-              <div class="card-header bg-warning text-dark fw-bold"> Card Payment Details</div>
-
-              <div class="card-header bg-warning text-dark fw-bold">💳 Card Payment Details</div>
-
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <label for="cardType" class="form-label fw-bold">Card Type</label>
-                    <select id="cardType" name="card_type" class="form-select fw-bold">
-                      <option value="credit">Credit Card</option>
-                      <option value="debit">Debit Card</option>
-                    </select>
-                  </div>
-                  <div class="col-md-4">
-                    <label for="cardLast4" class="form-label fw-bold">Last 4 Digits</label>
-                    <input type="text" id="cardLast4" name="card_last4" class="form-control fw-bold" maxlength="4" placeholder="1234">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="cardAuth" class="form-label fw-bold">Auth Code</label>
-                    <input type="text" id="cardAuth" name="card_auth" class="form-control fw-bold" placeholder="Authorization code">
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Cheque Fields -->
-          <div id="chequeFields" class="col-md-12" style="display: none;">
-            <div class="card border-danger">
-
-              <div class="card-header bg-danger text-white fw-bold"> Cheque Payment Details</div>
-
-              <div class="card-header bg-danger text-white fw-bold">📄 Cheque Payment Details</div>
-
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <label for="chequeNo" class="form-label fw-bold">Cheque Number</label>
-                    <input type="text" id="chequeNo" name="cheque_no" class="form-control fw-bold" placeholder="Cheque number">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="bankName" class="form-label fw-bold">Bank Name</label>
-                    <input type="text" id="bankName" name="bank_name" class="form-control fw-bold" placeholder="Bank name">
-                  </div>
-                  <div class="col-md-4">
-                    <label for="chequeDate" class="form-label fw-bold">Cheque Date</label>
-                    <input type="date" id="chequeDate" name="cheque_date" class="form-control fw-bold">
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <label for="method" class="form-label fw-bold">Method</label>
+          <select id="method" name="method" class="form-select form-select-lg fw-bold">
+            <option value="">-- Select --</option>
+            <option value="cash">Cash</option>
+            <option value="upi">UPI</option>
+            <option value="bank">Bank Transfer</option>
+            <option value="card">Card</option>
+            <option value="cheque">Cheque</option>
+            <option value="other">Other</option>
+          </select>
         </div>
       </div>
+    </div>
 
-      <!-- STEP 3: Review & Confirm -->
-      <div class="card-body step-content" id="step-3" style="display: none;">
-        <div class="step-header text-center mb-4">
-
-          <h4 class="fw-bold text-warning"> Step 3: Review & Confirm</h4>
-
-          <h4 class="fw-bold text-warning">🔍 Step 3: Review & Confirm</h4>
-
-          <p class="text-muted">Review payment details before saving</p>
-        </div>
-
-        <!-- PAYMENT SUMMARY -->
-        <div class="row mb-4">
-          <div class="col-md-6">
-            <div class="card border-info">
-
-              <div class="card-header bg-info text-white fw-bold"> Invoice Details</div>
-              <div class="card-body">
-                <p><strong>Invoice:</strong> <span id="reviewInvoice" class="fw-bold text-primary">-</span></p>
-                <p><strong>Party:</strong> <span id="reviewParty" class="fw-bold text-success">-</span></p>
-                <p><strong>Total Amount:</strong> <span id="reviewTotalAmount" class="fw-bold">-</span></p>
-
-              <div class="card-header bg-info text-white fw-bold">📄 Invoice Details</div>
-              <div class="card-body">
-                <p><strong>Invoice:</strong> <span id="reviewInvoice" class="fw-bold text-primary">-</span></p>
-                <p><strong>Party:</strong> <span id="reviewParty" class="fw-bold text-success">-</span></p>
-                <p><strong>Total Amount:</strong> ₹<span id="reviewTotalAmount" class="fw-bold">-</span></p>
-
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card border-success">
-
-              <div class="card-header bg-success text-white fw-bold"> Payment Summary</div>
-              <div class="card-body">
-                <p><strong>Payment Amount:</strong> <span id="reviewPaymentAmount" class="fw-bold">-</span></p>
-
-              <div class="card-header bg-success text-white fw-bold">💰 Payment Summary</div>
-              <div class="card-body">
-                <p><strong>Payment Amount:</strong> ₹<span id="reviewPaymentAmount" class="fw-bold">-</span></p>
-
-                <p><strong>Method:</strong> <span id="reviewMethod" class="fw-bold">-</span></p>
-                <p><strong>Reference:</strong> <span id="reviewReference" class="fw-bold">-</span></p>
-                <p><strong>Date:</strong> <span id="reviewDate" class="fw-bold">-</span></p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- FINAL NOTES -->
-        <div class="card border-warning">
-
-          <div class="card-header bg-warning text-dark fw-bold"> Final Notes (Optional)</div>
-
-          <div class="card-header bg-warning text-dark fw-bold">📝 Final Notes (Optional)</div>
-
-          <div class="card-body">
-            <textarea name="final_notes" class="form-control fw-bold" rows="3" placeholder="Add any final notes or remarks..."></textarea>
-          </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <label for="reference" class="form-label fw-bold">Reference (Optional)</label>
+          <input type="text" id="reference" name="reference" class="form-control form-control-lg fw-bold" placeholder="UTR / Txn ID / Cheque no.">
         </div>
       </div>
+    </div>
 
-      <!-- ENHANCED FOOTER ACTIONS -->
-      <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-between align-items-center">
-
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-success px-4">
-
-             Save Payment
-          </button>
-          <button type="button" id="saveDraftFooter" class="btn btn-outline-secondary">
-             Save Draft
-
-            💾 Save Payment
-          </button>
-          <button type="button" id="saveDraftFooter" class="btn btn-outline-secondary">
-            📝 Save Draft
-
-          </button>
+    <div class="col-12">
+      <div class="card border-secondary">
+        <div class="card-body">
+          <label for="note" class="form-label fw-bold">Notes (Optional)</label>
+          <textarea id="note" name="note" rows="3" class="form-control fw-bold" placeholder="Any remarks..."></textarea>
         </div>
-
-        <div class="d-flex flex-wrap gap-2">
-
-          <button type="button" onclick="window.print()" class="btn btn-secondary"> Print Receipt</button>
-          <button type="button" id="downloadPDFFooter" class="btn btn-danger"> PDF Receipt</button>
-          <button type="button" id="downloadExcelFooter" class="btn btn-success"> Excel Export</button>
-          <button type="button" id="shareWhatsAppFooter" class="btn btn-success"> WhatsApp</button>
-          <button type="button" id="shareEmailFooter" class="btn btn-warning"> Email Receipt</button>
-          <button type="button" id="shareSMSFooter" class="btn btn-info"> SMS Receipt</button>
-
-          <button type="button" onclick="window.print()" class="btn btn-secondary">🖨 Print Receipt</button>
-          <button type="button" id="downloadPDFFooter" class="btn btn-danger">⬇ PDF Receipt</button>
-          <button type="button" id="downloadExcelFooter" class="btn btn-success">📊 Excel Export</button>
-          <button type="button" id="shareWhatsAppFooter" class="btn btn-success">📤 WhatsApp</button>
-          <button type="button" id="shareEmailFooter" class="btn btn-warning">📧 Email Receipt</button>
-          <button type="button" id="shareSMSFooter" class="btn btn-info">💬 SMS Receipt</button>
-
-        </div>
-
       </div>
+    </div>
 
-    </form>
-  </div>
-</div>
+    <div class="col-12 d-flex justify-content-end gap-2">
+      <a id="kbCancel" data-kb-cancel href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary btn-lg fw-bold">Back</a>
+      <button type="submit" class="btn btn-success btn-lg fw-bold" data-kb-submit>Save</button>
+    </div>
+  </form>
 
-<script>
-// Global variables
-let currentStep = 1;
-const totalSteps = 3;
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    initializePaymentForm();
-    setupKeyboardShortcuts();
-    setupModeSwitcher();
-    setupThemeSelector();
-});
-
-// Initialize payment form
-function initializePaymentForm() {
-    // Invoice selection handler
-    document.getElementById('invoice_id').addEventListener('change', function() {
-        updateInvoiceSummary();
-        autoFillAmount();
-    });
-
-    // Payment method handler
-    document.getElementById('method').addEventListener('change', function() {
-        showMethodSpecificFields();
-    });
-
-    // Step navigation
-    document.getElementById('nextStep').addEventListener('click', nextStep);
-    document.getElementById('prevStep').addEventListener('click', prevStep);
-}
-
-// Update invoice summary
-function updateInvoiceSummary() {
-    const select = document.getElementById('invoice_id');
-    const summary = document.getElementById('invoiceSummary');
-
-    if (select.value) {
-        const option = select.options[select.selectedIndex];
-        const amount = option.getAttribute('data-amount');
-        const party = option.getAttribute('data-party');
-
-        summary.innerHTML = `
-            <p><strong>Party:</strong> ${party}</p>
-
-            <p><strong>Amount:</strong> ${amount}</p>
-
-            <p><strong>Amount:</strong> ₹${amount}</p>
-
-            <p><strong>Status:</strong> <span class="badge bg-warning">Pending</span></p>
-        `;
-    } else {
-        summary.innerHTML = '<p>Select an invoice to see details</p>';
-    }
-}
-
-// Auto-fill amount from invoice
-function autoFillAmount() {
-    const select = document.getElementById('invoice_id');
-    const amountInput = document.getElementById('amount');
-
-    if (select.value) {
-        const option = select.options[select.selectedIndex];
-        const amount = option.getAttribute('data-amount');
-        amountInput.value = amount;
-    }
-}
-
-// Show method-specific fields
-function showMethodSpecificFields() {
-    const method = document.getElementById('method').value;
-    const container = document.getElementById('methodSpecificFields');
-    const fields = ['upiFields', 'cardFields', 'chequeFields'];
-
-    // Hide all fields
-    fields.forEach(field => {
-        document.getElementById(field).style.display = 'none';
-    });
-
-    // Show relevant field
-    if (method === 'upi') {
-        document.getElementById('upiFields').style.display = 'block';
-    } else if (method === 'card') {
-        document.getElementById('cardFields').style.display = 'block';
-    } else if (method === 'cheque') {
-        document.getElementById('chequeFields').style.display = 'block';
-    }
-
-    // Show container if any field is visible
-    container.style.display = (method === 'upi' || method === 'card' || method === 'cheque') ? 'block' : 'none';
-}
-
-// Step navigation functions
-function nextStep() {
-    if (currentStep < totalSteps) {
-        // Validate current step
-        if (!validateStep(currentStep)) {
-            return;
-        }
-
-        // Hide current step
-        document.getElementById(`step-${currentStep}`).style.display = 'none';
-
-        // Update step indicator
-        document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
-        currentStep++;
-
-        // Show next step
-        document.getElementById(`step-${currentStep}`).style.display = 'block';
-
-        // Update step indicator
-        document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
-
-        // Update navigation buttons
-        updateNavigationButtons();
-
-        // Update review if on step 3
-        if (currentStep === 3) {
-            updateReview();
-        }
-    }
-}
-
-function prevStep() {
-    if (currentStep > 1) {
-        // Hide current step
-        document.getElementById(`step-${currentStep}`).style.display = 'none';
-
-        // Update step indicator
-        document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
-        currentStep--;
-
-        // Show previous step
-        document.getElementById(`step-${currentStep}`).style.display = 'block';
-
-        // Update step indicator
-        document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
-
-        // Update navigation buttons
-        updateNavigationButtons();
-    }
-}
-
-function updateNavigationButtons() {
-    const prevBtn = document.getElementById('prevStep');
-    const nextBtn = document.getElementById('nextStep');
-
-    prevBtn.disabled = currentStep === 1;
-    nextBtn.disabled = currentStep === totalSteps;
-
-    if (currentStep === totalSteps) {
-
-        nextBtn.innerHTML = 'Save Payment ';
-        nextBtn.onclick = function() { document.querySelector('form').submit(); };
-    } else {
-        nextBtn.innerHTML = 'Next ';
-
-        nextBtn.innerHTML = 'Save Payment 💾';
-        nextBtn.onclick = function() { document.querySelector('form').submit(); };
-    } else {
-        nextBtn.innerHTML = 'Next ➡️';
-
-        nextBtn.onclick = nextStep;
-    }
-}
-
-function validateStep(step) {
-    if (step === 1) {
-        const invoice = document.getElementById('invoice_id').value;
-        const amount = document.getElementById('amount').value;
-
-        if (!invoice) {
-            alert('Please select an invoice');
-            return false;
-        }
-        if (!amount || amount <= 0) {
-            alert('Please enter a valid payment amount');
-            return false;
-        }
-    } else if (step === 2) {
-        const method = document.getElementById('method').value;
-        if (!method) {
-            alert('Please select a payment method');
-            return false;
-        }
-    }
-    return true;
-}
-
-function updateReview() {
-    // Update invoice details
-    const invoiceSelect = document.getElementById('invoice_id');
-    const option = invoiceSelect.options[invoiceSelect.selectedIndex];
-    document.getElementById('reviewInvoice').textContent = option ? option.text.split(' - ')[0] : '-';
-    document.getElementById('reviewParty').textContent = option ? option.getAttribute('data-party') : '-';
-    document.getElementById('reviewTotalAmount').textContent = option ? option.getAttribute('data-amount') : '-';
-
-    // Update payment details
-    document.getElementById('reviewPaymentAmount').textContent = document.getElementById('amount').value || '-';
-    document.getElementById('reviewMethod').textContent = document.getElementById('method').options[document.getElementById('method').selectedIndex].text || '-';
-    document.getElementById('reviewReference').textContent = document.getElementById('reference').value || '-';
-    document.getElementById('reviewDate').textContent = document.getElementById('payment_date').value || '-';
-}
-
-// Keyboard shortcuts
-function setupKeyboardShortcuts() {
-    document.addEventListener('keydown', function(e) {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
-            return; // Don't interfere with form inputs
-        }
-
-        switch(e.key) {
-            case 'F1':
-                e.preventDefault();
-                showKeyboardHelp();
-                break;
-            case 'F2':
-                e.preventDefault();
-                document.getElementById('invoice_id').focus();
-                break;
-            case 'F3':
-                e.preventDefault();
-                document.getElementById('amount').focus();
-                break;
-            case 'F4':
-                e.preventDefault();
-                nextStep();
-                break;
-            case 'F5':
-                e.preventDefault();
-                document.querySelector('form').submit();
-                break;
-            case 'F6':
-                e.preventDefault();
-                // Save draft functionality
-                break;
-            case 'F7':
-                e.preventDefault();
-                window.print();
-                break;
-            case 'Escape':
-                e.preventDefault();
-                // Cancel/close functionality
-                break;
-        }
-    });
-}
-
-// Mode switcher
-function setupModeSwitcher() {
-    const modes = ['pc', 'pos', 'mobile'];
-    modes.forEach(mode => {
-        document.getElementById(`${mode}Mode`).addEventListener('click', function() {
-            // Remove active class from all
-            modes.forEach(m => document.getElementById(`${m}Mode`).classList.remove('active'));
-            // Add active class to clicked
-            this.classList.add('active');
-            // Apply mode-specific styling
-            applyModeStyling(mode);
-        });
-    });
-}
-
-function applyModeStyling(mode) {
-    const card = document.getElementById('mainPaymentCard');
-    card.classList.remove('pc-mode', 'pos-mode', 'mobile-mode');
-    card.classList.add(`${mode}-mode`);
-}
-
-// Theme selector
-function setupThemeSelector() {
-    document.getElementById('themeSelect').addEventListener('change', function() {
-        const theme = this.value;
-        applyTheme(theme);
-    });
-}
-
-function applyTheme(theme) {
-    const body = document.body;
-    // Remove existing theme classes
-    body.classList.remove('theme-dark', 'theme-blue', 'theme-green', 'theme-red', 'theme-rainbow', 'theme-neon');
-    // Add new theme class
-    if (theme !== 'default') {
-        body.classList.add(`theme-${theme}`);
-    }
-}
-
-// Utility functions
-function showKeyboardHelp() {
-    document.getElementById('keyboardHelp').style.display = 'block';
-}
-
-function hideKeyboardHelp() {
-    document.getElementById('keyboardHelp').style.display = 'none';
-}
-
-function scanQR() {
-    // QR scanning functionality
-    alert('QR scanning feature coming soon!');
-}
-
-function autoFillAmount() {
-    // Auto-fill amount from invoice
-    const select = document.getElementById('invoice_id');
-    if (select.value) {
-        const option = select.options[select.selectedIndex];
-        const amount = option.getAttribute('data-amount');
-        document.getElementById('amount').value = amount;
-    }
-}
-
-// Form submission handler
-document.querySelector('form').addEventListener('submit', function(e) {
-    // Show success modal on successful submission
-    setTimeout(() => {
-        $('#successModal').modal('show');
-    }, 1000);
-});
-</script>
-
+  <script src="{% static 'js/voice_accounting.js' %}?v=20260310a" defer></script>
 {% endblock %}

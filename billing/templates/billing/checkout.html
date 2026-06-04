@@ -17,7 +17,7 @@
         <select name="gateway_id" class="w-full border rounded-lg px-3 py-2">
           <option value="">-- Select --</option>
           {% for g in gateways %}
-            <option value="{{ g.id }}">{{ g.name }} ({{ g.provider }})</option>
+            <option value="{{ g.id }}" {% if selected_gateway_id and selected_gateway_id == g.id %}selected{% endif %}>{{ g.name }} ({{ g.provider }})</option>
           {% endfor %}
         </select>
       </div>
@@ -27,6 +27,78 @@
         Pay Now
       </button>
     </form>
+
+    {% if razorpay %}
+      <div class="mt-6 p-4 rounded-2xl border border-blue-100 bg-blue-50 text-left">
+        <div class="font-semibold text-gray-800 mb-2">Razorpay Checkout</div>
+        <button id="rzpPayBtn"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition">
+          Pay with Razorpay
+        </button>
+        <div id="rzpStatus" class="text-sm text-gray-600 mt-2"></div>
+      </div>
+
+      <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+      <script>
+        (function(){
+          const btn = document.getElementById("rzpPayBtn");
+          const status = document.getElementById("rzpStatus");
+          if(!btn || typeof Razorpay === "undefined") {
+            if(status) status.textContent = "Razorpay script not loaded. Please check internet access.";
+            return;
+          }
+
+          const options = {
+            key: "{{ razorpay.key_id }}",
+            amount: "{{ razorpay.amount }}",
+            currency: "{{ razorpay.currency }}",
+            name: "Billentra",
+            description: "{{ plan.name }} subscription",
+            order_id: "{{ razorpay.order_id }}",
+            handler: function (response){
+              if(status) status.textContent = "Verifying payment...";
+              fetch("{% url 'billing:razorpay-verify' %}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  plan_id: {{ plan.id }},
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature
+                })
+              })
+              .then(r => r.json())
+              .then(d => {
+                if(!d || !d.ok){
+                  if(status) status.textContent = (d && d.message) ? d.message : "Verification failed.";
+                  return;
+                }
+                window.location.href = d.redirect_url || "{% url 'billing:payment-success' plan_id=plan.id %}";
+              })
+              .catch(() => { if(status) status.textContent = "Network error during verification."; });
+            },
+            prefill: {
+              email: "{{ request.user.email|default:'' }}",
+              contact: "{{ request.user.mobile|default:'' }}"
+            },
+            theme: { color: "#2563eb" }
+          };
+
+          const rzp = new Razorpay(options);
+          btn.addEventListener("click", function(e){
+            e.preventDefault();
+            if(status) status.textContent = "";
+            rzp.open();
+          });
+
+          // auto-open when coming from landing public checkout (auto=1)
+          const qs = new URLSearchParams(window.location.search);
+          if(qs.get("auto")){
+            setTimeout(() => { try{ rzp.open(); }catch(e){} }, 450);
+          }
+        })();
+      </script>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

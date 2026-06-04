@@ -1,0 +1,59 @@
+{% extends "storefront/store_shell.html" %}
+{% block content %}
+  <div class="store-hero p-4 mb-4 shadow-soft">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="opacity-75">Payment</div>
+        <h3 class="fw-bold mb-0">Pay for {{ order.order_number }}</h3>
+        <div class="opacity-75 small mt-1">{{ vendor.name }} · Provider: {{ provider|upper }}</div>
+      </div>
+      <div class="text-end">
+        <div class="opacity-75">Amount</div>
+        <div class="fw-bold fs-4">&#8377;{{ order.total_amount }}</div>
+        <div class="opacity-75 small">Status: {{ order.payment_status }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-7">
+      <div class="card product-card shadow-soft">
+        <div class="card-body">
+          <div class="fw-bold mb-2">Demo payment gateway</div>
+          <div class="muted small mb-3">
+            This is an offline demo simulator. In production, this will redirect to Razorpay/Paytm/Stripe using vendor credentials.
+            {% if gateway_configured %}Vendor gateway is configured in admin.{% else %}No active vendor gateway found; using demo.{% endif %}
+          </div>
+
+          <div class="d-flex gap-2 flex-wrap">
+            <form method="post" action="{{ pay_success_url }}">
+              {% csrf_token %}
+              <button class="btn btn-brand" type="submit"><i class="bi bi-shield-check me-1"></i>Pay now (Success)</button>
+            </form>
+            <form method="post" action="{{ pay_fail_url }}">
+              {% csrf_token %}
+              <button class="btn btn-outline-danger" type="submit"><i class="bi bi-x-circle me-1"></i>Simulate failure</button>
+            </form>
+            <a class="btn btn-outline-secondary" href="{% url 'store-track' vendor.subdomain order.public_token %}">
+              <i class="bi bi-receipt me-1"></i>Order tracking
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+      <div class="card product-card shadow-soft">
+        <div class="card-body">
+          <div class="fw-bold mb-2">What admin sets (per vendor)</div>
+          <div class="muted small">
+            Admin can configure each vendor payment gateway credentials in Django admin:
+            <div class="mt-2"><code>Vendors → Vendor payment gateway configs</code></div>
+            <div class="mt-2">Active gateway is used for checkout.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

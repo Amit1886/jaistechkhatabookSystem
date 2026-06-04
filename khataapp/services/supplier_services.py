@@ -1,4 +1,4 @@
-from django.db.models import Sum, F, Q, Case, When, Value, DecimalField
+from django.db.models import Sum
 from django.utils import timezone
 from decimal import Decimal
 from datetime import timedelta
@@ -17,51 +17,28 @@ class SupplierService:
             owner=user,
             party_type='supplier',
             is_active=True
-        ).annotate(
-            # Total purchase amount
-            total_purchase=Sum(
-                Case(
-                    When(
-                        orders__order_type='PURCHASE',
-                        then=F('orders__items__qty') * F('orders__items__price')
-                    ),
-                    default=Value(0),
-                    output_field=DecimalField(max_digits=12, decimal_places=2)
-                )
-            ),
-            # Total paid amount
-            total_paid=Sum(
-                Case(
-                    When(
-                        supplier_payments__isnull=False,
-                        then=F('supplier_payments__amount')
-                    ),
-                    default=Value(0),
-                    output_field=DecimalField(max_digits=12, decimal_places=2)
-                )
-            ),
-            # Outstanding amount
-            outstanding_amount=Sum(
-                Case(
-                    When(
-                        orders__order_type='PURCHASE',
-                        then=F('orders__due_amount')
-                    ),
-                    default=Value(0),
-                    output_field=DecimalField(max_digits=12, decimal_places=2)
-                )
-            )
-        ).values(
-            'id', 'name', 'credit_period', 'opening_balance',
-            'total_purchase', 'total_paid', 'outstanding_amount'
-        )
+        ).order_by("name")
 
-        # Calculate next due date and status for each supplier
+        rows = []
         for supplier in suppliers:
-            supplier['next_due_date'] = SupplierService.get_next_due_date(supplier['id'])
-            supplier['status'] = SupplierService.get_supplier_status(supplier, today)
+            orders = Order.objects.filter(party=supplier, order_type='PURCHASE').prefetch_related("items")
+            total_purchase = sum((order.total_amount() for order in orders), Decimal('0.00'))
+            total_paid = SupplierPayment.objects.filter(supplier=supplier).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            outstanding = orders.aggregate(total=Sum('due_amount'))['total'] or Decimal('0.00')
+            row = {
+                'id': supplier.id,
+                'name': supplier.name,
+                'credit_period': supplier.credit_period,
+                'opening_balance': supplier.opening_balance,
+                'total_purchase': total_purchase,
+                'total_paid': total_paid,
+                'outstanding_amount': outstanding,
+                'next_due_date': SupplierService.get_next_due_date(supplier.id),
+            }
+            row['status'] = SupplierService.get_supplier_status(row, today)
+            rows.append(row)
 
-        return suppliers
+        return rows
 
     @staticmethod
     def get_next_due_date(supplier_id):
@@ -79,7 +56,7 @@ class SupplierService:
     def get_supplier_status(supplier_data, today):
         """Determine supplier status based on due dates"""
         next_due = supplier_data.get('next_due_date')
-        outstanding = supplier_data.get('outstanding_amount', 0)
+        outstanding = supplier_data.get('outstanding_amount') or Decimal('0.00')
 
         if outstanding <= 0:
             return 'green'  # No dues
@@ -139,8 +116,8 @@ class SupplierService:
                 'order_id': order.id
             })
 
-        # Due within 7 days
-        due_soon_orders = Order.objects.filter(
+        # Upcoming payments. Each order appears once, with the most specific state.
+        upcoming_orders = Order.objects.filter(
             owner=user,
             order_type='PURCHASE',
             due_amount__gt=0,
@@ -148,53 +125,20 @@ class SupplierService:
             payment_due_date__lte=today + timedelta(days=7)
         ).select_related('party')
 
-        for order in due_soon_orders:
+        for order in upcoming_orders:
             days_remaining = (order.payment_due_date - today).days
+            if days_remaining == 0:
+                alert_type = 'due_today'
+            elif days_remaining <= 3:
+                alert_type = 'due_very_soon'
+            else:
+                alert_type = 'due_soon'
             alerts.append({
-                'type': 'due_soon',
+                'type': alert_type,
                 'supplier': order.party.name,
                 'amount': order.due_amount,
                 'due_date': order.payment_due_date,
                 'days_remaining': days_remaining,
-                'invoice_number': order.invoice_number,
-                'order_id': order.id
-            })
-
-        # Due within 3 days
-        due_very_soon_orders = Order.objects.filter(
-            owner=user,
-            order_type='PURCHASE',
-            due_amount__gt=0,
-            payment_due_date__gte=today,
-            payment_due_date__lte=today + timedelta(days=3)
-        ).select_related('party')
-
-        for order in due_very_soon_orders:
-            days_remaining = (order.payment_due_date - today).days
-            alerts.append({
-                'type': 'due_very_soon',
-                'supplier': order.party.name,
-                'amount': order.due_amount,
-                'due_date': order.payment_due_date,
-                'days_remaining': days_remaining,
-                'invoice_number': order.invoice_number,
-                'order_id': order.id
-            })
-
-        # Due today
-        due_today_orders = Order.objects.filter(
-            owner=user,
-            order_type='PURCHASE',
-            due_amount__gt=0,
-            payment_due_date=today
-        ).select_related('party')
-
-        for order in due_today_orders:
-            alerts.append({
-                'type': 'due_today',
-                'supplier': order.party.name,
-                'amount': order.due_amount,
-                'due_date': order.payment_due_date,
                 'invoice_number': order.invoice_number,
                 'order_id': order.id
             })
@@ -210,12 +154,11 @@ class SupplierService:
         total_paid = Decimal('0.00')
         total_outstanding = Decimal('0.00')
 
-        for supplier in suppliers:
-            supplier_data = SupplierService.get_supplier_summary(user).filter(id=supplier.id).first()
-            if supplier_data:
-                total_purchase += supplier_data.get('total_purchase', 0)
-                total_paid += supplier_data.get('total_paid', 0)
-                total_outstanding += supplier_data.get('outstanding_amount', 0)
+        supplier_rows = SupplierService.get_supplier_summary(user)
+        for supplier_data in supplier_rows:
+            total_purchase += supplier_data.get('total_purchase') or Decimal('0.00')
+            total_paid += supplier_data.get('total_paid') or Decimal('0.00')
+            total_outstanding += supplier_data.get('outstanding_amount') or Decimal('0.00')
 
         return {
             'total_purchase': total_purchase,

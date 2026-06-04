@@ -21,11 +21,12 @@ html, body {
 
 /* MAIN CONTENT */
 .main-content {
-  margin-left: 240px;
-  width: 100%;
+  margin-left: var(--sidebar-width, 260px);
+  width: auto;
   min-height: 100vh;
   transition: margin-left 0.3s ease;
   background: #f5f7fb;
+  min-width: 0;
 }
 
 .main-content.full {
@@ -143,15 +144,6 @@ footer {
 
 /* -------- MOBILE -------- */
 @media (max-width: 768px) {
-
-  :root {
-    --sidebar-width: 0px;
-  }
-
-  .sidebar:hover {
-    --sidebar-width: 240px;
-  }
-
   .dashboard-wrap {
     padding: 14px;
   }

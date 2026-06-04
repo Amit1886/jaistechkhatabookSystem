@@ -1,0 +1,24 @@
+/* Smart BI: Festival Sale Mode themes (lightweight accents) */
+
+body.festival-theme-diwali .topbar {
+  background: linear-gradient(90deg, #b45309, #ea580c);
+  color: #fff;
+}
+
+body.festival-theme-holi .topbar {
+  background: linear-gradient(90deg, #7c3aed, #22c55e);
+  color: #fff;
+}
+
+body.festival-theme-new-year .topbar,
+body.festival-theme-newyear .topbar,
+body.festival-theme-new_year .topbar {
+  background: linear-gradient(90deg, #0f172a, #334155);
+  color: #fff;
+}
+
+body[class*="festival-theme-"] .btn-logout {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+

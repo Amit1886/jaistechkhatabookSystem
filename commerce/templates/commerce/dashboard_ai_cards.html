@@ -1,17 +1,27 @@
 <div class="ai-reorder-wrap" data-default-budget="{{ request.GET.budget|default:'50000' }}">
   <div class="ai-reorder-header">
-    <div>
-      <h2 class="ai-title">AI Reorder Planner</h2>
-      <p class="ai-subtitle">Automated purchasing insights across inventory, sales velocity, and supplier lead times.</p>
+    <div class="ai-reorder-title">
+      <span class="ai-reorder-title-icon"><i class="bi bi-cpu-fill"></i></span>
+      <div>
+        <h2 class="ai-title">AI Reorder Planner</h2>
+        <p class="ai-subtitle">Automated purchasing insights across inventory, sales velocity, and supplier lead times.</p>
+      </div>
     </div>
     <div class="ai-actions">
-      <a href="{% url 'commerce:ai_reorder_plan' %}" class="ai-btn">Open Planner</a>
-      <a href="{% url 'commerce:supplier_po' %}" class="ai-btn ai-btn-ghost">Supplier POs</a>
+      <a href="{% url 'commerce:ai_reorder_plan' %}" class="ai-btn">
+        <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+        <span>Open Planner</span>
+      </a>
+      <a href="{% url 'commerce:supplier_po' %}" class="ai-btn ai-btn-ghost">
+        <i class="bi bi-truck" aria-hidden="true"></i>
+        <span>Supplier POs</span>
+      </a>
     </div>
   </div>
 
   <div class="ai-cards-grid">
     <div class="ai-card" id="ai-card-budget">
+      <span class="ai-card-icon"><i class="bi bi-cash-stack"></i></span>
       <div class="ai-card-title">AI Purchase Recommendation</div>
       <div class="ai-card-value" data-ai="budget_used">0</div>
       <div class="ai-card-meta">Budget used</div>
@@ -19,11 +29,13 @@
     </div>
 
     <div class="ai-card" id="ai-card-fast">
+      <span class="ai-card-icon"><i class="bi bi-speedometer2"></i></span>
       <div class="ai-card-title">Fast-Moving Items</div>
       <div class="ai-card-list" data-ai="fast_moving">Loading...</div>
     </div>
 
     <div class="ai-card" id="ai-card-risk">
+      <span class="ai-card-icon"><i class="bi bi-exclamation-triangle"></i></span>
       <div class="ai-card-title">Low Stock Alerts</div>
       <div class="ai-card-list" data-ai="risk_items">Loading...</div>
     </div>
@@ -46,8 +58,8 @@
       </div>
     </div>
     <div class="ai-slider-controls">
-      <button class="ai-slider-btn" data-dir="-1" aria-label="Previous slide">Prev</button>
-      <button class="ai-slider-btn" data-dir="1" aria-label="Next slide">Next</button>
+      <button class="ai-slider-btn" data-dir="-1" aria-label="Previous slide"><i class="bi bi-chevron-left"></i><span>Prev</span></button>
+      <button class="ai-slider-btn" data-dir="1" aria-label="Next slide"><span>Next</span><i class="bi bi-chevron-right"></i></button>
     </div>
   </div>
 </div>
@@ -61,11 +73,23 @@
   --ai-text: #1b1b1b;
   --ai-muted: #6b7280;
   --ai-border: #e5e7eb;
-  background: linear-gradient(135deg, #f7f7f2 0%, #f2f7ff 100%);
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(37, 99, 235, 0.07)),
+    #ffffff;
   border: 1px solid var(--ai-border);
   border-radius: 16px;
   padding: 20px;
   margin: 18px 0;
+}
+
+.ai-reorder-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0f766e, #2563eb, #8b5cf6);
 }
 
 body.dark .ai-reorder-wrap {
@@ -76,15 +100,38 @@ body.dark .ai-reorder-wrap {
   --ai-text: #f8fafc;
   --ai-muted: #9ca3af;
   --ai-border: #1f2937;
-  background: linear-gradient(135deg, #0f172a 0%, #0b1220 100%);
+  background:
+    linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(96, 165, 250, 0.08)),
+    #0b1220;
 }
 
 .ai-reorder-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 16px;
+}
+
+.ai-reorder-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-reorder-title-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 118, 110, 0.12);
+  color: #0f766e;
+  font-size: 19px;
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.14);
+  flex: 0 0 auto;
 }
 
 .ai-title {
@@ -104,16 +151,22 @@ body.dark .ai-reorder-wrap {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .ai-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   background: var(--ai-accent);
   color: #ffffff;
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: 10px;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 800;
   font-size: 13px;
+  box-shadow: 0 10px 20px rgba(20, 83, 45, 0.16);
 }
 
 .ai-btn-ghost {
@@ -130,15 +183,39 @@ body.dark .ai-reorder-wrap {
 }
 
 .ai-card {
-  background: var(--ai-card);
+  position: relative;
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--ai-border);
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 14px;
+  padding: 14px 14px 14px 58px;
   color: var(--ai-text);
   min-height: 120px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.ai-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(15, 118, 110, 0.24);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.1);
+}
+
+.ai-card-icon {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 16px;
 }
 
 .ai-card-title {
@@ -150,7 +227,7 @@ body.dark .ai-reorder-wrap {
 
 .ai-card-value {
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 900;
 }
 
 .ai-card-list {
@@ -160,7 +237,10 @@ body.dark .ai-reorder-wrap {
 
 .ai-card-list span {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  padding: 5px 8px;
+  border-radius: 9px;
+  background: rgba(15, 118, 110, 0.07);
 }
 
 .ai-card-meta,
@@ -170,10 +250,11 @@ body.dark .ai-reorder-wrap {
 }
 
 .ai-slider {
-  background: var(--ai-card);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--ai-border);
   border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
 }
 
 .ai-slide-track {
@@ -185,7 +266,7 @@ body.dark .ai-reorder-wrap {
 
 .ai-slide {
   padding: 16px;
-  min-height: 120px;
+  min-height: 130px;
 }
 
 .ai-slide-label {
@@ -198,7 +279,7 @@ body.dark .ai-reorder-wrap {
 
 .ai-slide-value {
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 900;
   color: var(--ai-accent);
 }
 
@@ -210,6 +291,9 @@ body.dark .ai-reorder-wrap {
 .ai-slide-list span {
   display: block;
   margin-bottom: 6px;
+  padding: 6px 9px;
+  border-radius: 9px;
+  background: rgba(15, 118, 110, 0.07);
 }
 
 .ai-slider-controls {
@@ -220,18 +304,45 @@ body.dark .ai-reorder-wrap {
 }
 
 .ai-slider-btn {
-  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #ffffff;
   border: 1px solid var(--ai-border);
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: 10px;
   font-size: 12px;
+  font-weight: 800;
   color: var(--ai-text);
+}
+
+body.dark .ai-reorder-title-icon {
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.18);
+}
+
+body.dark .ai-card,
+body.dark .ai-slider,
+body.dark .ai-slider-btn {
+  background: rgba(15, 23, 42, 0.88);
+}
+
+body.dark .ai-card-list span,
+body.dark .ai-slide-list span {
+  background: rgba(34, 197, 94, 0.08);
 }
 
 @media (max-width: 640px) {
   .ai-reorder-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .ai-actions,
+  .ai-btn {
+    width: 100%;
   }
 }
 </style>
@@ -264,6 +375,14 @@ body.dark .ai-reorder-wrap {
   function formatCurrency(value) {
     if (value === undefined || value === null) return '0';
     return '' + Number(value).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  }
+
+  function isDesktopExeMode() {
+    try {
+      return String(document.body.dataset.systemMode || "").toUpperCase().indexOf("DESKTOP") !== -1;
+    } catch (e) {
+      return false;
+    }
   }
 
   function fetchSummary() {
@@ -310,9 +429,11 @@ body.dark .ai-reorder-wrap {
     });
   });
 
-  fetchSummary();
+  if (!isDesktopExeMode()) {
+    fetchSummary();
+    setInterval(fetchSummary, 60000);
+  }
   startAuto();
-  setInterval(fetchSummary, 60000);
 })();
 </script>
 

@@ -6,6 +6,7 @@ from .views import (
     PrintPlaceholderAPIView,
     PrintRenderLogViewSet,
     PrintSettingsAPIView,
+    PrintSendAPIView,
     PrintTemplateViewSet,
     PrinterConfigViewSet,
     PrinterTestLogViewSet,
@@ -25,5 +26,6 @@ urlpatterns = [
     path("engine/render/", PrintEngineRenderAPIView.as_view(), name="print-engine-render"),
     path("engine/placeholders/", PrintPlaceholderAPIView.as_view(), name="print-placeholder-catalog"),
     path("engine/settings/", PrintSettingsAPIView.as_view(), name="print-engine-settings"),
+    path("print/", PrintSendAPIView.as_view(), name="printer-send"),
     path("", include(router.urls)),
 ]

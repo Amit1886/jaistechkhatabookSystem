@@ -1,0 +1,59 @@
+{% extends "core/pc_universal.html" %}
+
+{% block title %}Checklist{% endblock %}
+
+{% block pc_actions %}
+  <a href="{% url 'reports:checklist_list' %}" class="btn btn-outline-light btn-sm fw-bold">Back</a>
+{% endblock %}
+
+{% block pc_content %}
+  <div class="unified-section">
+    <h4 style="margin:0 0 6px 0; font-weight:900;">{{ checklist.title }}</h4>
+    {% if checklist.notes %}
+      <div class="unified-muted">{{ checklist.notes }}</div>
+    {% endif %}
+  </div>
+
+  <div class="unified-section">
+    <h5 class="mb-2">Add Item</h5>
+    <form method="post" class="row g-2 align-items-end">
+      {% csrf_token %}
+      <div class="col-md-8">{{ item_form.text }}</div>
+      <div class="col-md-4">
+        <button class="btn unified-btn-primary" type="submit">Add</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="unified-section">
+    <h5 class="mb-2">Items</h5>
+    <div class="unified-table-wrap">
+      <table class="table unified-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="text-end">Status</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for it in items %}
+            <tr>
+              <td>{% if it.is_done %}<s>{{ it.text }}</s>{% else %}{{ it.text }}{% endif %}</td>
+              <td class="text-end">{% if it.is_done %}<span class="badge bg-success">Done</span>{% else %}<span class="badge bg-warning text-dark">Open</span>{% endif %}</td>
+              <td class="text-end">
+                <form method="post" action="{% url 'reports:checklist_item_toggle' checklist.id it.id %}">
+                  {% csrf_token %}
+                  <button class="btn unified-btn-outline" type="submit">{% if it.is_done %}Mark Open{% else %}Mark Done{% endif %}</button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3" class="text-center text-muted py-4">No items yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

@@ -1,7 +1,7 @@
-{% extends "core/base_ui.html" %}
+{% extends "core/pc_universal.html" %}
 
-{% block title %}Dashboard{% endblock %}
+{% block pc_title %}{% block title %}Dashboard{% endblock %}{% endblock %}
 
-{% block content %}
-<!-- Sirf dashboard ka content yahan aayega -->
+{% block pc_content %}
+  {% block content %}{% endblock %}
 {% endblock %}

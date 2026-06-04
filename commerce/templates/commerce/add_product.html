@@ -1,196 +1,134 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/add_order.css' %}">
+{% block title %}Add Product{% endblock %}
+
+{% block pc_badges %}
+  <span class="badge bg-warning text-dark fw-bold">Inventory</span>
+{% endblock %}
+
+{% block pc_actions %}
+  <a class="btn btn-outline-light btn-lg fw-bold" href="{% url 'commerce:add_category' %}" accesskey="c" title="Alt+C">Add Category</a>
+  <a class="btn btn-outline-light btn-lg fw-bold" href="{% url 'commerce:product_list' %}" accesskey="l" title="Alt+L">Products</a>
+  <button type="button" class="btn btn-warning btn-lg fw-bold" onclick="showKeyboardHelp()" title="F1">Shortcuts</button>
 {% endblock %}
 
 {% block content %}
+  {% include "core/includes/messages.html" %}
+  {% include "core/includes/keyboard_help_common.html" %}
 
-<div class="container-fluid py-4 unified-screen busy-unified-add">
-  <div class="card shadow-lg border-0 order-card">
+  <form method="post" enctype="multipart/form-data" class="row g-3" id="productForm" action="{% url 'commerce:add_product' %}">
+    {% csrf_token %}
 
-    <!-- HEADER -->
-    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-
-      <h4 class="mb-0"> Smart Product Manager</h4>
-
-      <h4 class="mb-0">🛒 Smart Product Manager</h4>
-
-      <span class="badge bg-light text-info">AI Ready</span>
+    <div class="col-lg-6">
+      <div class="card border-primary">
+        <div class="card-body">
+          <label for="name" class="form-label fw-bold">Product Name</label>
+          <input type="text" name="name" id="name" required class="form-control form-control-lg fw-bold" placeholder="e.g. Sugar 1kg" data-kb-primary="1" autofocus>
+        </div>
+      </div>
     </div>
 
-    <div class="card-body">
-
-      {% if messages %}
-        <div class="mb-4">
-          {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-              {{ message }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-
-      <!-- PRODUCT FORM -->
-      <div class="row g-3 mb-3">
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <label for="category" class="form-label">Category</label>
-              <select name="category" id="category" required class="form-select">
-                <option value="">-- Select Category --</option>
-                {% for cat in categories %}
-                  <option value="{{ cat.id }}">{{ cat.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <label for="name" class="form-label">Product Name</label>
-              <input type="text" name="name" id="name" required class="form-control" placeholder="Enter product name">
-            </div>
-          </div>
+    <div class="col-lg-6">
+      <div class="card border-info">
+        <div class="card-body">
+          <label for="category" class="form-label fw-bold">Category</label>
+          <select name="category" id="category" class="form-select form-select-lg fw-bold">
+            <option value="">-- Select Category --</option>
+            {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+          <small class="text-muted">No category? Use “Add Category” in the header (Alt+C).</small>
         </div>
       </div>
+    </div>
 
-      <div class="row g-3 mb-3">
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-body">
-
-              <label for="price" class="form-label">Price ()</label>
-
-              <label for="price" class="form-label">Price (₹)</label>
-
-              <input type="number" name="price" id="price" step="0.01" required class="form-control" placeholder="0.00">
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-body">
-              <label for="stock" class="form-label">Stock Quantity</label>
-              <input type="number" name="stock" id="stock" min="0" class="form-control" placeholder="0">
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-body">
-              <label for="sku" class="form-label">SKU</label>
-              <input type="text" name="sku" id="sku" required class="form-control" placeholder="Enter SKU">
-            </div>
-          </div>
+    <div class="col-md-3">
+      <div class="card border-success">
+        <div class="card-body">
+          <label for="price" class="form-label fw-bold">Price (&#8377;)</label>
+          <input type="number" name="price" id="price" step="0.01" min="0" required class="form-control form-control-lg fw-bold" placeholder="0.00">
         </div>
       </div>
+    </div>
 
-      <div class="row g-3 mb-3">
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-body">
-              <label for="unit" class="form-label">Unit</label>
-              <input type="text" name="unit" id="unit" value="pcs" class="form-control" placeholder="pcs/kg/ltr">
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-body">
-              <label for="hsn_code" class="form-label">HSN Code</label>
-              <input type="text" name="hsn_code" id="hsn_code" class="form-control" placeholder="Enter HSN code">
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-body">
-              <label for="gst_rate" class="form-label">GST Rate (%)</label>
-              <input type="number" name="gst_rate" id="gst_rate" step="0.01" value="0.0" class="form-control" placeholder="0.0">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- DESCRIPTION -->
+    <div class="col-md-3">
       <div class="card">
         <div class="card-body">
-          <label for="description" class="form-label">Description</label>
-          <textarea name="description" id="description" rows="3" class="form-control" placeholder="Enter product description"></textarea>
+          <label for="stock" class="form-label fw-bold">Opening Stock</label>
+          <input type="number" name="stock" id="stock" min="0" class="form-control form-control-lg fw-bold" placeholder="0">
         </div>
       </div>
-
     </div>
 
-    <!-- FOOTER ACTIONS -->
-    <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-between">
-      <div class="d-flex gap-2">
-        <button type="submit" form="productForm" class="btn btn-info px-4">
-
-           Add Product
-        </button>
-        <a href="{% url 'commerce:add_category' %}" class="btn btn-outline-success">
-           Add Category
-
-          ➕ Add Product
-        </button>
-        <a href="{% url 'commerce:add_category' %}" class="btn btn-outline-success">
-          ➕ Add Category
-
-        </a>
-      </div>
-
-      <div class="d-flex gap-2">
-
-        <button type="button" onclick="window.print()" class="btn btn-secondary" aria-label="Print product details"> Print</button>
-        <button type="button" id="downloadPDF" class="btn btn-danger" aria-label="Download PDF"> PDF</button>
-        <button type="button" class="btn btn-success" aria-label="Share via WhatsApp"> WhatsApp</button>
-        <button type="button" class="btn btn-warning" aria-label="Send SMS"> SMS</button>
-
-        <button type="button" onclick="window.print()" class="btn btn-secondary" aria-label="Print product details">🖨 Print</button>
-        <button type="button" id="downloadPDF" class="btn btn-danger" aria-label="Download PDF">⬇ PDF</button>
-        <button type="button" class="btn btn-success" aria-label="Share via WhatsApp">📤 WhatsApp</button>
-        <button type="button" class="btn btn-warning" aria-label="Send SMS">📩 SMS</button>
-
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <label for="min_stock" class="form-label fw-bold">Low Stock Alert</label>
+          <input type="number" name="min_stock" id="min_stock" min="0" class="form-control form-control-lg fw-bold" placeholder="0">
+        </div>
       </div>
     </div>
 
-  </div>
-</div>
+    <div class="col-md-3">
+      <div class="card border-warning">
+        <div class="card-body">
+          <label for="sku" class="form-label fw-bold">SKU (Optional)</label>
+          <input type="text" name="sku" id="sku" class="form-control form-control-lg fw-bold" placeholder="Leave blank to auto-generate">
+        </div>
+      </div>
+    </div>
 
-<form id="productForm" method="POST" style="display: none;">
-  {% csrf_token %}
-  <input type="text" name="category" id="hiddenCategory">
-  <input type="text" name="name" id="hiddenName">
-  <input type="text" name="price" id="hiddenPrice">
-  <input type="text" name="stock" id="hiddenStock">
-  <input type="text" name="sku" id="hiddenSku">
-  <input type="text" name="unit" id="hiddenUnit">
-  <input type="text" name="hsn_code" id="hiddenHsnCode">
-  <input type="text" name="gst_rate" id="hiddenGstRate">
-  <textarea name="description" id="hiddenDescription"></textarea>
-</form>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <label for="unit" class="form-label fw-bold">Unit</label>
+          <input type="text" name="unit" id="unit" value="pcs" class="form-control form-control-lg fw-bold" placeholder="pcs/kg/ltr">
+        </div>
+      </div>
+    </div>
 
-<script>
-  // Sync form inputs to hidden form
-  const fields = ['category', 'name', 'price', 'stock', 'sku', 'unit', 'hsn_code', 'gst_rate', 'description'];
-  fields.forEach(field => {
-    const input = document.getElementById(field);
-    if (input) {
-      input.addEventListener('input', function() {
-        document.getElementById('hidden' + field.charAt(0).toUpperCase() + field.slice(1)).value = this.value;
-      });
-    }
-  });
-</script>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <label for="hsn_code" class="form-label fw-bold">HSN Code (Optional)</label>
+          <input type="text" name="hsn_code" id="hsn_code" class="form-control form-control-lg fw-bold" placeholder="HSN">
+        </div>
+      </div>
+    </div>
 
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <label for="gst_rate" class="form-label fw-bold">GST Rate (%)</label>
+          <input type="number" name="gst_rate" id="gst_rate" step="0.01" min="0" value="0.0" class="form-control form-control-lg fw-bold" placeholder="0.0">
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card border-secondary">
+        <div class="card-body">
+          <label for="image" class="form-label fw-bold">Product Image (Optional)</label>
+          <input type="file" name="image" id="image" class="form-control form-control-lg fw-bold" accept="image/*">
+          <small class="text-muted">This image appears in Customer Portal catalog.</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card border-secondary">
+        <div class="card-body">
+          <label for="description" class="form-label fw-bold">Description (Optional)</label>
+          <textarea name="description" id="description" rows="3" class="form-control fw-bold" placeholder="Notes"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end gap-2">
+      <a id="kbCancel" data-kb-cancel href="{% url 'commerce:product_list' %}" class="btn btn-outline-secondary btn-lg fw-bold">Back</a>
+      <button type="submit" class="btn btn-success btn-lg fw-bold" data-kb-submit>Save</button>
+    </div>
+  </form>
 {% endblock %}

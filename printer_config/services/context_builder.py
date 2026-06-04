@@ -479,7 +479,7 @@ def build_dummy_context(document_type: str, user=None):
             "number": "DEMO-2026-0012",
             "type": document_type,
             "date": timezone.localdate().isoformat(),
-            "status": "draft",
+            "status": "paid",
             "due_date": "",
         },
         "customer": {
@@ -528,5 +528,20 @@ def build_dummy_context(document_type: str, user=None):
         "footer_text": "This is a system generated print.",
         "qr_value": "DEMO-2026-0012",
         "barcode_value": "DEMO-2026-0012",
+        "custom": {
+            "whatsapp_number": "+91 90000 00000",
+            "map_query": "Shop 14, Civil Lines, Lucknow",
+            "social_links": {
+                "instagram": "https://instagram.com/jaistech",
+                "facebook": "https://facebook.com/jaistech",
+            },
+            "bank_details": {
+                "account_name": "Demotest3 Retail Pvt Ltd",
+                "account_no": "123456789012",
+                "ifsc": "SBIN0000123",
+                "upi_id": "demotest3@upi",
+            },
+            "terms_conditions": "Goods once sold will not be taken back. Subject to Lucknow jurisdiction.",
+        },
     }
     return build_document_context(document_type=document_type, source_model="", source_id=None, payload=payload, user=user)

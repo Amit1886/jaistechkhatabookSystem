@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline Billing</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-title">JaisTech KhataBook</div>
+        <div class="brand-sub">Local Web UI (127.0.0.1:8001)</div>
+      </div>
+      <div class="topbar-right">
+        <span id="syncBadge" class="badge badge-neutral">Loading…</span>
+        <button id="btnSync" class="btn btn-primary">Sync Now</button>
+      </div>
+    </header>
+
+    <nav class="tabs" id="tabs"></nav>
+
+    <main class="container">
+      <div id="app"></div>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
+

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Khata Reminder Settings</h3>
+        <div class="unified-subtitle">Configure schedule, channels and message tone</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'smart_khata:reminder_logs' %}" class="btn unified-btn-outline">View Logs</a>
+        <a href="{% url 'core_settings:settings_center' %}" class="btn unified-btn-outline">Settings Center</a>
+      </div>
+    </div>
+
+    <div class="unified-body">
+      {% if not can_edit %}
+        <div class="alert alert-warning">Only Admin can change reminder settings.</div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="unified-section">
+          <div class="d-flex gap-4 flex-wrap align-items-center">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="enabled" name="enabled" {% if enabled %}checked{% endif %} {% if not can_edit %}disabled{% endif %}>
+              <label class="form-check-label fw-bold" for="enabled">Enable Auto Reminders</label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="smart_timing" name="smart_timing" {% if smart_timing %}checked{% endif %} {% if not can_edit %}disabled{% endif %}>
+              <label class="form-check-label fw-bold" for="smart_timing">Smart Timing</label>
+            </div>
+            <div style="min-width:220px;">
+              <label class="unified-label" for="risk_threshold">High-Risk Threshold</label>
+              <input type="number" min="0" max="100" id="risk_threshold" name="risk_threshold" class="form-control" value="{{ risk_threshold|default:40 }}" {% if not can_edit %}disabled{% endif %}>
+            </div>
+          </div>
+        </div>
+
+        <div class="unified-grid cols-2">
+          <div class="unified-section">
+            <label class="unified-label" for="offsets">Schedule Offsets (days)</label>
+            <input id="offsets" name="offsets" class="form-control" value="{{ offsets|join:',' }}" {% if not can_edit %}disabled{% endif %} placeholder="-3,0,3,7">
+            <div class="small text-muted mt-1">Example: -3 (3 days before), 0 (due date), 3, 7</div>
+          </div>
+          <div class="unified-section">
+            <label class="unified-label" for="default_tone">Default Tone</label>
+            <select id="default_tone" name="default_tone" class="form-select" {% if not can_edit %}disabled{% endif %}>
+              <option value="friendly" {% if default_tone == 'friendly' %}selected{% endif %}>Friendly</option>
+              <option value="professional" {% if default_tone == 'professional' %}selected{% endif %}>Professional</option>
+              <option value="strict" {% if default_tone == 'strict' %}selected{% endif %}>Strict</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="unified-section">
+          <label class="unified-label">Channels</label>
+          <div class="d-flex gap-3 flex-wrap">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="channels" value="whatsapp" id="chWa" {% if 'whatsapp' in channels %}checked{% endif %} {% if not can_edit %}disabled{% endif %}>
+              <label class="form-check-label" for="chWa">WhatsApp</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="channels" value="sms" id="chSms" {% if 'sms' in channels %}checked{% endif %} {% if not can_edit %}disabled{% endif %}>
+              <label class="form-check-label" for="chSms">SMS</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="channels" value="email" id="chEmail" {% if 'email' in channels %}checked{% endif %} {% if not can_edit %}disabled{% endif %}>
+              <label class="form-check-label" for="chEmail">Email</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="unified-section">
+          <h5 class="mb-2">Message Templates</h5>
+          <div class="unified-grid cols-2">
+            <div>
+              <label class="unified-label" for="tmpl_friendly">Friendly</label>
+              <textarea id="tmpl_friendly" name="tmpl_friendly" class="form-control" rows="4" {% if not can_edit %}disabled{% endif %}>{{ tmpl_friendly }}</textarea>
+            </div>
+            <div>
+              <label class="unified-label" for="tmpl_professional">Professional</label>
+              <textarea id="tmpl_professional" name="tmpl_professional" class="form-control" rows="4" {% if not can_edit %}disabled{% endif %}>{{ tmpl_professional }}</textarea>
+            </div>
+            <div>
+              <label class="unified-label" for="tmpl_strict">Strict</label>
+              <textarea id="tmpl_strict" name="tmpl_strict" class="form-control" rows="4" {% if not can_edit %}disabled{% endif %}>{{ tmpl_strict }}</textarea>
+            </div>
+            <div class="small text-muted">
+              <div class="fw-bold mb-1">Placeholders</div>
+              <div>
+                <code>{% templatetag openvariable %}customer_name{% templatetag closevariable %}</code>,
+                <code>{% templatetag openvariable %}amount{% templatetag closevariable %}</code>,
+                <code>{% templatetag openvariable %}days{% templatetag closevariable %}</code>,
+                <code>{% templatetag openvariable %}invoice_number{% templatetag closevariable %}</code>,
+                <code>{% templatetag openvariable %}due_date{% templatetag closevariable %}</code>,
+                <code>{% templatetag openvariable %}pay_link{% templatetag closevariable %}</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+          <a href="{% url 'smart_khata:khata_reminder_settings' %}" class="btn unified-btn-outline">Reset</a>
+          <button type="submit" class="btn unified-btn-primary" {% if not can_edit %}disabled{% endif %}>Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

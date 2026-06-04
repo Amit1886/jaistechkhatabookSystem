@@ -32,6 +32,10 @@
             <tr>
               <th>Product</th>
               <th>Stock</th>
+              <th>Min Stock</th>
+              <th>Recommended Supplier</th>
+              <th class="text-end">Best Price</th>
+              <th class="text-end">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -39,9 +43,40 @@
             <tr>
               <td>{{ p.name }}</td>
               <td>{{ p.stock|default:0 }}</td>
+              <td>{{ p.min_stock|default:0 }}</td>
+              <td>
+                {% if p.best_supplier %}
+                  <span class="fw-bold">{{ p.best_supplier.supplier_name }}</span>
+                  <span class="badge bg-success ms-1">Recommended</span>
+                  <div class="small text-muted">Delivery: {{ p.best_supplier.delivery_days }}d | MOQ: {{ p.best_supplier.moq }}</div>
+                {% else %}
+                  <span class="text-muted">No supplier mapping</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                {% if p.best_supplier %}
+                  <span class="fw-bold">₹{{ p.best_supplier.price }}</span>
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                {% if p.best_supplier %}
+                  <a class="btn btn-sm btn-success fw-bold"
+                     href="{% url 'commerce:add_order' %}?order_type=purchase&party_id={{ p.best_supplier.supplier_id }}&product_id={{ p.id }}&qty={{ p.best_supplier.moq }}&price={{ p.best_supplier.price }}">
+                    Create Purchase Order
+                  </a>
+                  <a class="btn btn-sm btn-outline-primary"
+                     href="{% url 'procurement:supplier_price_comparison' %}?product_id={{ p.id }}">
+                    Compare
+                  </a>
+                {% else %}
+                  <a class="btn btn-sm btn-outline-secondary" href="{% url 'procurement:supplier_product_mapping' %}">Add Mapping</a>
+                {% endif %}
+              </td>
             </tr>
             {% empty %}
-            <tr><td colspan="2" class="text-center">No low stock item found.</td></tr>
+            <tr><td colspan="6" class="text-center">No low stock item found.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -52,4 +87,47 @@
     </div>
   </div>
 </div>
+
+{% if popup_product and popup_best %}
+<!-- Smart Purchase Suggestion Popup -->
+<div class="modal fade" id="lowStockSuggestModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Smart Purchase Suggestion</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="fw-bold">Stock for {{ popup_product.name }} is low.</div>
+        <div class="mt-1"> {{ popup_best.supplier_name }} offers the best price <span class="fw-bold">₹{{ popup_best.price }}</span>.</div>
+        <div class="small text-muted mt-1">MOQ: {{ popup_best.moq }} | Delivery: {{ popup_best.delivery_days }} days</div>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-secondary fw-bold" href="{% url 'procurement:supplier_price_comparison' %}?product_id={{ popup_product.id }}">View Comparison</a>
+        <a class="btn btn-success fw-bold"
+           href="{% url 'commerce:add_order' %}?order_type=purchase&party_id={{ popup_best.supplier_id }}&product_id={{ popup_product.id }}&qty={{ popup_best.moq }}&price={{ popup_best.price }}">
+          Create Purchase Order
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if popup_product and popup_best %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      if (sessionStorage.getItem('lowStockSuggestShown') === '1') return;
+      const el = document.getElementById('lowStockSuggestModal');
+      if (!el || typeof bootstrap === 'undefined') return;
+      const m = new bootstrap.Modal(el);
+      m.show();
+      sessionStorage.setItem('lowStockSuggestShown', '1');
+    } catch (e) {}
+  });
+</script>
+{% endif %}
 {% endblock %}

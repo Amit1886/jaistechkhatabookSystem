@@ -1,0 +1,175 @@
+{% extends "storefront/store_shell.html" %}
+{% block content %}
+  <div id="storeHeroSlider" class="carousel slide mb-3 shadow-soft" data-bs-ride="carousel" data-bs-interval="4200" style="border-radius:18px; overflow:hidden;">
+    <div class="carousel-indicators">
+      <button type="button" data-bs-target="#storeHeroSlider" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+      <button type="button" data-bs-target="#storeHeroSlider" data-bs-slide-to="1" aria-label="Slide 2"></button>
+      <button type="button" data-bs-target="#storeHeroSlider" data-bs-slide-to="2" aria-label="Slide 3"></button>
+    </div>
+    <div class="carousel-inner">
+      <div class="carousel-item active">
+        <div class="p-4 p-md-5" style="background:linear-gradient(135deg, #e91e63, #ff5a8a); color:#fff;">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <div class="opacity-75">Welcome to</div>
+              <div class="fw-bold" style="font-size: 28px;">{{ vendor.name }}</div>
+              <div class="opacity-75 mt-1">Secure checkout &middot; Fast delivery &middot; Easy returns</div>
+              <div class="d-flex gap-2 flex-wrap mt-3">
+                <a class="btn btn-light btn-sm" href="{% url 'store-home' vendor.subdomain %}?tag=trending">
+                  <i class="bi bi-lightning-charge-fill me-1"></i>Trending
+                </a>
+                <a class="btn btn-outline-light btn-sm" href="{% url 'store-home' vendor.subdomain %}?tag=discount">
+                  <i class="bi bi-percent me-1"></i>Discounts
+                </a>
+              </div>
+            </div>
+            <div class="d-none d-md-flex align-items-center gap-2">
+              <span class="pill text-white" style="background:rgba(255,255,255,.18); border-color: rgba(255,255,255,.22);">
+                <i class="bi bi-shield-check me-1"></i>Secure
+              </span>
+              <span class="pill text-white" style="background:rgba(255,255,255,.18); border-color: rgba(255,255,255,.22);">
+                <i class="bi bi-truck me-1"></i>Quick delivery
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="carousel-item">
+        <div class="p-4 p-md-5" style="background:linear-gradient(135deg, #0ea5e9, #22c55e); color:#fff;">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <div class="opacity-75">Just dropped</div>
+              <div class="fw-bold" style="font-size: 28px;">New Arrivals</div>
+              <div class="opacity-75 mt-1">Fresh styles & new gadgets updated daily.</div>
+              <div class="d-flex gap-2 flex-wrap mt-3">
+                <a class="btn btn-light btn-sm" href="{% url 'store-home' vendor.subdomain %}?sort=newest">
+                  <i class="bi bi-stars me-1"></i>Explore newest
+                </a>
+                <a class="btn btn-outline-light btn-sm" href="{% url 'store-wishlist' vendor.subdomain %}">
+                  <i class="bi bi-heart me-1"></i>Wishlist
+                </a>
+              </div>
+            </div>
+            <div class="d-none d-md-block opacity-75">
+              <i class="bi bi-bag-heart" style="font-size: 54px;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="carousel-item">
+        <div class="p-4 p-md-5" style="background:linear-gradient(135deg, #a78bfa, #f97316); color:#fff;">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <div class="opacity-75">Best value</div>
+              <div class="fw-bold" style="font-size: 28px;">Under &#8377;499 Picks</div>
+              <div class="opacity-75 mt-1">Budget-friendly products with quick checkout.</div>
+              <div class="d-flex gap-2 flex-wrap mt-3">
+                <a class="btn btn-light btn-sm" href="{% url 'store-home' vendor.subdomain %}?max_price=499&sort=price_asc">
+                  <i class="bi bi-cash-coin me-1"></i>Shop under 499
+                </a>
+                <a class="btn btn-outline-light btn-sm" href="{% url 'store-cart' vendor.subdomain %}">
+                  <i class="bi bi-cart3 me-1"></i>Go to cart
+                </a>
+              </div>
+            </div>
+            <div class="d-none d-md-block opacity-75">
+              <i class="bi bi-tags" style="font-size: 54px;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="carousel-control-prev" type="button" data-bs-target="#storeHeroSlider" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#storeHeroSlider" data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Next</span>
+    </button>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+      <div class="fw-bold fs-4">Products For You</div>
+      <div class="muted small">{% if total_filtered is not None %}{{ total_filtered }} products{% endif %}</div>
+    </div>
+
+    <div class="d-flex gap-2 align-items-center">
+      <button class="btn btn-outline-secondary btn-sm d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#filtersCanvas">
+        <i class="bi bi-funnel me-1"></i>Filters
+      </button>
+      <form method="get">
+        {% for c in active_categories %}<input type="hidden" name="category" value="{{ c }}">{% endfor %}
+        {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+        {% if request.GET.min_price %}<input type="hidden" name="min_price" value="{{ request.GET.min_price }}">{% endif %}
+        {% if request.GET.max_price %}<input type="hidden" name="max_price" value="{{ request.GET.max_price }}">{% endif %}
+        {% if active_tag %}<input type="hidden" name="tag" value="{{ active_tag }}">{% endif %}
+        <select class="form-select form-select-sm" name="sort" onchange="this.form.submit()">
+          <option value="" {% if not active_sort %}selected{% endif %}>Sort by: Featured</option>
+          <option value="newest" {% if active_sort == 'newest' %}selected{% endif %}>Newest</option>
+          <option value="rating" {% if active_sort == 'rating' %}selected{% endif %}>Top Rated</option>
+          <option value="price_asc" {% if active_sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_desc" {% if active_sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-3">
+      <div class="card product-card shadow-soft d-none d-lg-block">
+        <div class="card-body">
+          {% include "storefront/_store_filters.html" %}
+        </div>
+      </div>
+
+      <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="filtersCanvas">
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title">Filters</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+          {% include "storefront/_store_filters.html" %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-9">
+      <div class="row g-3">
+        {% if listings %}
+          {% include "storefront/_product_grid.html" %}
+        {% else %}
+          <div class="col-12">
+            <div class="alert alert-info">No products found for the selected filters.</div>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if page_obj %}
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-4">
+          <div class="muted small">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} items)
+          </div>
+          <div class="d-flex gap-2">
+            {% if page_obj.has_previous %}
+              <a class="btn btn-outline-secondary btn-sm"
+                 href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+              <a class="btn btn-brand btn-sm shadow-soft"
+                 href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.next_page_number }}">
+                Load more <i class="bi bi-arrow-down ms-1"></i>
+              </a>
+            {% else %}
+              <span class="pill small">You’re all caught up</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

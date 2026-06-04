@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">Journal Voucher #{{ voucher.id }}</h3>
+        <div class="unified-subtitle">{{ voucher.date|date:"d M Y" }}</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'ledger:journal_voucher_list' %}" class="btn unified-btn-outline">Back</a>
+        {% if voucher.status == 'draft' and erp_can_edit %}
+          <a href="{% url 'ledger:journal_voucher_edit' voucher.id %}" class="btn unified-btn-outline">Edit</a>
+          <form method="post" action="{% url 'ledger:journal_voucher_post' voucher.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn unified-btn-primary">Post Voucher</button>
+          </form>
+        {% endif %}
+        {% if voucher.status != 'cancelled' and erp_can_delete %}
+          <form method="post" action="{% url 'ledger:journal_voucher_cancel' voucher.id %}" data-confirm data-confirm-title="Cancel Voucher" data-confirm-message="Cancel this journal voucher? Posted GL will be reversed." data-confirm-ok-text="Cancel Voucher" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn unified-btn-outline">Cancel</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="unified-body">
+      <div class="d-flex gap-2 flex-wrap mb-2">
+        {% if voucher.status == 'posted' %}
+          <span class="badge bg-success">Posted</span>
+        {% elif voucher.status == 'draft' %}
+          <span class="badge bg-warning text-dark">Draft</span>
+        {% else %}
+          <span class="badge bg-danger">Cancelled</span>
+        {% endif %}
+        {% if voucher.narration %}<span class="badge bg-light text-dark">{{ voucher.narration }}</span>{% endif %}
+      </div>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Account</th>
+              <th>Party</th>
+              <th>Description</th>
+              <th class="text-end">Debit</th>
+              <th class="text-end">Credit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for l in voucher.lines.all %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="fw-semibold">{{ l.account.code }} - {{ l.account.name }}</td>
+                <td>{{ l.party.name|default:"-" }}</td>
+                <td class="text-muted">{{ l.description|default:"-" }}</td>
+                <td class="text-end fw-bold">{{ l.debit }}</td>
+                <td class="text-end fw-bold">{{ l.credit }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-center text-muted py-4">No lines.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,41 @@
+{% for p in products %}
+<tr>
+  <td class="fw-semibold">{{ p.name }}</td>
+  <td>{{ p.category.name|default:"-" }}</td>
+  <td>{{ p.sku }}</td>
+  <td class="text-end fw-bold">{{ p.price }}</td>
+  <td class="text-end">{{ p.stock|default:0 }}</td>
+  <td>
+    {% if p.stock|default:0 <= 0 %}
+      <span class="badge bg-danger">Rejected</span>
+    {% elif p.stock <= p.min_stock %}
+      <span class="badge bg-warning text-dark">Pending</span>
+    {% else %}
+      <span class="badge bg-success">Accepted</span>
+    {% endif %}
+  </td>
+  <td>{{ p.created_at|date:"d M Y" }}</td>
+  <td class="text-end">
+    <div class="dropdown">
+      <button type="button" class="btn unified-btn-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown">Actions</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{% url 'commerce:product_detail' p.id %}">View</a></li>
+        {% if erp_can_edit %}
+          <li><a class="dropdown-item" href="{% url 'commerce:product_edit' p.id %}">Edit</a></li>
+        {% endif %}
+        {% if erp_can_delete %}
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <form method="post" action="{% url 'commerce:product_delete' p.id %}" data-confirm data-confirm-title="Delete Product" data-confirm-message="Delete this product? This action cannot be undone." data-confirm-ok-text="Delete" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item text-danger">Delete</button>
+          </form>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="8" class="text-center text-muted py-4">No products found.</td></tr>
+{% endfor %}

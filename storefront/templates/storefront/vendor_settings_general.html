@@ -1,0 +1,305 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">General</div>
+        <div class="va-help">Store profile, defaults and contact details.</div>
+      </div>
+      <div class="text-end">
+        <div class="va-help">Store URL</div>
+        <div class="d-flex align-items-center gap-2 justify-content-end flex-wrap">
+          <code class="small" id="storeUrlText">{{ store_url }}</code>
+          <button class="btn btn-sm btn-outline-secondary" type="button" id="copyStoreUrlBtn">
+            <i class="bi bi-clipboard me-1"></i>Copy
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-lg-6">
+      <div class="va-panel p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+          <div>
+            <div class="va-section-title">Store contact details</div>
+            <div class="va-help">Primary store identity and support contact.</div>
+          </div>
+          <a class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" href="#generalContactEdit" role="button" aria-expanded="true" aria-controls="generalContactEdit">
+            <i class="bi bi-pencil-square me-1"></i>Edit
+          </a>
+        </div>
+
+        <div class="mt-3">
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <div class="fw-semibold">Store name</div>
+            <div class="text-end">{{ vendor.name }}</div>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <div class="fw-semibold">Support email</div>
+            <div class="text-end">{{ settings.support_email|default:"-" }}</div>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <div class="fw-semibold">Support phone</div>
+            <div class="text-end">{{ settings.support_phone|default:"-" }}</div>
+          </div>
+          <div class="d-flex justify-content-between py-2">
+            <div class="fw-semibold">Store address</div>
+            <div class="text-end">
+              {% if settings.city or settings.state or settings.country %}
+                {{ settings.city|default:"" }}{% if settings.city and settings.state %}, {% endif %}{{ settings.state|default:"" }}
+                {% if settings.country %}<div class="va-help small">{{ settings.country }}</div>{% endif %}
+              {% else %}
+                -
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="collapse show mt-3" id="generalContactEdit">
+          <div class="va-help mb-2">Update details and click Save.</div>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="_section" value="contact">
+            <div class="row g-2">
+              <div class="col-12">
+                <label class="form-label va-form-label">Store name</label>
+                <input class="form-control" name="store_name" value="{{ vendor.name }}">
+              </div>
+              <div class="col-12 col-md-7">
+                <label class="form-label va-form-label">Support email</label>
+                <input class="form-control" name="support_email" value="{{ settings.support_email|default:'' }}" placeholder="support@example.com">
+              </div>
+              <div class="col-12 col-md-5">
+                <label class="form-label va-form-label">Support phone</label>
+                <input class="form-control" name="support_phone" value="{{ settings.support_phone|default:'' }}" placeholder="+91...">
+              </div>
+
+              <div class="col-12">
+                <div class="va-section-title mt-2">Address</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label va-form-label">Address line 1</label>
+                <input class="form-control" name="address_line1" value="{{ settings.address_line1|default:'' }}">
+              </div>
+              <div class="col-12">
+                <label class="form-label va-form-label">Address line 2</label>
+                <input class="form-control" name="address_line2" value="{{ settings.address_line2|default:'' }}">
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label va-form-label">City</label>
+                <input class="form-control" name="city" value="{{ settings.city|default:'' }}">
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label va-form-label">State</label>
+                <input class="form-control" name="state" value="{{ settings.state|default:'' }}">
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label va-form-label">Pincode</label>
+                <input class="form-control" name="pincode" value="{{ settings.pincode|default:'' }}">
+              </div>
+              <div class="col-12">
+                <label class="form-label va-form-label">Country</label>
+                <input class="form-control" name="country" value="{{ settings.country|default:'India' }}">
+              </div>
+
+              <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                <button class="btn btn-primary" type="submit">
+                  <i class="bi bi-check2-circle me-1"></i>Save changes
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="va-panel p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+          <div>
+            <div class="va-section-title">Store defaults</div>
+            <div class="va-help">Currency, unit system and region defaults.</div>
+          </div>
+          <a class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" href="#generalDefaultsEdit" role="button" aria-expanded="true" aria-controls="generalDefaultsEdit">
+            <i class="bi bi-sliders me-1"></i>Edit
+          </a>
+        </div>
+
+        <div class="mt-3">
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <div class="fw-semibold">Currency</div>
+            <div class="text-end">{{ settings.currency|default:"INR" }}</div>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <div class="fw-semibold">Timezone</div>
+            <div class="text-end">{{ settings.timezone|default:"Asia/Kolkata" }}</div>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <div class="fw-semibold">Backup region</div>
+            <div class="text-end">{{ settings_summary.backup_region|default:settings.country|default:"India" }}</div>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <div class="fw-semibold">Unit system</div>
+            <div class="text-end">{{ settings_summary.unit_system|default:"metric" }}</div>
+          </div>
+          <div class="d-flex justify-content-between py-2">
+            <div class="fw-semibold">Default weight unit</div>
+            <div class="text-end">{{ settings_summary.default_weight_unit|default:"kg" }}</div>
+          </div>
+        </div>
+
+        <div class="collapse show mt-3" id="generalDefaultsEdit">
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="_section" value="defaults">
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label va-form-label">Currency</label>
+                <input class="form-control" name="currency" value="{{ settings.currency|default:'INR' }}" placeholder="INR">
+              </div>
+              <div class="col-6">
+                <label class="form-label va-form-label">Timezone</label>
+                <input class="form-control" name="timezone" value="{{ settings.timezone|default:'Asia/Kolkata' }}" placeholder="Asia/Kolkata">
+              </div>
+              <div class="col-12">
+                <label class="form-label va-form-label">Backup region</label>
+                <input class="form-control" name="backup_region" value="{{ settings_summary.backup_region|default:settings.country|default:'India' }}" placeholder="India">
+                <div class="va-help mt-1">Used for customers outside your markets.</div>
+              </div>
+              <div class="col-6">
+                <label class="form-label va-form-label">Unit system</label>
+                {% with unit=settings_summary.unit_system|default:"metric" %}
+                  <select class="form-select" name="unit_system">
+                    <option value="metric" {% if unit == "metric" %}selected{% endif %}>Metric</option>
+                    <option value="imperial" {% if unit == "imperial" %}selected{% endif %}>Imperial</option>
+                  </select>
+                {% endwith %}
+              </div>
+              <div class="col-6">
+                <label class="form-label va-form-label">Default weight unit</label>
+                {% with w=settings_summary.default_weight_unit|default:"kg" %}
+                  <select class="form-select" name="default_weight_unit">
+                    <option value="kg" {% if w == "kg" %}selected{% endif %}>kg</option>
+                    <option value="g" {% if w == "g" %}selected{% endif %}>g</option>
+                    <option value="lb" {% if w == "lb" %}selected{% endif %}>lb</option>
+                    <option value="oz" {% if w == "oz" %}selected{% endif %}>oz</option>
+                  </select>
+                {% endwith %}
+              </div>
+
+              <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                <button class="btn btn-primary" type="submit">
+                  <i class="bi bi-check2-circle me-1"></i>Save changes
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Legacy single-form layout removed in favor of Shopify-like cards above #}
+
+  <script>
+    (function(){
+      const btn = document.getElementById("copyStoreUrlBtn");
+      const txt = document.getElementById("storeUrlText");
+      if (!btn || !txt) return;
+      btn.addEventListener("click", async function(){
+        try{
+          await navigator.clipboard.writeText(txt.textContent || "");
+          const old = btn.innerHTML;
+          btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Copied';
+          setTimeout(()=>{ btn.innerHTML = old; }, 1200);
+        }catch(e){
+          alert("Copy failed. Please copy manually.");
+        }
+      });
+    })();
+  </script>
+
+{% endblock %}
+
+{# old content kept intentionally removed to match new layout #}
+{% comment %}
+  <form method="post" class="va-panel p-3">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Store details</div>
+        <div class="mb-2">
+          <label class="form-label va-form-label">Store name</label>
+          <input class="form-control" name="store_name" value="{{ vendor.name }}">
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label va-form-label">Subdomain</label>
+            <input class="form-control" value="{{ vendor.subdomain }}" disabled>
+            <div class="va-help mt-1">This demo keeps subdomain locked.</div>
+          </div>
+          <div class="col-6">
+            <label class="form-label va-form-label">Currency</label>
+            <input class="form-control" name="currency" value="{{ settings.currency|default:'INR' }}" placeholder="INR">
+          </div>
+        </div>
+        <div class="mt-2">
+          <label class="form-label va-form-label">Timezone</label>
+          <input class="form-control" name="timezone" value="{{ settings.timezone|default:'Asia/Kolkata' }}" placeholder="Asia/Kolkata">
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Support contact</div>
+        <div class="row g-2">
+          <div class="col-12 col-md-7">
+            <label class="form-label va-form-label">Support email</label>
+            <input class="form-control" name="support_email" value="{{ settings.support_email|default:'' }}" placeholder="support@example.com">
+          </div>
+          <div class="col-12 col-md-5">
+            <label class="form-label va-form-label">Support phone</label>
+            <input class="form-control" name="support_phone" value="{{ settings.support_phone|default:'' }}" placeholder="+91...">
+          </div>
+        </div>
+
+        <div class="va-section-title mt-3 mb-2">Address</div>
+        <div class="mb-2">
+          <label class="form-label va-form-label">Address line 1</label>
+          <input class="form-control" name="address_line1" value="{{ settings.address_line1|default:'' }}">
+        </div>
+        <div class="mb-2">
+          <label class="form-label va-form-label">Address line 2</label>
+          <input class="form-control" name="address_line2" value="{{ settings.address_line2|default:'' }}">
+        </div>
+        <div class="row g-2">
+          <div class="col-12 col-md-4">
+            <label class="form-label va-form-label">City</label>
+            <input class="form-control" name="city" value="{{ settings.city|default:'' }}">
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label va-form-label">State</label>
+            <input class="form-control" name="state" value="{{ settings.state|default:'' }}">
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label va-form-label">Pincode</label>
+            <input class="form-control" name="pincode" value="{{ settings.pincode|default:'' }}">
+          </div>
+        </div>
+        <div class="mt-2">
+          <label class="form-label va-form-label">Country</label>
+          <input class="form-control" name="country" value="{{ settings.country|default:'India' }}">
+        </div>
+      </div>
+
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit">
+          <i class="bi bi-check2-circle me-1"></i>Save changes
+        </button>
+      </div>
+    </div>
+  </form>
+{% endblock %}
+{% endcomment %}

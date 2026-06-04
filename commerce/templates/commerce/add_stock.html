@@ -1,163 +1,64 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Stock | Commerce</title>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+{% block title %}Add Stock{% endblock %}
 
-    <style>
-        body {
-            font-family: "Poppins", sans-serif;
-            background: linear-gradient(135deg, #007bff, #6610f2);
-            margin: 0;
-            padding: 0;
-            color: #333;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+{% block pc_badges %}
+  <span class="badge bg-warning text-dark fw-bold">Inventory</span>
+{% endblock %}
 
-        .container {
-            width: 95%;
-            max-width: 420px;
-            background: #fff;
-            padding: 30px 25px;
-            border-radius: 15px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-            text-align: center;
-        }
+{% block pc_actions %}
+  <a class="btn btn-outline-light btn-lg fw-bold" href="{% url 'commerce:add_warehouse' %}" accesskey="w" title="Alt+W">Add Warehouse</a>
+  <button type="button" class="btn btn-warning btn-lg fw-bold" onclick="showKeyboardHelp()" title="F1">Shortcuts</button>
+{% endblock %}
 
-        h2 {
-            color: #007bff;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
+{% block content %}
+  {% include "core/includes/messages.html" %}
+  {% include "core/includes/keyboard_help_common.html" %}
 
-        label {
-            display: block;
-            font-weight: bold;
-            text-align: left;
-            margin-bottom: 8px;
-            color: #444;
-        }
+  <form method="post" class="row g-3" action="{% url 'commerce:add_stock' %}">
+    {% csrf_token %}
 
-        select, input[type="number"] {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 15px;
-            margin-bottom: 15px;
-            transition: border-color 0.3s;
-        }
-
-        select:focus, input[type="number"]:focus {
-            border-color: #007bff;
-            outline: none;
-        }
-
-        button {
-            width: 100%;
-            background: #007bff;
-            color: white;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background: #0056b3;
-        }
-
-        /*  Message Notification Styles */
-        .messages {
-            margin-bottom: 15px;
-        }
-
-        .message {
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            font-weight: 500;
-            text-align: center;
-        }
-
-        .message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 2px solid #c3e6cb;
-        }
-
-        .message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 2px solid #f5c6cb;
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 20px 15px;
-            }
-
-            h2 {
-                font-size: 20px;
-            }
-
-            button {
-                font-size: 15px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h2> Add New Stock</h2>
-
-    <!--  Django Message Display -->
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-            <div class="message {{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <form method="POST">
-        {% csrf_token %}
-
-        <label>Select Product:</label>
-        <select name="product" required>
+    <div class="col-lg-6">
+      <div class="card border-primary">
+        <div class="card-body">
+          <label for="product" class="form-label fw-bold">Product</label>
+          <select name="product" id="product" class="form-select form-select-lg fw-bold" required data-kb-primary="1" autofocus>
             <option value="">-- Select Product --</option>
             {% for p in products %}
-                <option value="{{ p.id }}">{{ p.name }}</option>
+              <option value="{{ p.id }}">{{ p.name }}</option>
             {% endfor %}
-        </select>
+          </select>
+        </div>
+      </div>
+    </div>
 
-        <label>Select Warehouse:</label>
-        <select name="warehouse" required>
+    <div class="col-lg-6">
+      <div class="card border-info">
+        <div class="card-body">
+          <label for="warehouse" class="form-label fw-bold">Warehouse</label>
+          <select name="warehouse" id="warehouse" class="form-select form-select-lg fw-bold" required>
             <option value="">-- Select Warehouse --</option>
             {% for w in warehouses %}
-                <option value="{{ w.id }}">{{ w.name }}</option>
+              <option value="{{ w.id }}">{{ w.name }}</option>
             {% endfor %}
-        </select>
+          </select>
+        </div>
+      </div>
+    </div>
 
-        <label>Quantity:</label>
-        <input type="number" name="quantity" min="1" required>
+    <div class="col-md-4">
+      <div class="card border-success">
+        <div class="card-body">
+          <label for="quantity" class="form-label fw-bold">Quantity</label>
+          <input type="number" name="quantity" id="quantity" min="1" required class="form-control form-control-lg fw-bold" placeholder="1">
+        </div>
+      </div>
+    </div>
 
-        <button type="submit">Add Stock</button>
-        <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary px-4 rounded-pill"> Back to Dashboard</a>
-    </form>
-</div>
-
-</body>
-</html>
+    <div class="col-12 d-flex justify-content-end gap-2">
+      <a id="kbCancel" data-kb-cancel href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary btn-lg fw-bold">Back</a>
+      <button type="submit" class="btn btn-success btn-lg fw-bold" data-kb-submit>Add Stock</button>
+    </div>
+  </form>
+{% endblock %}

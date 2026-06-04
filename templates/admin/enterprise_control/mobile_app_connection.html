@@ -1,0 +1,70 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+  <div class="module" style="max-width: 900px;">
+    <h2>Mobile App Live URL Setup</h2>
+    <p style="font-size: 15px; line-height: 1.6;">
+      Yahan sirf IP/domain aur port set karo. Save karte hi Android app ke live API URLs admin settings me update ho jayenge.
+      Koi coding ya manual file edit nahi karna padega.
+    </p>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <fieldset class="module aligned">
+        {% for field in form %}
+          <div class="form-row">
+            <div>
+              {{ field.errors }}
+              <label for="{{ field.id_for_label }}" style="font-weight: 600;">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}
+                <div class="help">{{ field.help_text }}</div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </fieldset>
+      <div class="submit-row">
+        <input type="submit" class="default" value="Save Mobile App URL">
+        <a class="button" href="{% url 'admin:enterprise_control_enterprisesetting_changelist' %}">Back to Settings</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="module" style="max-width: 900px; margin-top: 18px;">
+    <h2>Current App URLs</h2>
+    {% if saved_urls %}
+      <table>
+        <thead>
+          <tr>
+            <th>Setting</th>
+            <th>Key</th>
+            <th>URL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in saved_urls %}
+            <tr>
+              <td>{{ item.label }}</td>
+              <td><code>{{ item.key }}</code></td>
+              <td><code>{{ item.url }}</code></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No mobile URL saved yet.</p>
+    {% endif %}
+  </div>
+
+  <div class="module" style="max-width: 900px; margin-top: 18px;">
+    <h2>What To Use</h2>
+    <ul style="line-height: 1.8;">
+      <li><strong>Real Android phone:</strong> use the public/LAN URL saved above.</li>
+      <li><strong>Android emulator:</strong> use <code>http://10.0.2.2:57824</code>.</li>
+      <li><strong>Admin API docs:</strong> open <code>/api/docs/</code> on the saved backend URL.</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

@@ -1,48 +1,185 @@
-{% extends "accounts/base.html" %}
+{% extends "billing/base.html" %}
 {% load static %}
 
 {% block billing_content %}
-<div class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Billing Dashboard</h2>
-    <!--  Add New Commerce Button -->
-{% if request.user.userprofile.plan.feature_toggle.allow_commerce %}
-  <a href="{% url 'commerce:add_commerce' %}" class="btn btn-primary">+ Add New Commerce</a>
-{% endif %}
-</div>
-
-   <hr>
-     <h3>Your Subscriptions</h3>
-  <ul>
-    {% for s in subscriptions %}
-      <li>
-        {{ s.plan.name }}  {{ s.status }}
-        {% if s.start_date %}
-          (since {{ s.start_date|date:"d M Y" }})
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+      <h2 class="mb-0">Billing Dashboard</h2>
+      <div class="text-muted small">
+        {% if effective_plan %}
+          Current plan: <b>{{ effective_plan.name }}</b>
+        {% else %}
+          Current plan: <b>—</b>
         {% endif %}
-      </li>
-    {% empty %}
-      <li>No subscriptions</li>
-    {% endfor %}
-  </ul>
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'billing:plan_management' %}" class="btn btn-outline-secondary btn-sm">Plan & Features</a>
+      {% if can_add_commerce %}
+        <a href="{% url 'commerce:add_commerce' %}" class="btn btn-primary btn-sm">+ Add New Commerce</a>
+      {% endif %}
+    </div>
+  </div>
 
-  <h3>Your Invoices</h3>
-  <ul>
-    {% for inv in invoices %}
-      <li>
-        {{ inv.number }}  {{ inv.amount }}
-         {{ inv.paid|yesno:"Paid,Pending" }}
-         {{ inv.created_at|date:"d M Y" }}
-      </li>
-    {% empty %}
-      <li>No invoices</li>
-    {% endfor %}
-  </ul>
+  <div class="row g-3">
+    <div class="col-12 col-lg-7">
+      <div class="border rounded-3 p-3 bg-white">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <div class="fw-semibold">User Management (One Place)</div>
+            <div class="text-muted small">Create users, set role, permissions, features, reset password, welcome kit, trace activity.</div>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline-secondary btn-sm">Open Profile</a>
+            {% if can_manage_users %}
+              <a href="{% url 'billing:users_manage' %}" class="btn btn-outline-primary btn-sm">Open Users</a>
+              <a href="{% url 'billing:users_create' %}" class="btn btn-success btn-sm">+ Add User</a>
+            {% endif %}
+          </div>
+        </div>
 
-  <p>
-    <a href="{% url 'billing:choose_plan' %}" class="btn btn-primary">
-      Change / Buy Plan
-    </a>
-  </p>
+        {% if not can_manage_users %}
+          <div class="alert alert-warning mt-3 mb-0">
+            <b>Access needed:</b> Only Admin/Staff (or users with permission <code>billing.user.manage_subusers</code>) can manage users here.
+          </div>
+        {% else %}
+          <div class="row g-2 mt-3">
+            <div class="col-12 col-md-4">
+              <div class="border rounded-3 p-2 bg-light">
+                <div class="text-muted small">Linked users</div>
+                <div class="fs-5 fw-bold">{{ linked_users_count }}</div>
+              </div>
+            </div>
+            <div class="col-12 col-md-8">
+              <div class="border rounded-3 p-2 bg-light">
+                <div class="text-muted small mb-1">By role</div>
+                <div class="d-flex gap-2 flex-wrap">
+                  {% for row in linked_by_role %}
+                    <span class="badge bg-secondary">{{ row.billing_role_type|default:"-" }}: {{ row.total }}</span>
+                  {% empty %}
+                    <span class="text-muted small">No linked users yet.</span>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive mt-3">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th style="width:90px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for u in linked_users %}
+                  <tr>
+                    <td>
+                      <div class="fw-semibold">{{ u.email }}</div>
+                      <div class="text-muted small">
+                        {% if u.username %}{{ u.username }}{% endif %}
+                        {% if u.mobile %}{% if u.username %} • {% endif %}{{ u.mobile }}{% endif %}
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge bg-light text-dark">{{ u.billing_role_type|default:"-" }}</span>
+                      {% if u.billing_child_role %}
+                        <span class="text-muted small">/ {{ u.billing_child_role }}</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if u.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}
+                    </td>
+                    <td class="text-end">
+                      <a class="btn btn-outline-secondary btn-sm" href="{% url 'billing:users_edit' u.id %}">Open</a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="4" class="text-muted">No linked users. Click “Add User”.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="border rounded-3 p-3 bg-white mt-3">
+        <div class="fw-semibold">Role & Permission kaise set kare?</div>
+        <ol class="small text-muted mt-2 mb-0">
+          <li>Profile open karo: <code>/accounts/dashboard/edit/</code> → Billing Hierarchy set karo (Admin/User + Role Type + Child Role).</li>
+          <li>User create/list: <code>/billing/users/</code> → user open → <b>Access</b> tab → permissions + features toggle karo.</li>
+          <li>Password/Welcome kit: user open → <b>Overview</b> tab → Reset Password / Send Welcome Kit.</li>
+          <li>User ka dashboard/report dekhna: user open → <b>View As User</b> (Overview) → kaam check karo → Return to Admin.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+      <div class="border rounded-3 p-3 bg-white">
+        <div class="fw-semibold">Subscriptions</div>
+        <div class="table-responsive mt-2">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Plan</th>
+                <th>Status</th>
+                <th>Since</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in subscriptions %}
+                <tr>
+                  <td>{{ s.plan.name }}</td>
+                  <td><span class="badge bg-light text-dark">{{ s.status }}</span></td>
+                  <td>{% if s.start_date %}{{ s.start_date|date:"d M Y" }}{% else %}—{% endif %}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-muted">No subscriptions</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex gap-2 flex-wrap mt-3">
+          <a href="{% url 'billing:choose_plan' %}" class="btn btn-primary btn-sm">Change / Buy Plan</a>
+          <a href="{% url 'billing:billing_history' %}" class="btn btn-outline-secondary btn-sm">Billing History</a>
+          {% if request.user.is_staff or request.user.is_superuser %}
+            <a href="{% url 'billing:feature_matrix' %}" class="btn btn-outline-secondary btn-sm">Admin Feature Matrix</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="border rounded-3 p-3 bg-white mt-3">
+        <div class="fw-semibold">Invoices (Recent)</div>
+        <div class="table-responsive mt-2">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Invoice</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inv in invoices %}
+                <tr>
+                  <td>{% if inv.invoice_number %}{{ inv.invoice_number }}{% elif inv.number %}{{ inv.number }}{% else %}#{{ inv.id }}{% endif %}</td>
+                  <td>₹{{ inv.amount }}</td>
+                  <td>{% if inv.paid %}<span class="badge bg-success">Paid</span>{% else %}<span class="badge bg-secondary">Pending</span>{% endif %}</td>
+                  <td>{{ inv.created_at|date:"d M Y" }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="text-muted">No invoices</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

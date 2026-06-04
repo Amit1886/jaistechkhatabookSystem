@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <div class="unified-list-card" style="max-width: 820px; margin: 0 auto;">
+    <div class="unified-list-header d-flex justify-content-between align-items-center">
+      <div>
+        <h3>Apply Coupon</h3>
+        <div class="unified-subtitle">Demo screen (storefront applies coupons in Cart/Checkout).</div>
+      </div>
+      <a href="{% url 'commerce:user_coupon_list' %}" class="btn unified-btn-outline">Back</a>
+    </div>
+    <div class="unified-list-body">
+      <form method="post" class="row g-2">
+        {% csrf_token %}
+        <div class="col-12 col-md-8">
+          <label class="unified-label">Coupon code</label>
+          <input name="code" class="form-control" placeholder="Enter code">
+        </div>
+        <div class="col-12 col-md-4 d-flex align-items-end">
+          <button class="btn unified-btn-primary w-100" type="submit">Apply</button>
+        </div>
+      </form>
+      <div class="text-muted small mt-3">
+        Tip: Storefront coupon application is available at `/store/&lt;vendor&gt;/cart/`.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

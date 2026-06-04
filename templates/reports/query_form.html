@@ -1,0 +1,35 @@
+{% extends "core/pc_universal.html" %}
+
+{% block title %}New Query{% endblock %}
+
+{% block pc_actions %}
+  <a href="{% url 'reports:query_list' %}" class="btn btn-outline-light btn-sm fw-bold">Back</a>
+{% endblock %}
+
+{% block pc_content %}
+  <div class="unified-section">
+    <form method="post" class="unified-grid cols-2">
+      {% csrf_token %}
+      <div>
+        <label class="unified-label">Subject</label>
+        {{ form.subject }}
+      </div>
+      <div>
+        <label class="unified-label">Priority</label>
+        {{ form.priority }}
+      </div>
+      <div style="grid-column: 1 / -1;">
+        <label class="unified-label">Description</label>
+        {{ form.description }}
+      </div>
+      <div>
+        <label class="unified-label">Status</label>
+        {{ form.status }}
+      </div>
+      <div style="display:flex; align-items:flex-end;">
+        <button class="btn unified-btn-primary" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+

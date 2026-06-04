@@ -10,6 +10,9 @@
     </div>
     <div class="hero-right">
       <a href="{% url 'billing:plan_management' %}" class="primary-btn">Upgrade Plan</a>
+      {% if can_manage_users %}
+        <a href="{% url 'billing:users_manage' %}" class="ghost-btn" style="margin-left:8px;">User Management</a>
+      {% endif %}
     </div>
   </div>
 
@@ -87,6 +90,30 @@
           <label>Profile Picture {{ form.profile_picture }}</label>
           <label>QR Code {{ form.qr_code }}</label>
           <label>Plan {{ form.plan }}</label>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h4>Billing Hierarchy</h4>
+        <div class="form-grid">
+          <label>Access Level {{ form.billing_access_level }}</label>
+          <label>Role Type {{ form.billing_role_type }}</label>
+          <label>Child Role {{ form.billing_child_role }}</label>
+          <div class="full" style="font-size:11px; color:#64748b;">
+            Current: <b>{{ billing_role.role_label|default:"-" }}</b>{% if billing_role.child_label %} / {{ billing_role.child_label }}{% endif %}
+            {% if not can_edit_billing %}
+              <span style="margin-left:8px;">(Read-only)</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div id="billingHierarchyPreview" class="ai-list" style="margin-top:10px; color:#334155;">
+          <div style="font-weight:600; margin-bottom:6px;">Capabilities</div>
+          <ul id="billingHierarchyCapabilities" style="margin:0; padding-left:18px;"></ul>
+          <div style="font-weight:600; margin:10px 0 6px;">Permissions</div>
+          <ul id="billingHierarchyPermissions" style="margin:0; padding-left:18px;"></ul>
+          <div style="font-weight:600; margin:10px 0 6px;">Data Access</div>
+          <ul id="billingHierarchyDataAccess" style="margin:0; padding-left:18px;"></ul>
         </div>
       </div>
 
@@ -215,6 +242,68 @@
 </style>
 
 <script>
+  const billingHierarchyCfg = {{ billing_hierarchy_json|safe }};
+  function setList(el, items) {
+    if (!el) return;
+    el.innerHTML = "";
+    (items || []).forEach((t) => {
+      const li = document.createElement("li");
+      li.textContent = String(t);
+      el.appendChild(li);
+    });
+  }
+  function refreshBillingHierarchyPreview() {
+    const roleTypeEl = document.getElementById("id_billing_role_type");
+    const childRoleEl = document.getElementById("id_billing_child_role");
+    const capsEl = document.getElementById("billingHierarchyCapabilities");
+    const permsEl = document.getElementById("billingHierarchyPermissions");
+    const dataEl = document.getElementById("billingHierarchyDataAccess");
+
+    const roleType = roleTypeEl ? String(roleTypeEl.value || "").trim() : "";
+    const childRole = childRoleEl ? String(childRoleEl.value || "").trim() : "";
+
+    const roles = (billingHierarchyCfg && billingHierarchyCfg.roles) || {};
+    const role = roles[roleType] || null;
+
+    if (!role) {
+      setList(capsEl, ["Select a role type to view capabilities."]);
+      setList(permsEl, []);
+      setList(dataEl, []);
+      return;
+    }
+
+    setList(capsEl, role.key_capabilities || role.capabilities || []);
+    setList(permsEl, role.permissions || []);
+    setList(dataEl, role.data_access || []);
+
+    // Rebuild child-role options dynamically based on roleType
+    if (childRoleEl) {
+      const prev = childRole;
+      const children = role.children || [];
+      childRoleEl.innerHTML = "";
+      const opt0 = document.createElement("option");
+      opt0.value = "";
+      opt0.textContent = "—";
+      childRoleEl.appendChild(opt0);
+      children.forEach((c) => {
+        const o = document.createElement("option");
+        o.value = String(c.key || "");
+        o.textContent = String(c.label || c.key || "");
+        childRoleEl.appendChild(o);
+      });
+      // restore if still valid
+      childRoleEl.value = prev;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const roleTypeEl = document.getElementById("id_billing_role_type");
+    const childRoleEl = document.getElementById("id_billing_child_role");
+    if (roleTypeEl) roleTypeEl.addEventListener("change", refreshBillingHierarchyPreview);
+    if (childRoleEl) childRoleEl.addEventListener("change", refreshBillingHierarchyPreview);
+    refreshBillingHierarchyPreview();
+  });
+
   const updateUrl = "{% url 'core_settings:api_settings_update' %}";
   const csrfToken = "{{ csrf_token }}";
   document.querySelectorAll("[data-setting]").forEach(el => {

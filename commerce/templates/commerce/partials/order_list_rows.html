@@ -1,0 +1,53 @@
+{% for o in orders %}
+<tr>
+  <td>#{{ o.id }}</td>
+  <td class="fw-semibold">
+    {{ o.party.name }}
+    {% if o.order_source %}
+      <div class="text-muted small">{{ o.order_source }}</div>
+    {% endif %}
+  </td>
+  <td>
+    {% if o.order_type|upper == "SALE" %}
+      <span class="badge bg-success">Sale</span>
+    {% else %}
+      <span class="badge bg-warning text-dark">Purchase</span>
+    {% endif %}
+  </td>
+  <td>
+    {% if o.status|lower == "accepted" %}
+      <span class="badge bg-success">Accepted</span>
+    {% elif o.status|lower == "partial" %}
+      <span class="badge bg-warning text-dark">Partial</span>
+    {% elif o.status|lower == "pending" %}
+      <span class="badge bg-warning text-dark">Pending</span>
+    {% elif o.status|lower == "completed" %}
+      <span class="badge bg-success">Completed</span>
+    {% elif o.status|lower == "rejected" %}
+      <span class="badge bg-danger">Rejected</span>
+    {% else %}
+      <span class="badge bg-secondary">{{ o.status }}</span>
+    {% endif %}
+  </td>
+  <td class="text-end fw-bold">{{ o.list_total|default:o.items_subtotal|default:0 }}</td>
+  <td>{{ o.created_at|date:"d M Y" }}</td>
+  <td class="text-end">
+    <div class="dropdown">
+      <button type="button" class="btn unified-btn-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown">Actions</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{% url 'commerce:view_order' o.id %}">View</a></li>
+        <li><a class="dropdown-item" href="{% url 'commerce:order_detail' o.id %}">Details</a></li>
+        <li><a class="dropdown-item" href="{% url 'commerce:sales_voucher_create' %}?order_id={{ o.id }}">Create Voucher</a></li>
+        <li><a class="dropdown-item" href="{% url 'commerce:add_invoice' %}?order={{ o.id }}">Create Invoice</a></li>
+        <li><hr class="dropdown-divider"></li>
+        {% if o.status|lower == "pending" %}
+          <li><a class="dropdown-item text-success" href="{% url 'commerce:order_action' o.id 'accept' %}">Accept</a></li>
+          <li><a class="dropdown-item text-danger" href="{% url 'commerce:order_action' o.id 'reject' %}">Reject</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="7" class="text-center text-muted py-4">No orders found.</td></tr>
+{% endfor %}

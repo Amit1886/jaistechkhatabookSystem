@@ -2,154 +2,188 @@
 {% load static %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <h3 class="fw-bold">WhatsApp Order Inbox</h3>
-      <p class="text-muted mb-0">Live incoming orders captured from WhatsApp.</p>
-    </div>
-    <a href="{% url 'commerce:sales_order_list' %}" class="btn btn-outline-primary">
-      View Sales Orders
-    </a>
-  </div>
+<style>
+  .wa-page { background: #f6f8fb; min-height: calc(100vh - 70px); padding: 24px 0 36px; }
+  .wa-wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+  .wa-hero { background: linear-gradient(135deg, #075e54 0%, #0f766e 54%, #2563eb 100%); color: #fff; border-radius: 18px; padding: 24px; box-shadow: 0 18px 46px rgba(15, 23, 42, .18); }
+  .wa-hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: start; }
+  .wa-kicker { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.72); }
+  .wa-title-main { margin: 5px 0 0; font-size: 30px; line-height: 1.12; font-weight: 850; letter-spacing: 0; }
+  .wa-sub { margin: 8px 0 0; color: rgba(255,255,255,.78); max-width: 650px; }
+  .wa-actions-top { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .wa-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 9px 14px; border-radius: 10px; border: 1px solid #d8e0ea; background: #fff; color: #0f172a; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; }
+  .wa-btn:hover { color: #0f172a; text-decoration: none; filter: brightness(.98); }
+  .wa-btn.light { background: rgba(255,255,255,.14); color: #fff; border-color: rgba(255,255,255,.28); }
+  .wa-btn.primary { background: #0f172a; color: #fff; border-color: #0f172a; }
+  .wa-btn.good { background: #16a34a; color: #fff; border-color: #16a34a; }
+  .wa-btn.warn { background: #f59e0b; color: #111827; border-color: #f59e0b; }
+  .wa-btn.danger { background: #dc2626; color: #fff; border-color: #dc2626; }
+  .wa-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+  .wa-metric { background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.22); border-radius: 14px; padding: 13px; }
+  .wa-metric b { display: block; font-size: 24px; line-height: 1; }
+  .wa-metric span { display: block; margin-top: 6px; color: rgba(255,255,255,.75); font-size: 12px; font-weight: 700; }
+  .wa-toolbar { margin-top: 18px; background: #fff; border: 1px solid #e4e9f0; border-radius: 14px; padding: 14px; box-shadow: 0 10px 24px rgba(15,23,42,.05); }
+  .wa-filter-form { display: grid; grid-template-columns: minmax(240px, 1fr) auto; gap: 12px; align-items: center; }
+  .wa-search { width: 100%; border: 1px solid #d9e2ec; border-radius: 10px; min-height: 42px; padding: 10px 12px; outline: none; }
+  .wa-search:focus { border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15, 118, 110, .12); }
+  .wa-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .wa-tab { display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border-radius: 999px; border: 1px solid #dbe3ec; background: #f8fafc; color: #334155; font-size: 12px; font-weight: 800; text-decoration: none; }
+  .wa-tab.active { background: #0f172a; border-color: #0f172a; color: #fff; }
+  .wa-count { font-variant-numeric: tabular-nums; opacity: .82; }
+  .wa-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 18px; margin-top: 18px; align-items: start; }
+  .wa-panel, .wa-card { background: #fff; border: 1px solid #e4e9f0; border-radius: 14px; box-shadow: 0 10px 24px rgba(15,23,42,.05); }
+  .wa-panel { padding: 16px; position: sticky; top: 16px; }
+  .wa-panel-title { font-size: 14px; font-weight: 850; color: #0f172a; margin-bottom: 10px; }
+  .wa-health { display: grid; gap: 10px; }
+  .wa-health-row { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eef2f6; font-size: 13px; }
+  .wa-health-row:last-child { border-bottom: 0; }
+  .wa-health-row span { color: #64748b; }
+  .wa-health-row b { color: #0f172a; }
+  .wa-hint { margin-top: 12px; padding: 12px; border-radius: 12px; background: #ecfeff; border: 1px solid #cffafe; color: #155e75; font-size: 12px; line-height: 1.45; }
+  .wa-feed { display: grid; gap: 14px; }
+  .wa-card { overflow: hidden; }
+  .wa-card-head { padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; border-bottom: 1px solid #eef2f6; }
+  .wa-order-title { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 16px; font-weight: 850; color: #0f172a; }
+  .wa-avatar { width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: #dcfce7; color: #166534; font-weight: 900; }
+  .wa-meta { margin-top: 5px; display: flex; gap: 10px; flex-wrap: wrap; color: #64748b; font-size: 12px; }
+  .wa-status { padding: 6px 10px; border-radius: 999px; font-size: 11px; text-transform: uppercase; font-weight: 900; white-space: nowrap; }
+  .wa-status-new { background: #dcfce7; color: #166534; }
+  .wa-status-manual_review { background: #fef3c7; color: #92400e; }
+  .wa-status-approved { background: #dbeafe; color: #1d4ed8; }
+  .wa-status-rejected { background: #fee2e2; color: #991b1b; }
+  .wa-card-body { padding: 16px; display: grid; gap: 12px; }
+  .wa-message { font-size: 13px; color: #1f2937; line-height: 1.5; padding: 12px; background: #f8fafc; border: 1px solid #e8edf3; border-radius: 12px; white-space: pre-wrap; }
+  .wa-items { display: flex; flex-wrap: wrap; gap: 8px; }
+  .wa-item { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 999px; background: #e0f2fe; color: #075985; font-size: 12px; font-weight: 800; }
+  .wa-item-missing { background: #fee2e2; color: #991b1b; }
+  .wa-pill-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: .6; }
+  .wa-card-actions { padding: 14px 16px; border-top: 1px solid #eef2f6; display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+  .wa-action-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .wa-empty { padding: 34px; text-align: center; color: #64748b; }
+  .wa-empty b { display: block; color: #0f172a; font-size: 18px; margin-bottom: 6px; }
+  body.dark .wa-page { background: #07111f; }
+  body.dark .wa-toolbar, body.dark .wa-panel, body.dark .wa-card { background: #0b1220; border-color: #1e293b; }
+  body.dark .wa-panel-title, body.dark .wa-health-row b, body.dark .wa-order-title, body.dark .wa-empty b { color: #e5e7eb; }
+  body.dark .wa-search, body.dark .wa-message { background: #111827; color: #e5e7eb; border-color: #1f2937; }
+  body.dark .wa-tab { background: #111827; border-color: #263244; color: #cbd5e1; }
+  @media (max-width: 980px) { .wa-hero-grid, .wa-layout, .wa-filter-form { grid-template-columns: 1fr; } .wa-actions-top { justify-content: flex-start; } .wa-panel { position: static; } .wa-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .wa-title-main { font-size: 24px; } .wa-metrics { grid-template-columns: 1fr; } .wa-card-head { grid-template-columns: 1fr; } }
+</style>
 
-  <div class="wa-inbox-grid">
-    {% for entry in inbox %}
-      <div class="wa-card">
-        <div class="wa-card-head">
-          <div>
-            <div class="wa-title">Order #{{ entry.order.id|default:entry.id }}</div>
-            <div class="wa-meta">
-              {{ entry.customer_name|default:"Unknown" }} - {{ entry.mobile_number }}
-            </div>
-          </div>
-          <span class="wa-status wa-status-{{ entry.status }}">{{ entry.status|title }}</span>
+<div class="wa-page">
+  <div class="wa-wrap">
+    <section class="wa-hero">
+      <div class="wa-hero-grid">
+        <div>
+          <div class="wa-kicker">Commerce Automation</div>
+          <h1 class="wa-title-main">WhatsApp Order Inbox</h1>
+          <p class="wa-sub">Incoming WhatsApp orders, parsed items, linked customers, and approval controls in one smart operations queue.</p>
         </div>
-        <div class="wa-message">
-          {{ entry.raw_message }}
-        </div>
-        <div class="wa-items">
-          {% for item in entry.parsed_items %}
-            <span class="wa-item {% if not item.matched %}wa-item-missing{% endif %}">
-              {{ item.quantity }}  {{ item.raw_name }}
-              {% if not item.matched %}<em>(manual)</em>{% endif %}
-            </span>
-          {% empty %}
-            <span class="wa-item wa-item-missing">No items parsed</span>
-          {% endfor %}
-        </div>
-        <div class="wa-actions">
-          {% if entry.order %}
-            <a href="{% url 'commerce:sales_order_detail' entry.order.id %}" class="btn btn-sm btn-dark">
-              View Order
-            </a>
-          {% endif %}
-          <a href="{% url 'commerce:whatsapp_order_action' entry.id 'approve' %}" class="btn btn-sm btn-success">
-            Approve
-          </a>
-          <a href="{% url 'commerce:whatsapp_order_action' entry.id 'manual' %}" class="btn btn-sm btn-warning">
-            Manual Review
-          </a>
-          <a href="{% url 'commerce:whatsapp_order_action' entry.id 'reject' %}" class="btn btn-sm btn-danger">
-            Reject
-          </a>
+        <div class="wa-actions-top">
+          <a href="{% url 'commerce:sales_order_list' %}" class="wa-btn light">Sales Orders</a>
+          <a href="{% url 'whatsapp:control_center' %}" class="wa-btn light">WhatsApp Control</a>
         </div>
       </div>
-    {% empty %}
-      <div class="alert alert-info">No WhatsApp orders yet.</div>
-    {% endfor %}
+      <div class="wa-metrics">
+        <div class="wa-metric"><b>{{ status_counts.all|default:0 }}</b><span>Total captured</span></div>
+        <div class="wa-metric"><b>{{ urgent_count|default:0 }}</b><span>Needs attention</span></div>
+        <div class="wa-metric"><b>{{ parsed_total|default:0 }}</b><span>Parsed items shown</span></div>
+        <div class="wa-metric"><b>{{ missing_total|default:0 }}</b><span>Manual item matches</span></div>
+      </div>
+    </section>
+
+    <section class="wa-toolbar">
+      <form method="get" class="wa-filter-form">
+        <input class="wa-search" type="search" name="q" value="{{ q }}" placeholder="Search customer, mobile, party, or message...">
+        <button class="wa-btn primary" type="submit">Search</button>
+      </form>
+      <div class="wa-tabs">
+        <a class="wa-tab {% if status_filter == 'all' %}active{% endif %}" href="?{% if q %}q={{ q|urlencode }}&{% endif %}status=all">All <span class="wa-count">{{ status_counts.all|default:0 }}</span></a>
+        <a class="wa-tab {% if status_filter == 'new' %}active{% endif %}" href="?{% if q %}q={{ q|urlencode }}&{% endif %}status=new">New <span class="wa-count">{{ status_counts.new|default:0 }}</span></a>
+        <a class="wa-tab {% if status_filter == 'manual_review' %}active{% endif %}" href="?{% if q %}q={{ q|urlencode }}&{% endif %}status=manual_review">Manual <span class="wa-count">{{ status_counts.manual_review|default:0 }}</span></a>
+        <a class="wa-tab {% if status_filter == 'approved' %}active{% endif %}" href="?{% if q %}q={{ q|urlencode }}&{% endif %}status=approved">Approved <span class="wa-count">{{ status_counts.approved|default:0 }}</span></a>
+        <a class="wa-tab {% if status_filter == 'rejected' %}active{% endif %}" href="?{% if q %}q={{ q|urlencode }}&{% endif %}status=rejected">Rejected <span class="wa-count">{{ status_counts.rejected|default:0 }}</span></a>
+      </div>
+    </section>
+
+    <div class="wa-layout">
+      <aside class="wa-panel">
+        <div class="wa-panel-title">Queue Health</div>
+        <div class="wa-health">
+          <div class="wa-health-row"><span>New orders</span><b>{{ status_counts.new|default:0 }}</b></div>
+          <div class="wa-health-row"><span>Manual review</span><b>{{ status_counts.manual_review|default:0 }}</b></div>
+          <div class="wa-health-row"><span>Approved</span><b>{{ status_counts.approved|default:0 }}</b></div>
+          <div class="wa-health-row"><span>Rejected</span><b>{{ status_counts.rejected|default:0 }}</b></div>
+        </div>
+        <div class="wa-hint">
+          Approve clean orders, move uncertain messages to Manual Review, and reject spam or invalid requests. Manual item badges mean product matching needs attention.
+        </div>
+      </aside>
+
+      <main class="wa-feed">
+        {% for entry in inbox %}
+          <article class="wa-card">
+            <div class="wa-card-head">
+              <div>
+                <div class="wa-order-title">
+                  <span class="wa-avatar">{{ entry.customer_name|default:"W"|slice:":1"|upper }}</span>
+                  <span>Order #{{ entry.order.id|default:entry.id }}</span>
+                </div>
+                <div class="wa-meta">
+                  <span>{{ entry.customer_name|default:"Unknown customer" }}</span>
+                  <span>{{ entry.mobile_number }}</span>
+                  {% if entry.party %}<span>Party: {{ entry.party.name }}</span>{% endif %}
+                  <span>{{ entry.created_at|date:"d M Y, h:i A" }}</span>
+                </div>
+              </div>
+              <span class="wa-status wa-status-{{ entry.status }}">{{ entry.get_status_display|default:entry.status }}</span>
+            </div>
+
+            <div class="wa-card-body">
+              <div class="wa-message">{{ entry.raw_message }}</div>
+              <div class="wa-items">
+                {% for item in entry.parsed_items %}
+                  <span class="wa-item {% if not item.matched %}wa-item-missing{% endif %}">
+                    <span class="wa-pill-dot"></span>
+                    {{ item.quantity|default:"1" }} x {{ item.raw_name|default:item.name|default:"Item" }}
+                    {% if not item.matched %}(manual){% endif %}
+                  </span>
+                {% empty %}
+                  <span class="wa-item wa-item-missing"><span class="wa-pill-dot"></span>No items parsed</span>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="wa-card-actions">
+              <div class="wa-action-group">
+                {% if entry.order %}
+                  <a href="{% url 'commerce:sales_order_detail' entry.order.id %}" class="wa-btn">View Order</a>
+                {% endif %}
+              </div>
+              <div class="wa-action-group">
+                <form method="post" action="{% url 'commerce:whatsapp_order_action' entry.id 'approve' %}">
+                  {% csrf_token %}
+                  <button class="wa-btn good" type="submit">Approve</button>
+                </form>
+                <form method="post" action="{% url 'commerce:whatsapp_order_action' entry.id 'manual' %}">
+                  {% csrf_token %}
+                  <button class="wa-btn warn" type="submit">Manual Review</button>
+                </form>
+                <form method="post" action="{% url 'commerce:whatsapp_order_action' entry.id 'reject' %}">
+                  {% csrf_token %}
+                  <button class="wa-btn danger" type="submit">Reject</button>
+                </form>
+              </div>
+            </div>
+          </article>
+        {% empty %}
+          <div class="wa-card wa-empty">
+            <b>No WhatsApp orders found</b>
+            Try another filter or wait for incoming WhatsApp commerce messages.
+          </div>
+        {% endfor %}
+      </main>
+    </div>
   </div>
 </div>
-
-<style>
-.wa-inbox-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 16px;
-}
-.wa-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 16px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-}
-body.dark .wa-card {
-  background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
-  border-color: #1f2937;
-}
-.wa-card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-}
-.wa-title {
-  font-weight: 700;
-  font-size: 16px;
-}
-.wa-meta {
-  font-size: 12px;
-  color: #6b7280;
-}
-.wa-status {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  text-transform: uppercase;
-  font-weight: 700;
-}
-.wa-status-new {
-  background: #dcfce7;
-  color: #15803d;
-}
-.wa-status-manual_review {
-  background: #fef3c7;
-  color: #b45309;
-}
-.wa-status-approved {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-.wa-status-rejected {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-.wa-message {
-  margin-top: 12px;
-  font-size: 13px;
-  padding: 10px;
-  background: #ffffff;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-}
-body.dark .wa-message {
-  background: #0b1220;
-  border-color: #1f2937;
-  color: #e5e7eb;
-}
-.wa-items {
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.wa-item {
-  background: #e0f2fe;
-  color: #0369a1;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-}
-.wa-item-missing {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-.wa-actions {
-  margin-top: 12px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-</style>
 {% endblock %}

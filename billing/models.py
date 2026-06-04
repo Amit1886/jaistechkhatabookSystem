@@ -282,6 +282,14 @@ class FeatureRegistry(models.Model):
     description = models.TextField(blank=True)
     active = models.BooleanField(default=True)
     sort_order = models.PositiveIntegerField(default=0)
+    is_advanced = models.BooleanField(default=False, db_index=True)
+    dependencies = models.ManyToManyField(
+        "self",
+        blank=True,
+        symmetrical=False,
+        related_name="dependents",
+        help_text="If enabled for a user, dependencies are auto-enabled (backend).",
+    )
 
     class Meta:
         ordering = ["group", "sort_order", "label"]
@@ -322,6 +330,20 @@ class UserFeatureOverride(models.Model):
 
     def __str__(self):
         return f"{self.user} -> {self.feature.key} ({'ON' if self.is_enabled else 'OFF'})"
+
+    def save(self, *args, **kwargs):
+        # Persist first so PK exists for downstream updates.
+        super().save(*args, **kwargs)
+        # Dependency resolution (backend-only):
+        # When a feature is enabled for a user, auto-enable its dependencies.
+        try:
+            if self.is_enabled:
+                from billing.services import ensure_user_feature_overrides, enable_feature_dependencies_for_user
+
+                ensure_user_feature_overrides(self.user, sync_plan=False)
+                enable_feature_dependencies_for_user(self.user, self.feature_id)
+        except Exception:
+            pass
 
 
 # ====

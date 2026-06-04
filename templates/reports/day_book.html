@@ -1,19 +1,80 @@
-{% extends 'base.html' %}
-{% block title %}Day Book{% endblock %}
+{% extends "base.html" %}
 
 {% block content %}
-<h2>Day Book ({{ date }})</h2>
+<div class="container-fluid py-2 unified-list-screen" data-export-scope>
+  <div class="unified-list-card">
+    <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Day Book</h3>
+        <div class="unified-subtitle">Transactions for selected date</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#dayBookTable" data-export-name="day_book">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#dayBookTable" data-export-name="day_book">Excel</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#dayBookTable">PDF</button>
+      </div>
+    </div>
 
-<table>
-    <tr>
-        <th>Party</th>
-        <th>Amount</th>
-    </tr>
-    {% for t in transactions %}
-    <tr>
-        <td>{{ t.party }}</td>
-        <td>{{ t.amount }}</td>
-    </tr>
-    {% endfor %}
-</table>
+    <div class="unified-list-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" method="get">
+        <div style="min-width:200px;">
+          <label class="unified-label" for="dayBookDate">Date</label>
+          <input id="dayBookDate" name="date" type="date" class="form-control" value="{{ date|date:'Y-m-d' }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <a href="{% url 'reports:day_book' %}" class="btn unified-btn-outline">Today</a>
+        </div>
+      </form>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" id="dayBookTable">
+          <thead>
+            <tr>
+              <th>Party</th>
+              <th class="text-end">Amount</th>
+              <th>Type</th>
+              <th>Mode</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in transactions %}
+            <tr>
+              <td>{{ t.party.name|default:t.party }}</td>
+              <td class="text-end fw-bold">{{ t.amount }}</td>
+              <td>
+                {% if t.txn_type == 'credit' %}
+                  <span class="badge bg-success">Credit</span>
+                {% else %}
+                  <span class="badge bg-danger">Debit</span>
+                {% endif %}
+              </td>
+              <td><span class="badge bg-light text-dark">{{ t.txn_mode|default:"-" }}</span></td>
+              <td class="text-end">
+                <div class="dropdown">
+                  <button type="button" class="btn unified-btn-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown">Actions</button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{% url 'khataapp:transaction_view' t.id %}">View</a></li>
+                    <li><a class="dropdown-item" href="{% url 'khataapp:transaction_edit' t.id %}">Edit</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <form method="post" action="{% url 'khataapp:transaction_delete' t.id %}" onsubmit="return confirm('Delete this transaction?')" style="margin:0;">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item text-danger">Delete</button>
+                      </form>
+                    </li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No transactions found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

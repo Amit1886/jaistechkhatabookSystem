@@ -26,6 +26,27 @@ body.mode-pc .busy-order-pc #mainOrderCard {
   overflow: hidden;
 }
 
+/* Voucher quick-create: single screen, full-width table (no right summary/rail). */
+body.mode-pc .busy-order-pc.busy-voucher-single #mainOrderCard {
+  padding-right: 0 !important;
+}
+
+body.mode-pc .busy-order-pc.busy-voucher-single .busy-shortcut-rail {
+  display: none !important;
+}
+
+body.mode-pc .busy-order-pc.busy-voucher-single .busy-bottom-bar {
+  right: 0 !important;
+}
+
+body.mode-pc .busy-order-pc.busy-voucher-single #step-2 {
+  grid-template-columns: 1fr !important;
+}
+
+body.mode-pc .busy-order-pc.busy-voucher-single #step-2 .table-responsive {
+  height: calc(100vh - 260px) !important;
+}
+
 /* Full width toggle (hides shortcut rail) */
 body.mode-pc .busy-order-pc.busy-full-width #mainOrderCard {
   padding-right: 0 !important;
@@ -45,6 +66,11 @@ body.mode-pc .busy-order-pc #mainOrderCard > .card-header {
 }
 
 body.mode-pc .busy-order-pc .wizard-steps {
+  display: none !important;
+}
+
+/* Hide modern footer action blocks (Busy mode uses bottom function-key bar). */
+body.mode-pc .busy-order-pc #mainOrderCard > .card-footer {
   display: none !important;
 }
 
@@ -96,14 +122,119 @@ body.mode-pc .busy-order-pc #step-1 label {
   color: #0b2430;
 }
 
+body.mode-pc .busy-order-pc .busy-top-grid {
+  display: grid;
+  gap: 10px;
+}
+
+body.mode-pc .busy-order-pc .busy-top-row1 {
+  display: grid;
+  grid-template-columns: 90px 160px 160px 240px 1fr 120px;
+  gap: 10px;
+  align-items: end;
+}
+
+body.mode-pc .busy-order-pc .busy-top-row2 {
+  display: grid;
+  grid-template-columns: 220px 1fr 1fr 240px;
+  gap: 10px;
+  align-items: end;
+}
+
+body.mode-pc .busy-order-pc .busy-top-kv {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 900;
+}
+
+body.mode-pc .busy-order-pc .busy-top-kv .k {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+body.mode-pc .busy-order-pc .busy-top-kv .v {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+body.mode-pc .busy-order-pc .busy-top-kv.align-end {
+  align-items: flex-end;
+  text-align: right;
+}
+
+body.mode-pc .busy-order-pc .busy-date-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.mode-pc .busy-order-pc .busy-day {
+  font-size: 11px;
+  font-weight: 800;
+  color: #0b2430;
+  white-space: nowrap;
+}
+
 body.mode-pc .busy-order-pc #orderType,
-body.mode-pc .busy-order-pc #partySearch {
+body.mode-pc .busy-order-pc #partySearch,
+body.mode-pc .busy-order-pc #partySelect,
+body.mode-pc .busy-order-pc #orderDate,
+body.mode-pc .busy-order-pc #pcGstRate,
+body.mode-pc .busy-order-pc #pcNarration,
+body.mode-pc .busy-order-pc #step-1 select.form-select,
+body.mode-pc .busy-order-pc #step-1 input.form-control {
   height: 28px;
   border-radius: 0 !important;
   border: 1px solid #9bb4b8 !important;
   background: #ffffff !important;
   font-size: 12px !important;
   font-weight: 700 !important;
+}
+
+body.mode-pc .busy-order-pc #step-1 input.form-control,
+body.mode-pc .busy-order-pc #step-1 select.form-select {
+  padding: 2px 6px !important;
+}
+
+body.mode-pc .busy-order-pc #step-1 input.form-control.busy-mini {
+  width: 110px;
+  max-width: 110px;
+}
+
+/* Select2 in PC Busy top strip (Warehouse/Payment/etc.) */
+body.mode-pc .busy-order-pc #step-1 .select2-container {
+  width: 100% !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+body.mode-pc .busy-order-pc #step-1 .select2-container .select2-selection--single {
+  height: 28px !important;
+  border-radius: 0 !important;
+  border: 1px solid #9bb4b8 !important;
+}
+
+body.mode-pc .busy-order-pc #step-1 .select2-container .select2-selection--single .select2-selection__rendered {
+  line-height: 26px !important;
+  padding-left: 6px !important;
+  padding-right: 20px !important;
+  color: #0b2430 !important;
+}
+
+body.mode-pc .busy-order-pc #step-1 .select2-container .select2-selection--single .select2-selection__arrow {
+  height: 26px !important;
+}
+
+body.mode-pc .busy-order-pc .select2-dropdown {
+  border-radius: 0 !important;
+  border: 1px solid #9bb4b8 !important;
+}
+
+body.mode-pc .busy-order-pc .select2-search__field {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: 0 !important;
 }
 
 /* Step 2 -> classic table + right summary */
@@ -142,6 +273,12 @@ body.mode-pc .busy-order-pc #step-2 .table-responsive {
   background: #ffffff !important;
   height: calc(100vh - 230px);
   overflow: auto !important;
+}
+
+/* In PC Busy mode, Bill Sundry is handled via F8 modal + side summary.
+   Hide the inline sundry block under the table to remove extra blank/gap area. */
+body.mode-pc .busy-order-pc .sundry-section-inline {
+  display: none !important;
 }
 
 body.mode-pc .busy-order-pc #orderTable {

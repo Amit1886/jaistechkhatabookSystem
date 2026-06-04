@@ -1,0 +1,5 @@
+supplier,product_sku,product_name,price,moq,delivery_days
+Demo Supplier A,DEMO-SKU-1-1,Demo Product 1,95.00,1,2
+Demo Supplier B,DEMO-SKU-1-1,Demo Product 1,98.00,2,1
+Demo Supplier C,DEMO-SKU-1-1,Demo Product 1,99.00,1,3
+

@@ -1,0 +1,83 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">New campaign</div>
+        <div class="va-help">Send to your lead list (free) or prepare paid ads (Phase B).</div>
+      </div>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-marketing-campaigns' vendor.subdomain %}">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+    </div>
+  </div>
+
+  <form method="post" class="va-panel p-3">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <label class="form-label va-form-label">Campaign name</label>
+        <input class="form-control" name="name" placeholder="Summer sale blast" required>
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Channel</label>
+        <select class="form-select" name="channel">
+          <option value="whatsapp">WhatsApp</option>
+          <option value="sms">SMS</option>
+          <option value="email">Email</option>
+          <option value="facebook">Facebook Ads (Phase B)</option>
+          <option value="instagram">Instagram Ads (Phase B)</option>
+          <option value="google">Google Ads (Phase B)</option>
+          <option value="ott">OTT Ads (Demo)</option>
+        </select>
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Language</label>
+        <select class="form-select" name="language">
+          <option value="auto">Auto</option>
+          <option value="hi">Hindi</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <label class="form-label va-form-label">Objective</label>
+        <input class="form-control" name="objective" placeholder="promote / new launch / discount">
+      </div>
+      <div class="col-12 col-lg-6">
+        <label class="form-label va-form-label">Product name</label>
+        <input class="form-control" name="product" placeholder="Kitchen Knife Set">
+        <div class="va-help mt-1">Used to auto-generate ad copy if you leave copy blank.</div>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label va-form-label">Ad copy (optional)</label>
+        <textarea class="form-control" rows="4" name="ad_copy" placeholder="Type your message..."></textarea>
+      </div>
+
+      <div class="col-12">
+        <div class="va-section-title mb-2">Audience (Lead filters)</div>
+        <div class="va-help">Phase A uses leads from CRM. Select filters to target.</div>
+      </div>
+
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Lead status (comma separated)</label>
+        <input class="form-control" name="lead_status" placeholder="new, interested, converted">
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Pincode (optional)</label>
+        <input class="form-control" name="pincode" placeholder="272002">
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Schedule (optional)</label>
+        <input class="form-control" name="scheduled_at" placeholder="YYYY-MM-DD HH:MM">
+        <div class="va-help mt-1">Leave empty to keep as draft.</div>
+      </div>
+
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Create</button>
+      </div>
+    </div>
+  </form>
+{% endblock %}

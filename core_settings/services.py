@@ -65,6 +65,83 @@ SETTINGS_REGISTRY = [
         ],
     },
     {
+        "slug": "khata_control",
+        "label": "Khata Control",
+        "icon": "bell",
+        "description": "Smart khata credit score + auto payment reminders.",
+        "settings": [
+            {
+                "key": "khata_auto_reminders_enabled",
+                "label": "Enable auto khata reminders",
+                "data_type": "boolean",
+                "default": True,
+                "scope": "user",
+                "help_text": "Master switch for due/payment reminder automation.",
+            },
+            {
+                "key": "khata_reminder_offsets",
+                "label": "Reminder schedule offsets (days)",
+                "data_type": "json",
+                "default": [-3, 0, 3, 7],
+                "scope": "user",
+                "help_text": "Offsets relative to due date. Example: [-3,0,3,7].",
+            },
+            {
+                "key": "khata_smart_timing_enabled",
+                "label": "Enable smart reminder timing",
+                "data_type": "boolean",
+                "default": True,
+                "scope": "user",
+                "help_text": "Learns typical delay and sends a reminder 1 day before the usual payment day.",
+            },
+            {
+                "key": "khata_default_tone",
+                "label": "Default reminder tone",
+                "data_type": "select",
+                "default": "professional",
+                "options": ["friendly", "professional", "strict"],
+                "scope": "user",
+            },
+            {
+                "key": "khata_reminder_channels",
+                "label": "Reminder channels",
+                "data_type": "json",
+                "default": ["whatsapp"],
+                "scope": "user",
+                "help_text": "Example: [\"whatsapp\",\"sms\",\"email\"].",
+            },
+            {
+                "key": "khata_template_friendly",
+                "label": "Reminder template (Friendly)",
+                "data_type": "text",
+                "default": "Hello {{customer_name}}, your outstanding balance of ₹{{amount}} is pending since {{days}} days. Please clear your payment. Thank you.",
+                "scope": "user",
+            },
+            {
+                "key": "khata_template_professional",
+                "label": "Reminder template (Professional)",
+                "data_type": "text",
+                "default": "Hello {{customer_name}}, your outstanding balance of ₹{{amount}} is pending for {{days}} days. Kindly make the payment at the earliest. Invoice: {{invoice_number}}.",
+                "scope": "user",
+            },
+            {
+                "key": "khata_template_strict",
+                "label": "Reminder template (Strict)",
+                "data_type": "text",
+                "default": "Dear {{customer_name}}, payment of ₹{{amount}} is overdue by {{days}} days. Please pay immediately to avoid further action. Invoice: {{invoice_number}}.",
+                "scope": "user",
+            },
+            {
+                "key": "khata_risk_threshold",
+                "label": "High-risk score threshold",
+                "data_type": "number",
+                "default": 40,
+                "scope": "user",
+                "help_text": "Score below this value triggers warnings (default 40).",
+            },
+        ],
+    },
+    {
         "slug": "invoice_voucher",
         "label": "Invoice & Voucher",
         "icon": "file-text",
@@ -131,13 +208,133 @@ SETTINGS_REGISTRY = [
         "description": "Messaging, reminders, and email/SMS.",
         "settings": [
             {"key": "whatsapp_api_config", "label": "WhatsApp API config", "data_type": "text", "default": ""},
+            {"key": "wa_enabled", "label": "Enable WhatsApp automation", "data_type": "boolean", "default": True, "help_text": "Master switch for WhatsApp automation features."},
+            {
+                "key": "wa_provider",
+                "label": "WhatsApp provider",
+                "data_type": "select",
+                "default": "ultramsg",
+                "options": [
+                    {"value": "ultramsg", "label": "UltraMsg (easy demo)"},
+                    {"value": "meta_cloud_api", "label": "Meta WhatsApp Cloud API (official)"},
+                    {"value": "twilio", "label": "Twilio WhatsApp"},
+                    {"value": "gupshup", "label": "Gupshup (BSP)"},
+                    {"value": "360dialog", "label": "360dialog (BSP)"},
+                    {"value": "wati", "label": "WATI (BSP/platform)"},
+                    {"value": "interakt", "label": "Interakt (BSP/platform)"},
+                    {"value": "aisensy", "label": "AiSensy (BSP/platform)"},
+                    {"value": "infobip", "label": "Infobip (BSP)"},
+                    {"value": "vonage", "label": "Vonage (BSP)"},
+                    {"value": "messagebird", "label": "MessageBird/Bird (BSP)"},
+                    {"value": "kaleyra", "label": "Kaleyra (BSP)"},
+                    {"value": "custom_http", "label": "Custom HTTP (any provider)"},
+                ],
+                "help_text": "Select your WhatsApp provider. For most market vendors you can use Custom HTTP, or use Meta/Twilio if you have official credentials.",
+            },
+            {"key": "wa_ultramsg_instance_id", "label": "UltraMsg Instance ID", "data_type": "string", "default": "", "help_text": "Example: instance123456"},
+            {"key": "wa_ultramsg_token", "label": "UltraMsg Token", "data_type": "string", "default": "", "help_text": "Bearer token / API token from UltraMsg."},
+            {"key": "wa_meta_phone_number_id", "label": "Meta Phone Number ID", "data_type": "string", "default": "", "help_text": "WhatsApp Cloud API phone_number_id."},
+            {"key": "wa_meta_access_token", "label": "Meta Access Token", "data_type": "string", "default": "", "help_text": "Permanent/long-lived access token for WhatsApp Cloud API."},
+            {"key": "wa_meta_graph_version", "label": "Meta Graph API version", "data_type": "string", "default": "v20.0", "help_text": "Example: v20.0 (change if your app uses a different version)."},
+            {"key": "wa_twilio_account_sid", "label": "Twilio Account SID", "data_type": "string", "default": "", "help_text": "Example: ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"},
+            {"key": "wa_twilio_auth_token", "label": "Twilio Auth Token", "data_type": "string", "default": "", "help_text": "Twilio auth token."},
+            {"key": "wa_twilio_from_number", "label": "Twilio From (WhatsApp)", "data_type": "string", "default": "", "help_text": "Example: whatsapp:+14155238886"},
+            {"key": "wa_custom_send_url", "label": "Custom provider send URL", "data_type": "string", "default": "", "help_text": "For Custom HTTP: the message send endpoint URL."},
+            {"key": "wa_custom_content_type", "label": "Custom provider content type", "data_type": "select", "default": "form", "options": ["form", "json"], "help_text": "For Custom HTTP: how to send the payload."},
+            {"key": "wa_custom_to_field", "label": "Custom provider 'to' field", "data_type": "string", "default": "to", "help_text": "For Custom HTTP: field name for destination number."},
+            {"key": "wa_custom_body_field", "label": "Custom provider 'body' field", "data_type": "string", "default": "body", "help_text": "For Custom HTTP: field name for message text."},
+            {"key": "wa_custom_extra_payload", "label": "Custom provider extra payload", "data_type": "json", "default": {}, "help_text": "For Custom HTTP: extra JSON fields to include in the request body."},
+            {"key": "wa_custom_headers", "label": "Custom provider headers", "data_type": "json", "default": {}, "help_text": "For Custom HTTP: extra request headers (JSON object)."},
+            {"key": "wa_custom_auth_header", "label": "Custom provider auth header", "data_type": "string", "default": "Authorization", "help_text": "For Custom HTTP: header name for auth."},
+            {"key": "wa_custom_auth_value", "label": "Custom provider auth value", "data_type": "string", "default": "", "help_text": "For Custom HTTP: header value, e.g. 'Bearer <token>'."},
+            {"key": "wa_webhook_secret", "label": "WhatsApp webhook secret", "data_type": "string", "default": "", "help_text": "Shared secret to protect the webhook endpoint."},
             {"key": "order_via_whatsapp", "label": "Order via WhatsApp", "data_type": "boolean", "default": False},
             {"key": "invoice_share_auto", "label": "Invoice share automation", "data_type": "boolean", "default": False},
             {"key": "payment_link_auto", "label": "Payment link auto-send", "data_type": "boolean", "default": False},
             {"key": "reminder_templates", "label": "Reminder templates", "data_type": "json", "default": []},
             {"key": "chatbot_order_mode", "label": "Chatbot order mode", "data_type": "boolean", "default": False},
+
+            # ---------------- OTP (SMS/Email/WhatsApp) ----------------
+            {
+                "key": "otp_delivery_strategy",
+                "label": "OTP delivery strategy",
+                "data_type": "select",
+                "default": "all",
+                "options": [
+                    {"value": "all", "label": "Send via all enabled channels"},
+                    {"value": "fallback", "label": "Fallback (try SMS, then Email, then WhatsApp)"},
+                ],
+                "help_text": "Controls how OTP is delivered. 'All' is best for reliability; 'Fallback' reduces message volume.",
+            },
+            {"key": "otp_send_via_sms", "label": "Send OTP via SMS", "data_type": "boolean", "default": True},
+            {"key": "otp_send_via_email", "label": "Send OTP via Email", "data_type": "boolean", "default": True},
+            {"key": "otp_send_via_whatsapp", "label": "Send OTP via WhatsApp", "data_type": "boolean", "default": True},
+
+            # ---------------- SMS Provider ----------------
+            {
+                "key": "sms_provider",
+                "label": "SMS provider",
+                "data_type": "select",
+                "default": "fast2sms",
+                "options": [
+                    {"value": "demo", "label": "Demo (no real SMS, just logs)"},
+                    {"value": "fast2sms", "label": "Fast2SMS (quick demo)"},
+                    {"value": "google", "label": "Google Verified SMS / RCS (via gateway)"},
+                    {"value": "custom_http", "label": "Custom HTTP (any SMS gateway)"},
+                ],
+                "help_text": "Choose how the platform sends SMS (OTP + public download links).",
+            },
+            {"key": "sms_api_key", "label": "SMS API key", "data_type": "string", "default": "", "help_text": "API key/token for your SMS provider (used by Fast2SMS/Google/custom providers)."},
+            {"key": "sms_sender_id", "label": "SMS Sender ID", "data_type": "string", "default": "", "help_text": "DLT sender ID (if your provider requires it). Example: BILLEN"},
+            {"key": "sms_api_url", "label": "SMS API URL", "data_type": "string", "default": "", "help_text": "Optional override URL for SMS provider (used by Google/custom providers)."},
+            {"key": "sms_dlt_enabled", "label": "Enable DLT mode", "data_type": "boolean", "default": False, "help_text": "Enable if your SMS provider requires DLT entity/template IDs (India)."},
+            {"key": "sms_dlt_entity_id", "label": "DLT Entity ID", "data_type": "string", "default": "", "help_text": "Your DLT entity ID (if applicable)."},
+            {"key": "sms_dlt_template_id_otp", "label": "DLT Template ID (OTP)", "data_type": "string", "default": "", "help_text": "Your approved DLT template ID for OTP messages (if applicable)."},
+
+            # Custom HTTP SMS adapter (works for most providers)
+            {"key": "sms_custom_send_url", "label": "Custom SMS send URL", "data_type": "string", "default": "", "help_text": "For Custom HTTP: the SMS send endpoint URL."},
+            {"key": "sms_custom_method", "label": "Custom SMS method", "data_type": "select", "default": "POST", "options": ["POST", "GET"], "help_text": "For Custom HTTP: HTTP method."},
+            {"key": "sms_custom_content_type", "label": "Custom SMS content type", "data_type": "select", "default": "form", "options": ["form", "json"], "help_text": "For Custom HTTP: send payload as form or JSON."},
+            {"key": "sms_custom_to_field", "label": "Custom SMS 'to' field", "data_type": "string", "default": "to", "help_text": "For Custom HTTP: payload field name for destination number."},
+            {"key": "sms_custom_message_field", "label": "Custom SMS 'message' field", "data_type": "string", "default": "message", "help_text": "For Custom HTTP: payload field name for message text."},
+            {"key": "sms_custom_headers", "label": "Custom SMS headers", "data_type": "json", "default": {}, "help_text": "For Custom HTTP: request headers (JSON object)."},
+            {"key": "sms_custom_auth_header", "label": "Custom SMS auth header", "data_type": "string", "default": "Authorization", "help_text": "For Custom HTTP: header name for auth."},
+            {"key": "sms_custom_auth_value", "label": "Custom SMS auth value", "data_type": "string", "default": "", "help_text": "For Custom HTTP: header value, e.g. 'Bearer <token>'."},
+            {"key": "sms_custom_extra_payload", "label": "Custom SMS extra payload", "data_type": "json", "default": {}, "help_text": "For Custom HTTP: extra fields to include in the request body."},
+
+            # ---------------- Email SMTP (Optional) ----------------
+            {"key": "smtp_host", "label": "SMTP Host", "data_type": "string", "default": "", "help_text": "If set, OTP emails use this SMTP config instead of default Django email settings."},
+            {"key": "smtp_port", "label": "SMTP Port", "data_type": "number", "default": 587},
+            {"key": "smtp_username", "label": "SMTP Username", "data_type": "string", "default": ""},
+            {"key": "smtp_password", "label": "SMTP Password", "data_type": "string", "default": ""},
+            {"key": "smtp_use_tls", "label": "SMTP Use TLS", "data_type": "boolean", "default": True},
+            {"key": "smtp_use_ssl", "label": "SMTP Use SSL", "data_type": "boolean", "default": False},
+            {"key": "smtp_from_email", "label": "From Email", "data_type": "string", "default": "", "help_text": "From address for OTP emails. Falls back to DEFAULT_FROM_EMAIL."},
             {"key": "sms_gateway_config", "label": "SMS gateway config", "data_type": "text", "default": ""},
             {"key": "email_smtp_config", "label": "Email SMTP config", "data_type": "text", "default": ""},
+
+            # ---------------- Customer Login Link Footer ----------------
+            {
+                "key": "public_base_url",
+                "label": "Public Base URL",
+                "data_type": "string",
+                "default": "",
+                "help_text": "Optional. Example: https://app.yourdomain.com (used in WhatsApp/SMS login links).",
+            },
+            {"key": "customer_login_link_enabled", "label": "Append customer login link", "data_type": "boolean", "default": True},
+            {"key": "customer_login_link_append_to_sms", "label": "Append to SMS", "data_type": "boolean", "default": True},
+            {"key": "customer_login_link_append_to_whatsapp", "label": "Append to WhatsApp", "data_type": "boolean", "default": True},
+            {"key": "customer_login_link_append_to_email", "label": "Append to Email", "data_type": "boolean", "default": True},
+            {"key": "customer_login_link_append_to_notifications", "label": "Append to Notifications", "data_type": "boolean", "default": True},
+            {"key": "customer_login_link_append_to_otp", "label": "Append to OTP messages", "data_type": "boolean", "default": False},
+            {"key": "customer_login_link_expires_hours", "label": "Login link expiry (hours)", "data_type": "number", "default": 168},
+            {
+                "key": "customer_login_link_footer_template",
+                "label": "Login link footer template",
+                "data_type": "text",
+                "default": "\n\nLogin: {url}",
+                "help_text": "Use {url}. Example: \\n\\nOpen your dashboard: {url}",
+            },
         ],
     },
     {
@@ -150,6 +347,11 @@ SETTINGS_REGISTRY = [
             {"key": "website_link", "label": "Website link", "data_type": "string", "default": ""},
             {"key": "google_login", "label": "Google login", "data_type": "boolean", "default": False},
             {"key": "api_keys_manager", "label": "API keys manager", "data_type": "json", "default": {}},
+            # ---------------- Shopify (Partner App) ----------------
+            {"key": "shopify_client_id", "label": "Shopify Client ID", "data_type": "string", "default": "", "help_text": "From Shopify Dev Dashboard app settings."},
+            {"key": "shopify_client_secret", "label": "Shopify Client Secret", "data_type": "string", "default": "", "help_text": "Store securely. Used to verify OAuth and exchange token."},
+            {"key": "shopify_scopes", "label": "Shopify Scopes", "data_type": "string", "default": "read_orders,read_products,read_customers", "help_text": "Comma-separated scopes for OAuth authorize URL."},
+            {"key": "shopify_webhook_secret", "label": "Shopify Webhook Secret", "data_type": "string", "default": "", "help_text": "Optional: shared secret for verifying webhook requests."},
             {"key": "webhook_settings", "label": "Webhook settings", "data_type": "json", "default": {}},
             {"key": "third_party_integrations", "label": "Third-party integrations", "data_type": "json", "default": []},
         ],
@@ -168,12 +370,76 @@ SETTINGS_REGISTRY = [
             {"key": "filing_reminders", "label": "Filing reminder alerts", "data_type": "boolean", "default": True},
         ],
     },
+    {
+        "slug": "ai_tools",
+        "label": "AI Tools",
+        "icon": "cpu",
+        "description": "AI-powered accounting, OCR and insights.",
+        "settings": [
+            {"key": "ai_tools_enabled", "label": "Enable AI Tools", "data_type": "boolean", "default": True},
+            {"key": "ocr_enabled", "label": "Enable OCR Invoice Entry", "data_type": "boolean", "default": True},
+            {"key": "ocr_model", "label": "OCR Model (OpenAI)", "data_type": "string", "default": "gpt-4o-mini"},
+            {"key": "voice_enabled", "label": "Enable Voice Accounting", "data_type": "boolean", "default": True},
+            {"key": "ai_insights_enabled", "label": "Enable AI Insights", "data_type": "boolean", "default": True},
+            {"key": "smart_alerts_enabled", "label": "Enable Smart Alerts", "data_type": "boolean", "default": True},
+        ],
+    },
+    {
+        "slug": "automation",
+        "label": "Automation",
+        "icon": "zap",
+        "description": "Automation rules and imports.",
+        "settings": [
+            {"key": "bank_import_enabled", "label": "Enable Bank Statement Import", "data_type": "boolean", "default": True},
+            {
+                "key": "bank_import_mapping",
+                "label": "Bank Import Mapping Rules",
+                "data_type": "json",
+                "default": {"expenses": [{"pattern": "diesel", "category": "Fuel"}]},
+                "help_text": "Regex-based mapping. Example: {'expenses':[{'pattern':'diesel','category':'Fuel'}]}",
+            },
+        ],
+    },
+    {
+        "slug": "portal",
+        "label": "Customer & Supplier Portal",
+        "icon": "globe",
+        "description": "Self-service portal access, welcome kit automation and payment links.",
+        "settings": [
+            {"key": "portal_enabled", "label": "Enable Portal", "data_type": "boolean", "default": True},
+            {"key": "portal_customer_enabled", "label": "Enable Customer Portal", "data_type": "boolean", "default": True},
+            {"key": "portal_supplier_enabled", "label": "Enable Supplier Portal", "data_type": "boolean", "default": True},
+            {"key": "portal_customer_split_dashboards", "label": "Split customer dashboards (E-commerce/Billing)", "data_type": "boolean", "default": True},
+            {"key": "portal_supplier_split_dashboards", "label": "Split supplier dashboards (Purchases/Billing)", "data_type": "boolean", "default": True},
+            {
+                "key": "portal_base_url",
+                "label": "Portal Base URL",
+                "data_type": "string",
+                "default": "",
+                "help_text": "Public URL used in welcome messages. Leave blank to use BASE_URL.",
+            },
+            {"key": "portal_welcome_whatsapp", "label": "Welcome kit via WhatsApp", "data_type": "boolean", "default": True},
+            {"key": "portal_welcome_sms", "label": "Welcome kit via SMS", "data_type": "boolean", "default": True},
+            {"key": "portal_welcome_email", "label": "Welcome kit via Email", "data_type": "boolean", "default": True},
+        ],
+    },
 ]
 
 
 def get_user_role(user):
     if user.is_superuser:
         return "super_admin"
+
+    saas_role = (getattr(user, "role", "") or "").strip().lower()
+    if saas_role == "super_admin":
+        return "super_admin"
+    if saas_role in {"state_admin", "district_admin", "area_admin"}:
+        return "admin"
+    if saas_role == "super_agent":
+        return "manager"
+    if saas_role in {"agent", "customer"}:
+        return "user"
+
     if user.is_staff:
         return "admin"
     manager_group = Group.objects.filter(name__iexact="manager").first()

@@ -1,0 +1,39 @@
+{% extends "core/pc_universal.html" %}
+
+{% block title %}Account Summary{% endblock %}
+
+{% block pc_content %}
+  <div class="unified-section">
+    <div class="unified-subtitle">Balances computed from GL entries (Debit - Credit).</div>
+  </div>
+
+  <div class="unified-table-wrap">
+    <table class="table unified-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Account</th>
+          <th>Type</th>
+          <th class="text-end">Debit</th>
+          <th class="text-end">Credit</th>
+          <th class="text-end">Balance</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in accounts %}
+          <tr>
+            <td style="font-family: monospace;">{{ a.code }}</td>
+            <td>{{ a.name }}</td>
+            <td>{{ a.account_type|title }}</td>
+            <td class="text-end">{{ a.debit }}</td>
+            <td class="text-end">{{ a.credit }}</td>
+            <td class="text-end" style="font-weight:900;">{{ a.balance }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-4">No accounts found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+

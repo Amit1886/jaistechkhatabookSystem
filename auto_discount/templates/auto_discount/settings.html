@@ -1,0 +1,174 @@
+{% extends "core/pc_universal.html" %}
+{% load static %}
+
+{% block title %}Auto Discount Settings{% endblock %}
+
+{% block pc_content %}
+<div class="p-4 space-y-4">
+  <div class="flex items-start justify-between gap-3 flex-wrap">
+    <div>
+      <h1 class="text-2xl font-semibold">Auto Discount Settings</h1>
+      <p class="text-sm text-gray-500">
+        Simple tarike se slab set karein. System automatic best discount choose karega aur loss hone nahi dega.
+      </p>
+    </div>
+    <div class="flex gap-2 flex-wrap">
+      <a class="px-3 py-2 text-sm rounded-md border bg-white" href="{% url 'auto_discount:billing_page' %}">Open Billing Demo</a>
+    </div>
+  </div>
+
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+
+    {% if form.non_field_errors or b2b_fs.non_form_errors or b2c_fs.non_form_errors %}
+      <div class="p-3 rounded-md border bg-red-50 text-red-700 border-red-200 text-sm">
+        {{ form.non_field_errors }}
+        {{ b2b_fs.non_form_errors }}
+        {{ b2c_fs.non_form_errors }}
+      </div>
+    {% endif %}
+
+    <div class="bg-white border rounded-lg overflow-hidden">
+      <div class="px-4 py-3 border-b font-medium">Main Controls</div>
+      <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-lg border bg-white">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="enableAuto" name="enable_auto_discount" {% if form.initial.enable_auto_discount %}checked{% endif %}>
+            <label class="form-check-label" for="enableAuto">Auto discount ON/OFF</label>
+          </div>
+          <div class="text-xs text-gray-500 mt-2">
+            OFF karne par discount apply nahi hoga, lekin minimum profit protection phir bhi enforce hoga.
+          </div>
+        </div>
+
+        <div class="p-4 rounded-lg border bg-white">
+          <label class="text-xs text-gray-500">Minimum Profit % (Loss protection)</label>
+          <input class="form-control mt-1" type="number" step="0.01" min="0" name="min_profit_percentage" value="{{ form.initial.min_profit_percentage }}">
+          {% if form.errors.min_profit_percentage %}
+            <div class="text-sm text-red-600 mt-1">{{ form.errors.min_profit_percentage }}</div>
+          {% endif %}
+          <div class="text-xs text-gray-500 mt-2">
+            Example: Buy ₹100 + 10% = Minimum Sell ₹110
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white border rounded-lg overflow-hidden">
+      <div class="px-4 py-3 border-b font-medium">B2B Slabs (Quantity ke hisab se)</div>
+      <div class="p-4">
+        {{ b2b_fs.management_form }}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width:140px;">Min Qty</th>
+                <th style="width:180px;">Discount %</th>
+                <th>Remove</th>
+              </tr>
+            </thead>
+            <tbody id="b2bRows">
+              {% for f in b2b_fs.forms %}
+                <tr class="b2b-row">
+                  <td>{{ f.min_qty }}</td>
+                  <td>{{ f.discount }}</td>
+                  <td>
+                    <div class="form-check">
+                      {{ f.DELETE }}
+                      <label class="form-check-label small" for="{{ f.DELETE.id_for_label }}">Remove</label>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="b2bAdd">+ Add slab</button>
+        {% for e in b2b_fs.errors %}
+          {% if e %}<div class="text-sm text-red-600 mt-2">{{ e }}</div>{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="bg-white border rounded-lg overflow-hidden">
+      <div class="px-4 py-3 border-b font-medium">B2C Slabs (Quantity ke hisab se)</div>
+      <div class="p-4">
+        {{ b2c_fs.management_form }}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width:140px;">Min Qty</th>
+                <th style="width:180px;">Discount %</th>
+                <th>Remove</th>
+              </tr>
+            </thead>
+            <tbody id="b2cRows">
+              {% for f in b2c_fs.forms %}
+                <tr class="b2c-row">
+                  <td>{{ f.min_qty }}</td>
+                  <td>{{ f.discount }}</td>
+                  <td>
+                    <div class="form-check">
+                      {{ f.DELETE }}
+                      <label class="form-check-label small" for="{{ f.DELETE.id_for_label }}">Remove</label>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="b2cAdd">+ Add slab</button>
+        {% for e in b2c_fs.errors %}
+          {% if e %}<div class="text-sm text-red-600 mt-2">{{ e }}</div>{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="flex gap-2 flex-wrap">
+      <button class="btn btn-primary" type="submit">Save Settings</button>
+      <span class="text-xs text-gray-500">Admin permission wale user hi yeh page edit kar sakte hain.</span>
+    </div>
+  </form>
+</div>
+
+<script>
+  (function () {
+    function makeRow(prefix, index) {
+      const minName = `${prefix}-${index}-min_qty`;
+      const disName = `${prefix}-${index}-discount`;
+      const delName = `${prefix}-${index}-DELETE`;
+      return `
+        <tr class="${prefix}-row">
+          <td><input type="number" min="1" class="form-control form-control-sm" name="${minName}" /></td>
+          <td><input type="number" min="0" max="100" step="0.01" class="form-control form-control-sm" name="${disName}" /></td>
+          <td>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="${delName}" />
+              <label class="form-check-label small">Remove</label>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    function wireAdd(prefix, btnId, rowsId) {
+      const btn = document.getElementById(btnId);
+      const tbody = document.getElementById(rowsId);
+      const totalEl = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
+      if (!btn || !tbody || !totalEl) return;
+
+      btn.addEventListener("click", () => {
+        const idx = parseInt(totalEl.value || "0", 10) || 0;
+        tbody.insertAdjacentHTML("beforeend", makeRow(prefix, idx));
+        totalEl.value = String(idx + 1);
+      });
+    }
+
+    wireAdd("b2b", "b2bAdd", "b2bRows");
+    wireAdd("b2c", "b2cAdd", "b2cRows");
+  })();
+</script>
+{% endblock %}
+

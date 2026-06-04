@@ -1,26 +1,33 @@
 <div class="wa-dashboard-wrap" data-owner="{{ request.user.id }}">
   <div class="wa-dashboard-header">
-    <div>
-      <h3>WhatsApp Orders</h3>
-      <p>Live orders captured from WhatsApp messages.</p>
+    <div class="wa-dashboard-title">
+      <span class="wa-dashboard-title-icon"><i class="bi bi-whatsapp"></i></span>
+      <div>
+        <h3>WhatsApp Orders</h3>
+        <p>Live orders captured from WhatsApp messages.</p>
+      </div>
     </div>
     <a href="{% url 'commerce:whatsapp_order_inbox' %}" class="summary-modern-btn">
-      Open Inbox
+      <i class="bi bi-inbox" aria-hidden="true"></i>
+      <span>Open Inbox</span>
     </a>
   </div>
 
   <div class="wa-cards-grid">
     <div class="wa-card">
+      <span class="wa-card-icon"><i class="bi bi-chat-dots"></i></span>
       <div class="wa-card-label">Orders Today</div>
       <div class="wa-card-value" data-wa="total_orders">0</div>
       <div class="wa-card-meta">Auto-updated every 10s</div>
     </div>
     <div class="wa-card">
+      <span class="wa-card-icon"><i class="bi bi-cash-coin"></i></span>
       <div class="wa-card-label">WhatsApp Sales</div>
       <div class="wa-card-value" data-wa="total_sales">Rs. 0</div>
       <div class="wa-card-meta">Todays total</div>
     </div>
     <div class="wa-card">
+      <span class="wa-card-icon"><i class="bi bi-bag-check"></i></span>
       <div class="wa-card-label">Latest Order</div>
       <div class="wa-card-value" data-wa="latest_order">-</div>
       <div class="wa-card-meta">Tap to open details</div>
@@ -58,22 +65,61 @@
 
 <style>
 .wa-dashboard-wrap {
+  position: relative;
+  overflow: hidden;
   margin: 18px 0;
-  background: linear-gradient(135deg, #fefce8 0%, #f0fdf4 100%);
+  background:
+    linear-gradient(135deg, rgba(37, 211, 102, 0.1), rgba(2, 132, 199, 0.07)),
+    #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
   padding: 18px;
 }
+.wa-dashboard-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, #25d366, #0f766e, #0284c7);
+}
 body.dark .wa-dashboard-wrap {
-  background: linear-gradient(135deg, #0f172a 0%, #0b1220 100%);
+  background:
+    linear-gradient(135deg, rgba(37, 211, 102, 0.08), rgba(56, 189, 248, 0.08)),
+    #0b1220;
   border-color: #1f2937;
 }
 .wa-dashboard-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   margin-bottom: 14px;
+}
+.wa-dashboard-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.wa-dashboard-title-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37, 211, 102, 0.14);
+  color: #0f766e;
+  font-size: 19px;
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.14);
+  flex: 0 0 auto;
+}
+.wa-dashboard-header .summary-modern-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 10px;
 }
 .wa-dashboard-header h3 {
   margin: 0;
@@ -90,13 +136,36 @@ body.dark .wa-dashboard-wrap {
   gap: 12px;
 }
 .wa-card {
-  background: #ffffff;
+  position: relative;
+  min-height: 104px;
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px 14px 14px 58px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+.wa-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(15, 118, 110, 0.24);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.1);
+}
+.wa-card-icon {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 34px;
+  height: 34px;
   border-radius: 12px;
-  padding: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 16px;
 }
 body.dark .wa-card {
-  background: #0b1220;
+  background: rgba(15, 23, 42, 0.88);
   border-color: #1f2937;
   color: #e5e7eb;
 }
@@ -107,8 +176,8 @@ body.dark .wa-card {
   color: #6b7280;
 }
 .wa-card-value {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 900;
   margin-top: 6px;
 }
 .wa-card-meta {
@@ -117,13 +186,14 @@ body.dark .wa-card {
 }
 .wa-slider {
   margin-top: 14px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 body.dark .wa-slider {
-  background: #0b1220;
+  background: rgba(15, 23, 42, 0.88);
   border-color: #1f2937;
 }
 .wa-slide-track {
@@ -154,11 +224,12 @@ body.dark .wa-slider {
   border-top: 1px solid #e5e7eb;
 }
 .wa-slider-btn {
-  background: transparent;
-  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: 10px;
   font-size: 12px;
+  font-weight: 700;
 }
 .wa-order-list {
   margin-top: 12px;
@@ -174,9 +245,10 @@ body.dark .wa-slider {
   display: grid;
   grid-template-columns: 120px 1fr 120px 120px;
   gap: 8px;
-  padding: 8px 0;
+  padding: 10px 0;
   border-bottom: 1px solid #f1f5f9;
   font-size: 12px;
+  align-items: center;
 }
 .wa-order-btn {
   background: #0f766e;
@@ -186,6 +258,7 @@ body.dark .wa-slider {
   border-radius: 8px;
   font-size: 12px;
   cursor: pointer;
+  font-weight: 800;
 }
 .wa-empty {
   font-size: 12px;
@@ -193,6 +266,12 @@ body.dark .wa-slider {
   padding: 6px 0;
 }
 @media (max-width: 720px) {
+  .wa-dashboard-header {
+    align-items: stretch;
+  }
+  .wa-dashboard-header .summary-modern-btn {
+    width: 100%;
+  }
   .wa-list-row {
     grid-template-columns: 1fr;
   }
@@ -234,7 +313,20 @@ body.dark .wa-slider {
   }
 
   function fetchLive() {
-    fetch('/api/orders/live-feed/')
+    if (document.hidden) return;
+
+    // Cancel any in-flight request so reload/shutdown doesn't get stuck waiting.
+    if (window.__waLiveAbort) {
+      try { window.__waLiveAbort.abort(); } catch (e) {}
+    }
+
+    const controller = new AbortController();
+    window.__waLiveAbort = controller;
+    const timeout = setTimeout(() => {
+      try { controller.abort(); } catch (e) {}
+    }, 5000);
+
+    fetch('/api/orders/live-feed/', { signal: controller.signal, cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         setText('[data-wa="total_orders"]', data.total_orders_today || 0);
@@ -247,9 +339,13 @@ body.dark .wa-slider {
         setText('[data-wa="slide_sales"]', formatCurrency(data.total_sales_today || 0));
         renderOrders(data.latest_orders || []);
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err && err.name === 'AbortError') return;
         setText('[data-wa="total_orders"]', '');
         setText('[data-wa="total_sales"]', '');
+      })
+      .finally(() => {
+        clearTimeout(timeout);
       });
   }
 
@@ -264,8 +360,40 @@ body.dark .wa-slider {
     btn.addEventListener('click', () => moveSlide(parseInt(btn.dataset.dir || '1', 10)));
   });
 
-  fetchLive();
-  setInterval(fetchLive, 10000);
+  let intervalId = null;
+  function startLive() {
+    if (intervalId) return;
+    fetchLive();
+    intervalId = setInterval(fetchLive, 10000);
+  }
+  function stopLive() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+    if (window.__waLiveAbort) {
+      try { window.__waLiveAbort.abort(); } catch (e) {}
+      window.__waLiveAbort = null;
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopLive();
+    else startLive();
+  });
+  window.addEventListener('pagehide', stopLive);
+  window.addEventListener('beforeunload', stopLive);
+
+  function isDesktopExeMode() {
+    try {
+      return String(document.body.dataset.systemMode || "").toUpperCase().indexOf("DESKTOP") !== -1;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Desktop EXE: reduce background polling to minimize SQLite churn on Windows.
+  if (!isDesktopExeMode()) startLive();
 })();
 </script>
 

@@ -1,0 +1,16 @@
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="240" height="240" rx="16" fill="#F1F5F9"/>
+<rect x="24" y="24" width="64" height="64" rx="8" fill="#0EA5E9" opacity="0.12"/>
+<rect x="152" y="24" width="64" height="64" rx="8" fill="#0EA5E9" opacity="0.12"/>
+<rect x="24" y="152" width="64" height="64" rx="8" fill="#0EA5E9" opacity="0.12"/>
+<rect x="90" y="90" width="60" height="60" rx="8" fill="#0EA5E9" opacity="0.12"/>
+<rect x="122" y="40" width="12" height="12" rx="2" fill="#0EA5E9"/>
+<rect x="178" y="104" width="14" height="14" rx="2" fill="#0EA5E9"/>
+<rect x="54" y="118" width="12" height="12" rx="2" fill="#0EA5E9"/>
+<rect x="118" y="178" width="14" height="14" rx="2" fill="#0EA5E9"/>
+<rect x="152" y="152" width="32" height="32" rx="4" fill="#0EA5E9" opacity="0.16"/>
+<rect x="40" y="74" width="24" height="8" rx="2" fill="#0EA5E9" opacity="0.4"/>
+<rect x="176" y="74" width="24" height="8" rx="2" fill="#0EA5E9" opacity="0.4"/>
+<rect x="40" y="190" width="24" height="8" rx="2" fill="#0EA5E9" opacity="0.4"/>
+<text x="120" y="208" text-anchor="middle" fill="#0EA5E9" font-family="Arial" font-size="14">Waiting for QR</text>
+</svg>

@@ -2,6 +2,7 @@ import React from "react";
 
 import AppHeader from "../components/shared/AppHeader";
 import AppShell from "../components/shared/AppShell";
+import BillingHierarchyCard from "../components/BillingHierarchyCard";
 
 function Sidebar() {
   return (
@@ -27,6 +28,7 @@ export default function DesktopLayout() {
           <Sidebar />
         </div>
         <div className="col-span-12 xl:col-span-9 space-y-4">
+          <BillingHierarchyCard />
           <section className="rounded-xl bg-white p-4 shadow-sm">
             <h2 className="text-sm font-semibold">Analytics Dashboard</h2>
             <div className="mt-3 grid grid-cols-2 gap-3">

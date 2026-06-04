@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 12px; color: #222; }
+      .muted { color: #666; }
+      .row { display: flex; justify-content: space-between; }
+      table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+      th, td { border: 1px solid #ddd; padding: 6px; }
+      th { background: #f5f5f5; text-align: left; }
+      .right { text-align: right; }
+      .totals td { border: none; }
+      .totals .label { text-align: right; }
+      .totals .value { text-align: right; width: 120px; }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <div>
+        <h2 style="margin:0;">{{ vendor.name }}</h2>
+        <div class="muted">Store Invoice</div>
+      </div>
+      <div style="text-align:right;">
+        <div><b>Invoice/Order:</b> {{ order.order_number }}</div>
+        <div><b>Date:</b> {{ order.created_at|date:"Y-m-d H:i" }}</div>
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="row">
+      <div style="width: 48%;">
+        <div><b>Bill To</b></div>
+        <div>{{ customer.email }}</div>
+        {% if customer.mobile %}<div>{{ customer.mobile }}</div>{% endif %}
+      </div>
+      <div style="width: 48%;">
+        <div><b>Ship To</b></div>
+        {% if address %}
+          <div>{{ address.line1 }}</div>
+          {% if address.line2 %}<div>{{ address.line2 }}</div>{% endif %}
+          {% if address.landmark %}<div>{{ address.landmark }}</div>{% endif %}
+          <div>{{ address.district }} {{ address.state }} - {{ address.pincode }}</div>
+        {% else %}
+          <div class="muted">No address on file.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 52%;">Item</th>
+          <th class="right" style="width: 12%;">Qty</th>
+          <th class="right" style="width: 18%;">Rate</th>
+          <th class="right" style="width: 18%;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for it in items %}
+          <tr>
+            <td>{{ it.product.name }}</td>
+            <td class="right">{{ it.qty }}</td>
+            <td class="right">₹{{ it.unit_price }}</td>
+            <td class="right">₹{{ it.line_total }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <table class="totals">
+      <tr>
+        <td class="label muted">Subtotal</td>
+        <td class="value">₹{{ subtotal }}</td>
+      </tr>
+      <tr>
+        <td class="label muted">Tax</td>
+        <td class="value">₹{{ tax }}</td>
+      </tr>
+      {% if is_gst %}
+        <tr>
+          <td class="label muted">CGST</td>
+          <td class="value">₹{{ cgst }}</td>
+        </tr>
+        <tr>
+          <td class="label muted">SGST</td>
+          <td class="value">₹{{ sgst }}</td>
+        </tr>
+      {% endif %}
+      <tr>
+        <td class="label"><b>Total</b></td>
+        <td class="value"><b>₹{{ total }}</b></td>
+      </tr>
+    </table>
+
+    <p class="muted">This is a computer-generated invoice.</p>
+  </body>
+</html>
+

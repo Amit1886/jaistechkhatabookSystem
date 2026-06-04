@@ -1,14 +1,40 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="container mt-4">
-    <h2>Add Chat Thread</h2>
-    <form method="post">
-        {% csrf_token %}
-        <div class="mb-3">
-            <label for="title" class="form-label">Thread Title</label>
-            <input type="text" class="form-control" id="title" name="title" placeholder="Enter chat thread title">
-        </div>
-        <button type="submit" class="btn btn-primary">Save</button>
-    </form>
-</div>
+{% load static %}
+
+{% block title %}Add Chat Thread{% endblock %}
+
+{% block pc_badges %}
+  <span class="badge bg-warning text-dark fw-bold">Chat</span>
 {% endblock %}
+
+{% block pc_actions %}
+  <button type="button" class="btn btn-warning btn-lg fw-bold" onclick="showKeyboardHelp()" title="F1">Shortcuts</button>
+{% endblock %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+
+  <form method="post" class="row g-3" action="{% url 'commerce:add_chat_thread' %}">
+    {% csrf_token %}
+
+    <div class="col-lg-8">
+      <div class="card border-primary">
+        <div class="card-body">
+          <label for="party" class="form-label fw-bold">Party</label>
+          <select id="party" name="party" class="form-select form-select-lg fw-bold" required data-kb-primary="1" autofocus>
+            <option value="">-- Select Party --</option>
+            {% for p in parties %}
+              <option value="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end gap-2">
+      <a id="kbCancel" data-kb-cancel href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary btn-lg fw-bold">Back</a>
+      <button type="submit" class="btn btn-success btn-lg fw-bold" data-kb-submit>Create</button>
+    </div>
+  </form>
+{% endblock %}
+

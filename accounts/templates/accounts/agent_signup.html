@@ -1,0 +1,64 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Agent Signup{% endblock %}
+{% block content %}
+
+<div class="space-y-5">
+  <div class="text-center">
+    <h1 class="text-3xl font-bold text-slate-900">Become a Billentra Agent</h1>
+    <p class="text-sm text-slate-500 mt-2">Create your agent account to onboard businesses and track referrals.</p>
+  </div>
+
+  <form method="post" class="space-y-4" novalidate>{% csrf_token %}
+    <div>
+      <label for="id_username" class="block text-slate-700 mb-1">Full Name</label>
+      <input type="text" name="username" id="id_username" value="{{ form.username.value|default_if_none:'' }}" required
+             class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+      {% if form.username.errors %}<p class="text-red-500 text-sm mt-1">{{ form.username.errors.0 }}</p>{% endif %}
+    </div>
+
+    <div>
+      <label for="id_email" class="block text-slate-700 mb-1">Email</label>
+      <input type="email" name="email" id="id_email" value="{{ form.email.value|default_if_none:'' }}" required
+             class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+      {% if form.email.errors %}<p class="text-red-500 text-sm mt-1">{{ form.email.errors.0 }}</p>{% endif %}
+    </div>
+
+    <div>
+      <label for="id_mobile" class="block text-slate-700 mb-1">Mobile</label>
+      <input type="text" name="mobile" id="id_mobile" value="{{ form.mobile.value|default_if_none:'' }}" required
+             class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+      {% if form.mobile.errors %}<p class="text-red-500 text-sm mt-1">{{ form.mobile.errors.0 }}</p>{% endif %}
+    </div>
+
+    <div>
+      <label for="id_password" class="block text-slate-700 mb-1">Password</label>
+      <input type="password" name="password" id="id_password" required
+             class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+      {% if form.password.errors %}<p class="text-red-500 text-sm mt-1">{{ form.password.errors.0 }}</p>{% endif %}
+    </div>
+
+    <div>
+      <label for="id_referrer_code" class="block text-slate-700 mb-1">Referral Code (Optional)</label>
+      <input type="text" name="referrer_code" id="id_referrer_code" value="{{ form.referrer_code.value|default_if_none:'' }}"
+             class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+             placeholder="Eg: ABCD1234EFGH">
+      {% if form.referrer_code.errors %}<p class="text-red-500 text-sm mt-1">{{ form.referrer_code.errors.0 }}</p>{% endif %}
+      {% if form.referrer_code.help_text %}<p class="text-xs text-slate-500 mt-1">{{ form.referrer_code.help_text }}</p>{% endif %}
+    </div>
+
+    {% if form.non_field_errors %}
+      <div class="text-red-600 text-sm">{{ form.non_field_errors.0 }}</div>
+    {% endif %}
+
+    <button type="submit" class="mt-2 w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition font-semibold shadow-sm">
+      Create Agent Account
+    </button>
+  </form>
+
+  <p class="mt-3 text-sm text-center">Already have an account?
+    <a href="{% url 'accounts:login' %}" class="text-blue-600 underline">Login</a>
+  </p>
+</div>
+
+{% endblock %}
+

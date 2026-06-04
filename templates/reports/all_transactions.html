@@ -2,24 +2,107 @@
 {% block title %}All Transactions{% endblock %}
 
 {% block content %}
-<h2>All Transactions</h2>
+<div class="container-fluid py-2 unified-report-screen" data-master-list-wrap>
+  <div class="unified-report-card">
+    <div class="unified-report-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>All Transactions</h3>
+        <div class="unified-subtitle">Complete transaction register (filterable)</div>
+      </div>
+    </div>
 
-<table>
-    <tr>
-        <th>Date</th>
-        <th>Party</th>
-        <th>Type</th>
-        <th>Amount</th>
-    </tr>
-    {% for t in transactions %}
-    <tr>
-        <td>{{ t.date }}</td>
-        <td>{{ t.party }}</td>
-        <td>{{ t.voucher_type }}</td>
-        <td>{{ t.amount }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="4">No data</td></tr>
-    {% endfor %}
-</table>
+    <div class="unified-report-body">
+      <div class="report-summary-grid">
+        <div class="report-summary-card">
+          <div class="label">Entries</div>
+          <div class="value">{{ transactions|length }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Credit</div>
+          <div class="value">{{ credit_total }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Debit</div>
+          <div class="value">{{ debit_total }}</div>
+        </div>
+      </div>
+
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" method="get">
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="txnSearch">Search</label>
+          <input id="txnSearch" data-master-search type="text" class="form-control" placeholder="Search party/mode/notes">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="txnTypeFilter">Type</label>
+          <select id="txnTypeFilter" data-master-filter="2" class="form-select">
+            <option value="">All</option>
+            <option value="credit">Credit</option>
+            <option value="debit">Debit</option>
+          </select>
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="txnModeFilter">Mode</label>
+          <select id="txnModeFilter" data-master-filter="3" class="form-select">
+            <option value="">All</option>
+            <option value="cash">Cash</option>
+            <option value="upi">UPI</option>
+            <option value="online">Online</option>
+            <option value="bank">Bank</option>
+            <option value="cheque">Cheque</option>
+          </select>
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="fromDate">From</label>
+          <input id="fromDate" name="from" type="date" class="form-control" value="{{ date_from|date:'Y-m-d' }}">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="toDate">To</label>
+          <input id="toDate" name="to" type="date" class="form-control" value="{{ date_to|date:'Y-m-d' }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <a class="btn unified-btn-outline" href="{% url 'reports:all_transactions' %}">Reset</a>
+        </div>
+      </form>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" data-master-list data-page-size="15">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Party</th>
+              <th>Type</th>
+              <th>Mode</th>
+              <th class="text-end">Amount</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in transactions %}
+            <tr>
+              <td>{{ t.date|date:"d M Y" }}</td>
+              <td>{{ t.party.name }}</td>
+              <td>
+                {% if t.txn_type == 'credit' %}
+                  <span class="badge bg-success">Credit</span>
+                {% else %}
+                  <span class="badge bg-danger">Debit</span>
+                {% endif %}
+              </td>
+              <td>{{ t.txn_mode }}</td>
+              <td class="text-end fw-bold">{{ t.amount }}</td>
+              <td>{{ t.notes|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center">No transactions found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-2" data-master-pagination></div>
+      {% include 'core/includes/document_action_bar.html' %}
+    </div>
+  </div>
+</div>
 {% endblock %}

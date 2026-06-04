@@ -5,12 +5,15 @@
   <div class="unified-card">
     <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div>
-        <h3>Warehouse View</h3>
-        <div class="unified-subtitle">Warehouse summary and stock item details</div>
+        <h3>Warehouse Details</h3>
+        <div class="unified-subtitle">{{ warehouse.name }} • {{ warehouse.location|default:"-" }}</div>
       </div>
-      <div class="d-flex gap-2">
-        <a href="{% url 'commerce:warehouse_edit' warehouse.id %}" class="btn unified-btn-secondary">Edit</a>
+      <div class="d-flex gap-2 flex-wrap">
         <a href="{% url 'commerce:warehouse_list' %}" class="btn unified-btn-outline">Back</a>
+        <a href="{% url 'commerce:warehouse_edit' warehouse.id %}" class="btn unified-btn-secondary">Edit</a>
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#warehouseStockTable" data-export-name="warehouse_stock">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#warehouseStockTable" data-export-name="warehouse_stock">Excel</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#warehouseStockTable">PDF</button>
       </div>
     </div>
 
@@ -19,6 +22,7 @@
         <div class="report-summary-card">
           <div class="label">Warehouse</div>
           <div class="value">{{ warehouse.name }}</div>
+          <div class="meta">Created: {{ warehouse.created_at|date:"d M Y" }}</div>
         </div>
         <div class="report-summary-card">
           <div class="label">Location</div>
@@ -26,7 +30,12 @@
         </div>
         <div class="report-summary-card">
           <div class="label">Capacity</div>
-          <div class="value">{{ warehouse.capacity }}</div>
+          <div class="value">{{ warehouse.capacity|default:0 }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Stock Items</div>
+          <div class="value">{{ stocks|length }}</div>
+          <div class="meta">Linked products in this warehouse</div>
         </div>
       </div>
 
@@ -38,7 +47,7 @@
       </div>
 
       <div class="unified-table-wrap">
-        <table class="table unified-table" data-master-list data-page-size="10">
+        <table class="table unified-table" id="warehouseStockTable" data-master-list data-page-size="15">
           <thead>
             <tr>
               <th>#</th>
@@ -57,7 +66,7 @@
               <td>{{ stock.updated_at|date:"d M Y H:i" }}</td>
               <td>
                 <div class="unified-row-actions">
-                  <a href="{% url 'commerce:stock_view' stock.id %}" class="btn unified-btn-outline btn-sm">View</a>
+                  <a href="{% url 'commerce:product_detail' stock.product.id %}" class="btn unified-btn-outline btn-sm">View</a>
                 </div>
               </td>
             </tr>
@@ -69,6 +78,8 @@
       </div>
 
       <div class="d-flex justify-content-end mt-2" data-master-pagination></div>
+
+      {% include "core/includes/document_action_bar.html" %}
     </div>
   </div>
 </div>

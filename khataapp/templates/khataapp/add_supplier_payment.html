@@ -1,551 +1,93 @@
 {% extends "base.html" %}
 {% load static %}
-{% block content %}
 
+{% block title %}Add Supplier Payment{% endblock %}
 
-{% block content %}
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">Add Supplier Payment</h4>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.order.id_for_label }}" class="form-label">Purchase Order</label>
-                                    {{ form.order }}
-                                    {% if form.order.errors %}
-                                        <div class="text-danger">{{ form.order.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.amount.id_for_label }}" class="form-label">Payment Amount</label>
-                                    {{ form.amount }}
-                                    {% if form.amount.errors %}
-                                        <div class="text-danger">{{ form.amount.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.payment_mode.id_for_label }}" class="form-label">Payment Mode</label>
-                                    {{ form.payment_mode }}
-                                    {% if form.payment_mode.errors %}
-                                        <div class="text-danger">{{ form.payment_mode.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.reference.id_for_label }}" class="form-label">Reference (Optional)</label>
-                                    {{ form.reference }}
-                                    {% if form.reference.errors %}
-                                        <div class="text-danger">{{ form.reference.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.payment_date.id_for_label }}" class="form-label">Payment Date</label>
-                                    {{ form.payment_date }}
-                                    {% if form.payment_date.errors %}
-                                        <div class="text-danger">{{ form.payment_date.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="{{ form.notes.id_for_label }}" class="form-label">Notes (Optional)</label>
-                            {{ form.notes }}
-                            {% if form.notes.errors %}
-                                <div class="text-danger">{{ form.notes.errors }}</div>
-                            {% endif %}
-                        </div>
-
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-warning px-4">
-
-             Save Supplier Payment
-          </button>
-          <button type="button" id="saveDraftFooter" class="btn btn-outline-secondary">
-             Save Draft
-
-            💾 Save Supplier Payment
-          </button>
-          <button type="button" id="saveDraftFooter" class="btn btn-outline-secondary">
-            📝 Save Draft
-
-          </button>
-        </div>
-
-        <div class="d-flex flex-wrap gap-2">
-
-          <button type="button" onclick="window.print()" class="btn btn-secondary"> Print Receipt</button>
-          <button type="button" id="downloadPDFFooter" class="btn btn-danger"> PDF Receipt</button>
-          <button type="button" id="downloadExcelFooter" class="btn btn-success"> Excel Export</button>
-          <button type="button" id="shareWhatsAppFooter" class="btn btn-success"> WhatsApp</button>
-          <button type="button" id="shareEmailFooter" class="btn btn-warning"> Email Receipt</button>
-          <button type="button" id="shareSMSFooter" class="btn btn-info"> SMS Receipt</button>
-
-          <button type="button" onclick="window.print()" class="btn btn-secondary">🖨 Print Receipt</button>
-          <button type="button" id="downloadPDFFooter" class="btn btn-danger">⬇ PDF Receipt</button>
-          <button type="button" id="downloadExcelFooter" class="btn btn-success">📊 Excel Export</button>
-          <button type="button" id="shareWhatsAppFooter" class="btn btn-success">📤 WhatsApp</button>
-          <button type="button" id="shareEmailFooter" class="btn btn-warning">📧 Email Receipt</button>
-          <button type="button" id="shareSMSFooter" class="btn btn-info">💬 SMS Receipt</button>
-
-        </div>
-
-      </div>
-
-    </form>
-  </div>
-</div>
-
-<script>
-// Global variables
-let currentStep = 1;
-const totalSteps = 3;
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    initializeSupplierPaymentForm();
-    setupKeyboardShortcuts();
-    setupModeSwitcher();
-    setupThemeSelector();
-});
-
-// Initialize supplier payment form
-function initializeSupplierPaymentForm() {
-    // Supplier search functionality
-    const supplierSearch = document.getElementById('supplierSearch');
-    const supplierDropdown = document.getElementById('supplierDropdown');
-    const supplierSelect = document.getElementById('supplierSelect');
-
-    supplierSearch.addEventListener('input', function() {
-        const query = this.value.toLowerCase();
-        const options = supplierSelect.querySelectorAll('option');
-
-        supplierDropdown.innerHTML = '';
-
-        if (query.length > 0) {
-            options.forEach(option => {
-                if (option.value && option.text.toLowerCase().includes(query)) {
-                    const item = document.createElement('div');
-                    item.className = 'dropdown-item';
-                    item.textContent = option.text;
-                    item.onclick = () => {
-                        supplierSearch.value = option.text;
-                        supplierSelect.value = option.value;
-                        supplierDropdown.style.display = 'none';
-                        updateSupplierSummary();
-                        filterOrdersBySupplier();
-                    };
-                    supplierDropdown.appendChild(item);
-                }
-            });
-
-            supplierDropdown.style.display = options.length > 0 ? 'block' : 'none';
-        } else {
-            supplierDropdown.style.display = 'none';
-        }
-    });
-
-    // Order selection handler
-    document.getElementById('orderSelect').addEventListener('change', function() {
-        updateOrderSummary();
-        autoFillAmount();
-    });
-
-    // Payment method handler
-    document.getElementById('payment_mode').addEventListener('change', function() {
-        showMethodSpecificFields();
-    });
-
-    // Amount input handler
-    document.getElementById('amount').addEventListener('input', function() {
-        updatePaymentBreakdown();
-    });
-
-    // Step navigation
-    document.getElementById('nextStep').addEventListener('click', nextStep);
-    document.getElementById('prevStep').addEventListener('click', prevStep);
-}
-
-// Update supplier summary
-function updateSupplierSummary() {
-    const select = document.getElementById('supplierSelect');
-    const summary = document.getElementById('supplierSummary');
-
-    if (select.value) {
-        const option = select.options[select.selectedIndex];
-        const balance = option.getAttribute('data-balance');
-        const mobile = option.getAttribute('data-mobile');
-
-        summary.innerHTML = `
-
-            <p><strong>Outstanding Balance:</strong> ${balance}</p>
-
-            <p><strong>Outstanding Balance:</strong> ₹${balance}</p>
-
-            <p><strong>Mobile:</strong> ${mobile || 'Not provided'}</p>
-            <p><strong>Status:</strong> <span class="badge bg-${parseFloat(balance) > 0 ? 'danger' : 'success'}">${parseFloat(balance) > 0 ? 'Outstanding' : 'Settled'}</span></p>
-        `;
-    } else {
-        summary.innerHTML = '<p>Select a supplier to see details</p>';
-    }
-}
-
-// Filter orders by selected supplier
-function filterOrdersBySupplier() {
-    const supplierSelect = document.getElementById('supplierSelect');
-    const orderSelect = document.getElementById('orderSelect');
-    const supplierId = supplierSelect.value;
-
-    // Reset order selection
-    orderSelect.value = '';
-
-    // Filter order options
-    const options = orderSelect.querySelectorAll('option');
-    options.forEach(option => {
-        if (option.value === '') return; // Keep "Select Order" option
-
-        const orderSupplierId = option.getAttribute('data-supplier');
-        if (supplierId && orderSupplierId !== supplierId) {
-            option.style.display = 'none';
-        } else {
-            option.style.display = 'block';
-        }
-    });
-
-    updateOrderSummary();
-}
-
-// Update order summary
-function updateOrderSummary() {
-    const select = document.getElementById('orderSelect');
-    const summary = document.getElementById('orderSummary');
-
-    if (select.value) {
-        const option = select.options[select.selectedIndex];
-        const amount = option.getAttribute('data-amount');
-        const due = option.getAttribute('data-due');
-
-        summary.innerHTML = `
-
-            <p><strong>Total Amount:</strong> ${amount}</p>
-            <p><strong>Outstanding:</strong> ${due}</p>
-
-            <p><strong>Total Amount:</strong> ₹${amount}</p>
-            <p><strong>Outstanding:</strong> ₹${due}</p>
-
-            <p><strong>Status:</strong> <span class="badge bg-${parseFloat(due) > 0 ? 'warning' : 'success'}">${parseFloat(due) > 0 ? 'Pending' : 'Paid'}</span></p>
-        `;
-    } else {
-        summary.innerHTML = '<p>Select an order to see details</p>';
-    }
-}
-
-// Auto-fill amount from order
-function autoFillAmount() {
-    const select = document.getElementById('orderSelect');
-    const amountInput = document.getElementById('amount');
-
-    if (select.value) {
-        const option = select.options[select.selectedIndex];
-        const due = option.getAttribute('data-due');
-        amountInput.value = due;
-        updatePaymentBreakdown();
-    }
-}
-
-// Update payment breakdown
-function updatePaymentBreakdown() {
-    const amount = document.getElementById('amount').value;
-    const breakdown = document.getElementById('paymentBreakdown');
-
-    if (amount && parseFloat(amount) > 0) {
-        const numAmount = parseFloat(amount);
-        breakdown.innerHTML = `
-
-            <p><strong>Payment Amount:</strong> ${numAmount.toFixed(2)}</p>
-            <p><strong>GST Impact:</strong> ${(numAmount * 0.18).toFixed(2)} (18% GST)</p>
-            <p><strong>Net Settlement:</strong> ${(numAmount * 1.18).toFixed(2)}</p>
-
-            <p><strong>Payment Amount:</strong> ₹${numAmount.toFixed(2)}</p>
-            <p><strong>GST Impact:</strong> ₹${(numAmount * 0.18).toFixed(2)} (18% GST)</p>
-            <p><strong>Net Settlement:</strong> ₹${(numAmount * 1.18).toFixed(2)}</p>
-
-        `;
-    } else {
-        breakdown.innerHTML = '<p>Enter amount to see breakdown</p>';
-    }
-}
-
-// Show method-specific fields
-function showMethodSpecificFields() {
-    const method = document.getElementById('payment_mode').value;
-    const container = document.getElementById('methodSpecificFields');
-    const fields = ['upiFields', 'bankFields', 'chequeFields'];
-
-    // Hide all fields
-    fields.forEach(field => {
-        document.getElementById(field).style.display = 'none';
-    });
-
-    // Show relevant field
-    if (method === 'upi') {
-        document.getElementById('upiFields').style.display = 'block';
-    } else if (method === 'bank') {
-        document.getElementById('bankFields').style.display = 'block';
-    } else if (method === 'cheque') {
-        document.getElementById('chequeFields').style.display = 'block';
-    }
-
-    container.style.display = method !== 'cash' && method !== 'card' ? 'block' : 'none';
-}
-
-// Step navigation functions
-function nextStep() {
-    if (currentStep < totalSteps) {
-        // Validate current step
-        if (!validateStep(currentStep)) {
-            return;
-        }
-
-        // Hide current step
-        document.getElementById(`step-${currentStep}`).style.display = 'none';
-
-        // Update step indicator
-        document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
-        currentStep++;
-
-        // Show next step
-        document.getElementById(`step-${currentStep}`).style.display = 'block';
-
-        // Update step indicator
-        document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
-
-        // Update navigation buttons
-        updateNavigationButtons();
-
-        // Update review if on step 3
-        if (currentStep === 3) {
-            updateReview();
-        }
-    }
-}
-
-function prevStep() {
-    if (currentStep > 1) {
-        // Hide current step
-        document.getElementById(`step-${currentStep}`).style.display = 'none';
-
-        // Update step indicator
-        document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
-        currentStep--;
-
-        // Show previous step
-        document.getElementById(`step-${currentStep}`).style.display = 'block';
-
-        // Update step indicator
-        document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
-
-        // Update navigation buttons
-        updateNavigationButtons();
-    }
-}
-
-function updateNavigationButtons() {
-    const prevBtn = document.getElementById('prevStep');
-    const nextBtn = document.getElementById('nextStep');
-
-    prevBtn.disabled = currentStep === 1;
-    nextBtn.disabled = currentStep === totalSteps;
-
-    if (currentStep === totalSteps) {
-
-        nextBtn.innerHTML = 'Save Payment ';
-        nextBtn.onclick = function() { document.querySelector('form').submit(); };
-    } else {
-        nextBtn.innerHTML = 'Next ';
-
-        nextBtn.innerHTML = 'Save Payment 💾';
-        nextBtn.onclick = function() { document.querySelector('form').submit(); };
-    } else {
-        nextBtn.innerHTML = 'Next ➡️';
-
-        nextBtn.onclick = nextStep;
-    }
-}
-
-function validateStep(step) {
-    if (step === 1) {
-        const supplier = document.getElementById('supplierSelect').value;
-        const order = document.getElementById('orderSelect').value;
-
-        if (!supplier) {
-            alert('Please select a supplier');
-            return false;
-        }
-        if (!order) {
-            alert('Please select a purchase order');
-            return false;
-        }
-    } else if (step === 2) {
-        const amount = document.getElementById('amount').value;
-
-        if (!amount || parseFloat(amount) <= 0) {
-            alert('Please enter a valid payment amount');
-            return false;
-        }
-    }
-    return true;
-}
-
-function updateReview() {
-    // Update supplier details
-    const supplierSelect = document.getElementById('supplierSelect');
-    document.getElementById('reviewSupplier').textContent = supplierSelect.options[supplierSelect.selectedIndex].text || '-';
-
-    // Update order details
-    const orderSelect = document.getElementById('orderSelect');
-    const orderOption = orderSelect.options[orderSelect.selectedIndex];
-    document.getElementById('reviewOrder').textContent = orderOption ? `Order #${orderSelect.value}` : '-';
-    document.getElementById('reviewOrderTotal').textContent = orderOption ? orderOption.getAttribute('data-amount') : '-';
-    document.getElementById('reviewOutstanding').textContent = orderOption ? orderOption.getAttribute('data-due') : '-';
-
-    // Update payment details
-    document.getElementById('reviewAmount').textContent = document.getElementById('amount').value || '-';
-
-    const methodSelect = document.getElementById('payment_mode');
-    document.getElementById('reviewMethod').textContent = methodSelect.options[methodSelect.selectedIndex].text || '-';
-
-    document.getElementById('reviewReference').textContent = document.getElementById('reference').value || '-';
-    document.getElementById('reviewDate').textContent = document.getElementById('payment_date').value || '-';
-}
-
-// Keyboard shortcuts
-function setupKeyboardShortcuts() {
-    document.addEventListener('keydown', function(e) {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
-            return; // Don't interfere with form inputs
-        }
-
-        switch(e.key) {
-            case 'F1':
-                e.preventDefault();
-                showKeyboardHelp();
-                break;
-            case 'F2':
-                e.preventDefault();
-                document.getElementById('supplierSearch').focus();
-                break;
-            case 'F3':
-                e.preventDefault();
-                document.getElementById('orderSelect').focus();
-                break;
-            case 'F4':
-                e.preventDefault();
-                document.getElementById('amount').focus();
-                break;
-            case 'F5':
-                e.preventDefault();
-                document.querySelector('form').submit();
-                break;
-            case 'F6':
-                e.preventDefault();
-                // Save draft functionality
-                break;
-            case 'F7':
-                e.preventDefault();
-                window.print();
-                break;
-            case 'Escape':
-                e.preventDefault();
-                // Cancel/close functionality
-                break;
-        }
-    });
-}
-
-// Mode switcher
-function setupModeSwitcher() {
-    const modes = ['pc', 'pos', 'mobile'];
-    modes.forEach(mode => {
-        document.getElementById(`${mode}Mode`).addEventListener('click', function() {
-            // Remove active class from all
-            modes.forEach(m => document.getElementById(`${m}Mode`).classList.remove('active'));
-            // Add active class to clicked
-            this.classList.add('active');
-            // Apply mode-specific styling
-            applyModeStyling(mode);
-        });
-    });
-}
-
-function applyModeStyling(mode) {
-    const card = document.getElementById('mainSupplierPaymentCard');
-    card.classList.remove('pc-mode', 'pos-mode', 'mobile-mode');
-    card.classList.add(`${mode}-mode`);
-}
-
-// Theme selector
-function setupThemeSelector() {
-    document.getElementById('themeSelect').addEventListener('change', function() {
-        const theme = this.value;
-        applyTheme(theme);
-    });
-}
-
-function applyTheme(theme) {
-    const body = document.body;
-    // Remove existing theme classes
-    body.classList.remove('theme-dark', 'theme-blue', 'theme-green', 'theme-red', 'theme-rainbow', 'theme-neon');
-    // Add new theme class
-    if (theme !== 'default') {
-        body.classList.add(`theme-${theme}`);
-    }
-}
-
-// Utility functions
-function showKeyboardHelp() {
-    document.getElementById('keyboardHelp').style.display = 'block';
-}
-
-function hideKeyboardHelp() {
-    document.getElementById('keyboardHelp').style.display = 'none';
-}
-
-// Form submission handler
-document.querySelector('form').addEventListener('submit', function(e) {
-    // Show success modal on successful submission
-    setTimeout(() => {
-        $('#successModal').modal('show');
-    }, 1000);
-});
-</script>
-
+{% block pc_badges %}
+  <span class="badge bg-warning text-dark fw-bold">Suppliers</span>
 {% endblock %}
-                    </form>
-                </div>
-            </div>
-        </div>
+
+{% block pc_actions %}
+  <a class="btn btn-outline-light btn-lg fw-bold" href="{% url 'khataapp:supplier_dashboard' %}" accesskey="d" title="Alt+D">Supplier Dashboard</a>
+  <button type="button" class="btn btn-warning btn-lg fw-bold" onclick="showKeyboardHelp()" title="F1">Shortcuts</button>
+{% endblock %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+  {% include "core/includes/keyboard_help_common.html" %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">
+      {{ form.non_field_errors }}
     </div>
-</div>
+  {% endif %}
+
+  <form method="post" class="row g-3" action="{% url 'khataapp:add_supplier_payment' %}">
+    {% csrf_token %}
+
+    <div class="col-lg-6">
+      <div class="card border-primary">
+        <div class="card-body">
+          <label for="{{ form.order.id_for_label }}" class="form-label fw-bold">Purchase Order</label>
+          {{ form.order }}
+          {% if form.order.errors %}<div class="text-danger small">{{ form.order.errors }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-success">
+        <div class="card-body">
+          <label for="{{ form.amount.id_for_label }}" class="form-label fw-bold">Amount (&#8377;)</label>
+          {{ form.amount }}
+          {% if form.amount.errors %}<div class="text-danger small">{{ form.amount.errors }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-info">
+        <div class="card-body">
+          <label for="{{ form.payment_mode.id_for_label }}" class="form-label fw-bold">Payment Mode</label>
+          {{ form.payment_mode }}
+          {% if form.payment_mode.errors %}<div class="text-danger small">{{ form.payment_mode.errors }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <label for="{{ form.reference.id_for_label }}" class="form-label fw-bold">Reference (Optional)</label>
+          {{ form.reference }}
+          {% if form.reference.errors %}<div class="text-danger small">{{ form.reference.errors }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <label for="{{ form.payment_date.id_for_label }}" class="form-label fw-bold">Payment Date</label>
+          {{ form.payment_date }}
+          {% if form.payment_date.errors %}<div class="text-danger small">{{ form.payment_date.errors }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card border-secondary">
+        <div class="card-body">
+          <label for="{{ form.notes.id_for_label }}" class="form-label fw-bold">Notes (Optional)</label>
+          {{ form.notes }}
+          {% if form.notes.errors %}<div class="text-danger small">{{ form.notes.errors }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end gap-2">
+      <a id="kbCancel" data-kb-cancel href="{% url 'khataapp:supplier_dashboard' %}" class="btn btn-outline-secondary btn-lg fw-bold">Back</a>
+      <button type="submit" class="btn btn-success btn-lg fw-bold" data-kb-submit>Save</button>
+    </div>
+  </form>
 {% endblock %}

@@ -1,0 +1,52 @@
+{% extends "core/pc_universal.html" %}
+
+{% block title %}Inventory Summary{% endblock %}
+
+{% block pc_actions %}
+  <a href="{% url 'reports:inventory_books' %}" class="btn btn-outline-light btn-sm fw-bold">Inventory Books</a>
+{% endblock %}
+
+{% block pc_content %}
+  <div class="unified-section unified-filter-row">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="unified-label">As Of</label>
+        <input type="date" name="as_of" value="{{ as_of|date:'Y-m-d' }}" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <button class="btn unified-btn-primary" type="submit">Apply</button>
+        <a class="btn unified-btn-outline" href="{% url 'reports:inventory_summary' %}">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="unified-table-wrap">
+    <table class="table unified-table">
+      <thead>
+        <tr>
+          <th>Warehouse</th>
+          <th>Product</th>
+          <th>Unit</th>
+          <th class="text-end">In</th>
+          <th class="text-end">Out</th>
+          <th class="text-end">Closing</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>{{ r.warehouse }}</td>
+            <td>{{ r.product }}</td>
+            <td>{{ r.unit|default:"-" }}</td>
+            <td class="text-end">{{ r.qty_in }}</td>
+            <td class="text-end">{{ r.qty_out }}</td>
+            <td class="text-end" style="font-weight:900;">{{ r.closing_qty }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-4">No stock movements found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+

@@ -4,6 +4,13 @@
     <div class="card span-12">
       <h3>User Demo (Real Data)</h3>
       <div class="sub">Logged-in user: <code>{{ state.user.email }}</code></div>
+      <div class="sub" style="margin-top:6px;">
+        Billing Role:
+        <code>{{ state.user.billing_access_level|default:"-" }}</code>
+        /
+        <code>{{ state.user.billing_role_type|default:"-" }}</code>
+        {% if state.user.billing_child_role %}/ <code>{{ state.user.billing_child_role }}</code>{% endif %}
+      </div>
     </div>
 
     <div class="card span-3"><h3>Parties</h3><div class="value">{{ state.user_metrics.parties }}</div></div>
@@ -25,6 +32,62 @@
       <div class="sub">Fetch your demo JSON state:</div>
       <div style="margin-top:10px;"><code>/addons/demo_center/api/user-state/</code></div>
     </div>
+
+    <div class="card span-12">
+      <h3>Output Demo</h3>
+      <div class="sub">Demotest3 ke demo result outputs yahan live/fallback data ke sath dikh rahe hain.</div>
+    </div>
+
+    {% for card in state.output_demo.summary_cards %}
+      <div class="card span-3">
+        <h3>{{ card.label }}</h3>
+        <div class="value">{{ card.value }}</div>
+        <div class="sub">{{ card.hint }}</div>
+      </div>
+    {% endfor %}
+
+    <div class="card span-6">
+      <h3>Business Output</h3>
+      <div class="timeline">
+        {% for item in state.output_demo.business_outputs %}
+          <div class="titem">
+            <b>{{ item.name }}</b>
+            <span class="sub">{{ item.status }} - {{ item.detail }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card span-6">
+      <h3>Retail OS Output</h3>
+      <div class="timeline">
+        {% for item in state.output_demo.retail_os_outputs %}
+          <div class="titem">
+            <b>{{ item.name }}</b>
+            <span class="sub">{{ item.value }} - {{ item.detail }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card span-7">
+      <h3>Latest Demo Parties</h3>
+      <div class="timeline">
+        {% for party in state.output_demo.latest_parties %}
+          <div class="titem">
+            <b>{{ party.name }} <span class="sub">({{ party.type }})</span></b>
+            <span class="sub">Balance Rs {{ party.balance }} / Grade {{ party.credit_grade }}</span>
+          </div>
+        {% empty %}
+          <div class="sub">No Demotest3 parties found yet. Import or seed demo data to populate this list.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card span-5">
+      <h3>Output Logs</h3>
+      <div class="log">{% for line in state.output_demo.logs %}{{ line }}
+{% endfor %}</div>
+    </div>
   </div>
 {% endblock %}
-

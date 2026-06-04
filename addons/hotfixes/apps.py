@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 
 
 class HotfixesConfig(AppConfig):
@@ -7,5 +8,7 @@ class HotfixesConfig(AppConfig):
     verbose_name = "Addons Hotfixes"
 
     def ready(self):
-        from .patches import accounts_dashboard  # noqa: F401
+        if getattr(settings, "LIGHTWEIGHT_DEPLOYMENT", False):
+            return
 
+        from .patches import accounts_dashboard  # noqa: F401

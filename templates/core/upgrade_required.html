@@ -1,0 +1,21 @@
+{% extends "core/pc_universal.html" %}
+
+{% block title %}Upgrade Plan Required{% endblock %}
+
+{% block pc_content %}
+  <div class="unified-section">
+    <h4 style="margin:0 0 6px 0; font-weight:900;">Upgrade Plan Required</h4>
+    <div class="unified-muted">
+      {% if feature_label %}
+        This module (<strong>{{ feature_label }}</strong>) is not available in your current plan.
+      {% else %}
+        This module is not available in your current plan.
+      {% endif %}
+    </div>
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+      <a href="{% url 'billing:upgrade_plan' %}" class="btn unified-btn-primary">Upgrade Plan</a>
+      <a href="{% url 'accounts:dashboard' %}" class="btn unified-btn-outline">Back to Dashboard</a>
+    </div>
+  </div>
+{% endblock %}
+

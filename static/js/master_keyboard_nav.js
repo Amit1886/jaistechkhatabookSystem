@@ -1,4 +1,7 @@
 (function () {
+  if (window.__MASTER_KEYBOARD_NAV_INSTALLED__ === true) return;
+  window.__MASTER_KEYBOARD_NAV_INSTALLED__ = true;
+
   function ready(fn) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', fn);
@@ -184,6 +187,11 @@
   }
 
   ready(function () {
+    // Only on add/create screens (keyboard-first data entry)
+    const isAddScreen = document.body && document.body.classList && document.body.classList.contains('add-screen');
+    const isOrderEntry = (window.__ADD_ORDER_PC_BUSY__ === true) || !!document.querySelector('.busy-order-pc, #orderBody, #mainOrderCard');
+    if (!isAddScreen || isOrderEntry) return;
+
     const root = document;
     applyTabindex(root);
     enhanceDateFields(root);

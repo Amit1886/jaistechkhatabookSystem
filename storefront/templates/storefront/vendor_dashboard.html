@@ -1,0 +1,438 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Overview</div>
+        <h3 class="fw-bold mb-0">Performance</h3>
+        <div class="va-help small mt-1">
+          Orders, payments, shipping & inventory at a glance.
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'vendor-products' vendor.subdomain %}">
+          <i class="bi bi-box-seam me-1"></i>Products
+        </a>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'vendor-orders' vendor.subdomain %}">
+          <i class="bi bi-receipt-cutoff me-1"></i>Orders
+        </a>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'vendor-coupons' vendor.subdomain %}">
+          <i class="bi bi-tag me-1"></i>Coupons & Offers
+        </a>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'vendor-orders-report-csv' vendor.subdomain %}?days=30&paid_only=1">
+          <i class="bi bi-download me-1"></i>30D Paid CSV
+        </a>
+        <button class="btn btn-outline-secondary btn-sm" type="button" id="dashRefreshBtn">
+          <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+        </button>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'store-home' vendor.subdomain %}">
+          <i class="bi bi-shop me-1"></i>View Store
+        </a>
+      </div>
+    </div>
+    <div class="va-help small mt-2" id="dashUpdatedAt"></div>
+  </div>
+
+  <div id="vendorKpiSlider" class="carousel slide mb-3" data-bs-ride="carousel" data-bs-interval="4500">
+    <div class="carousel-indicators">
+      <button type="button" data-bs-target="#vendorKpiSlider" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+      <button type="button" data-bs-target="#vendorKpiSlider" data-bs-slide-to="1" aria-label="Slide 2"></button>
+      <button type="button" data-bs-target="#vendorKpiSlider" data-bs-slide-to="2" aria-label="Slide 3"></button>
+    </div>
+    <div class="carousel-inner">
+      <div class="carousel-item active">
+        <div class="row g-3">
+          <div class="col-6 col-lg-3">
+            <div class="card product-card shadow-soft h-100">
+              <div class="card-body">
+                <div class="muted small">Sales (Today)</div>
+                <div class="fw-bold fs-4">&#8377;<span id="kpiSalesToday">{{ sales_today }}</span></div>
+                <div class="muted small">Paid orders: <span id="kpiPaidCount">{{ counts.paid }}</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card product-card shadow-soft h-100">
+              <div class="card-body">
+                <div class="muted small">Sales (7 Days)</div>
+                <div class="fw-bold fs-4">&#8377;<span id="kpiSales7d">{{ sales_7d }}</span></div>
+                <div class="muted small">Last 7 days</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card product-card shadow-soft h-100">
+              <div class="card-body">
+                <div class="muted small">Sales (30 Days)</div>
+                <div class="fw-bold fs-4">&#8377;<span id="kpiSales30d">{{ sales_30d }}</span></div>
+                <div class="muted small">Paid orders: <span id="kpiPaid30d">{{ paid_30d_count }}</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card product-card shadow-soft h-100">
+              <div class="card-body">
+                <div class="muted small">Avg order value (30D)</div>
+                <div class="fw-bold fs-4">&#8377;<span id="kpiAov30d">{{ aov_30d }}</span></div>
+                <div class="muted small">All-time paid: &#8377;<span id="kpiTotalSales">{{ sales_total }}</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="carousel-item">
+        <div class="row g-3">
+          <div class="col-6 col-lg-3">
+            <div class="card product-card shadow-soft h-100">
+              <div class="card-body">
+                <div class="muted small">Pending orders</div>
+                <div class="fw-bold fs-4"><span id="kpiPending">{{ counts.pending }}</span></div>
+                <div class="muted small">Needs action</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card product-card shadow-soft h-100">
+              <div class="card-body">
+                <div class="muted small">Ready to ship</div>
+                <div class="fw-bold fs-4"><span id="kpiReadyShip">{{ ready_to_ship_count }}</span></div>
+                <div class="muted small">Accepted, no shipment</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card product-card shadow-soft h-100">
+              <div class="card-body">
+                <div class="muted small">Low stock</div>
+                <div class="fw-bold fs-4"><span id="kpiLowStock">{{ low_stock_count }}</span></div>
+                <div class="muted small">Below threshold</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="card product-card shadow-soft h-100">
+              <div class="card-body">
+                <div class="muted small">Shipping in transit</div>
+                <div class="fw-bold fs-4"><span id="kpiShipTransit">{{ shipment_counts.transit }}</span></div>
+                <div class="muted small">Delivered: <span id="kpiShipDelivered">{{ shipment_counts.delivered }}</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="carousel-item">
+        <div class="row g-3">
+          <div class="col-12 col-lg-6">
+            <div class="card product-card shadow-soft h-100">
+              <div class="card-body">
+                <div class="fw-bold mb-1">Integrations health</div>
+                <div class="d-flex gap-2 flex-wrap mt-2">
+                  {% if active_payment %}
+                    <span class="pill small"><i class="bi bi-credit-card me-1"></i>Payment: {{ active_payment.provider }}</span>
+                  {% else %}
+                    <span class="pill small"><i class="bi bi-credit-card me-1"></i>Payment: Not set</span>
+                  {% endif %}
+                  {% if shiprocket_ok %}
+                    <span class="pill small"><i class="bi bi-truck me-1"></i>Shiprocket: Connected</span>
+                  {% else %}
+                    <span class="pill small"><i class="bi bi-truck me-1"></i>Shiprocket: Not configured</span>
+                  {% endif %}
+                </div>
+                <div class="muted small mt-2">Tip: Configure providers per vendor to enable live shipping & payments.</div>
+                <a class="btn btn-sm btn-outline-primary mt-3" href="{% url 'vendor-orders' vendor.subdomain %}?status=accepted">Ship accepted orders</a>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="card product-card shadow-soft h-100">
+              <div class="card-body">
+                <div class="fw-bold mb-1">Payment health</div>
+                <div class="d-flex gap-2 flex-wrap mt-2">
+                  <span class="pill small">Unpaid: <span id="kpiUnpaid">{{ counts.unpaid }}</span></span>
+                  <span class="pill small">Initiated: <span id="kpiInitiated">{{ counts.initiated }}</span></span>
+                  <span class="pill small">Failed: <span id="kpiPayFailed">{{ counts.failed }}</span></span>
+                </div>
+                <div class="muted small mt-2">Reduce failures by validating gateway keys & webhook URLs.</div>
+                <a class="btn btn-sm btn-outline-secondary mt-3" href="{% url 'vendor-orders' vendor.subdomain %}?payment=failed">See failed payments</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="carousel-control-prev" type="button" data-bs-target="#vendorKpiSlider" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#vendorKpiSlider" data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Next</span>
+    </button>
+  </div>
+
+  {# KPI cards moved into slider above #}
+
+  <script>
+    (function(){
+      const btn = document.getElementById("dashRefreshBtn");
+      const updated = document.getElementById("dashUpdatedAt");
+      if (!btn) return;
+
+      const setText = (id, val) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = String(val ?? "");
+      };
+
+      async function refresh(){
+        btn.disabled = true;
+        const old = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Refreshing';
+        try{
+          const res = await fetch("/api/vendor-dashboard/", {headers: {"Accept":"application/json"}});
+          const data = await res.json();
+          if (!data || !data.ok && data.vendor_id === undefined) throw new Error("bad response");
+
+          const periods = data.periods || {};
+          setText("kpiSalesToday", periods.sales_today);
+          setText("kpiSales7d", periods.sales_7d);
+          setText("kpiSales30d", periods.sales_30d);
+          setText("kpiPaid30d", periods.paid_30d_count);
+          setText("kpiAov30d", periods.aov_30d);
+          setText("kpiTotalSales", (data.totals || {}).total_sales);
+
+          const os = data.orders_by_status || {};
+          setText("kpiPending", os.pending || 0);
+          setText("kpiReadyShip", data.ready_to_ship_count || 0);
+
+          const ps = data.payments_by_status || {};
+          setText("kpiUnpaid", ps.unpaid || 0);
+          setText("kpiInitiated", ps.initiated || 0);
+          setText("kpiPayFailed", ps.failed || 0);
+          setText("kpiPaidCount", ps.paid || 0);
+
+          const ss = data.shipments_by_status || {};
+          setText("kpiShipTransit", ss.in_transit || 0);
+          setText("kpiShipDelivered", ss.delivered || 0);
+
+          setText("kpiLowStock", (data.inventory_alerts || []).length || 0);
+
+          if (updated && data.last_updated){
+            const d = new Date(data.last_updated);
+            updated.textContent = "Last updated: " + (isNaN(d.getTime()) ? String(data.last_updated) : d.toLocaleString());
+          }
+        }catch(e){
+          if (updated) updated.textContent = "Refresh failed. Please reload the page.";
+        }finally{
+          btn.innerHTML = old;
+          btn.disabled = false;
+        }
+      }
+
+      btn.addEventListener("click", refresh);
+      // auto refresh every 30s when tab is visible
+      setInterval(function(){
+        if (document.visibilityState === "visible") refresh();
+      }, 30000);
+    })();
+  </script>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-lg-8">
+      <div class="card product-card shadow-soft h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+            <div class="fw-bold">Performance (Last 14 days)</div>
+            <div class="d-flex gap-2 flex-wrap">
+              <span class="pill small">Orders: {{ counts.total }}</span>
+              <span class="pill small">Pending: {{ counts.pending }}</span>
+              <span class="pill small">Delivered: {{ counts.delivered }}</span>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="fw-semibold">Revenue</div>
+                <div class="muted small">Paid only</div>
+              </div>
+              <div class="mt-2">
+                <svg viewBox="0 0 120 34" width="100%" height="44" role="img" aria-label="Revenue trend">
+                  <polyline fill="none" stroke="rgba(233,30,99,.9)" stroke-width="2.6" points="{{ spark_revenue_points }}"></polyline>
+                </svg>
+              </div>
+              <div class="d-flex justify-content-between mt-1 muted small">
+                <span>{{ series.0.label }}</span>
+                {% with last_row=series|last %}<span>{{ last_row.label }}</span>{% endwith %}
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="fw-semibold">Orders</div>
+                <div class="muted small">Count</div>
+              </div>
+              <div class="mt-2">
+                <svg viewBox="0 0 120 34" width="100%" height="44" role="img" aria-label="Orders trend">
+                  <polyline fill="none" stroke="rgba(15,23,42,.8)" stroke-width="2.6" points="{{ spark_orders_points }}"></polyline>
+                </svg>
+              </div>
+              <div class="d-flex justify-content-between mt-1 muted small">
+                <span>{{ series.0.label }}</span>
+                {% with last_row=series|last %}<span>{{ last_row.label }}</span>{% endwith %}
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 d-flex gap-2 flex-wrap">
+            <span class="pill small">Unpaid: {{ counts.unpaid }}</span>
+            <span class="pill small">Initiated: {{ counts.initiated }}</span>
+            <span class="pill small">Payment failed: {{ counts.failed }}</span>
+            <span class="pill small">Rejected: {{ counts.rejected }}</span>
+            <span class="pill small">Low stock: {{ low_stock_count }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-4">
+      <div class="card product-card shadow-soft h-100">
+        <div class="card-body">
+          <div class="fw-bold mb-2">Shipping snapshot</div>
+          <div class="d-flex gap-2 flex-wrap">
+            <span class="pill small">Created: {{ shipment_counts.created }}</span>
+            <span class="pill small">Pickup: {{ shipment_counts.pickup }}</span>
+            <span class="pill small">In transit: {{ shipment_counts.transit }}</span>
+            <span class="pill small">Delivered: {{ shipment_counts.delivered }}</span>
+            <span class="pill small">Failed: {{ shipment_counts.failed }}</span>
+          </div>
+          <hr>
+          <div class="fw-bold mb-2">Top products</div>
+          <div class="list-group list-group-flush">
+            {% for p in top_products %}
+              <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                <div class="text-truncate">{{ p.product__name }}</div>
+                <span class="pill small">{{ p.qty }} sold</span>
+              </div>
+            {% empty %}
+              <div class="muted small">No sales yet.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-lg-6">
+      <div class="card product-card shadow-soft h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="fw-bold">Action center</div>
+            <span class="pill small">Pending: {{ counts.pending }}</span>
+          </div>
+          {% if pending_orders %}
+            <div class="list-group list-group-flush">
+              {% for o in pending_orders %}
+                <div class="list-group-item px-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div>
+                    <div class="fw-semibold">{{ o.order_number }}</div>
+                    <div class="muted small">&#8377;{{ o.total_amount }} · {{ o.created_at }}</div>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <a class="btn btn-sm btn-outline-primary" href="{% url 'vendor-order-view' vendor.subdomain o.id %}">Open</a>
+                    <form method="post" action="{% url 'vendor-order-accept' vendor.subdomain o.id %}">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-success" type="submit">Accept</button>
+                    </form>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="muted small">No pending orders right now.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="card product-card shadow-soft h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="fw-bold">Recent activity</div>
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-orders' vendor.subdomain %}">Orders</a>
+          </div>
+          <div class="list-group list-group-flush">
+            {% for e in recent_events %}
+              <div class="list-group-item px-0">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="fw-semibold">{{ e.order.order_number }}</div>
+                  <div class="muted small">{{ e.created_at }}</div>
+                </div>
+                <div class="muted small">{{ e.status }}{% if e.note %} · {{ e.note }}{% endif %}</div>
+              </div>
+            {% empty %}
+              <div class="muted small">No activity yet.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card product-card shadow-soft">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <div class="fw-bold">Recent orders</div>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'vendor-orders' vendor.subdomain %}">View all</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Status</th>
+              <th>Payment</th>
+              <th>Shipping</th>
+              <th class="text-end">Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in orders %}
+              <tr>
+                <td class="fw-semibold">{{ o.order_number }}</td>
+                <td>{{ o.status }}</td>
+                <td>{{ o.payment_status }}</td>
+                <td>
+                  {% if o.shipment %}
+                    <div class="small fw-semibold">{{ o.shipment.status }}</div>
+                    <div class="muted small text-truncate" style="max-width:180px;">
+                      {{ o.shipment.tracking_number|default:"-" }}
+                    </div>
+                  {% else %}
+                    <span class="muted small">Not created</span>
+                    {% if o.status == "accepted" or o.status == "packed" %}
+                      <form method="post" action="{% url 'vendor-order-shipping-create' vendor.subdomain o.id %}" class="mt-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="provider" value="shiprocket">
+                        <button class="btn btn-sm btn-outline-primary" type="submit">Create</button>
+                      </form>
+                    {% endif %}
+                  {% endif %}
+                </td>
+                <td class="text-end">&#8377;{{ o.total_amount }}</td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-outline-primary" href="{% url 'vendor-order-view' vendor.subdomain o.id %}">Open</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="muted">No orders yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

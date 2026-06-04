@@ -4,221 +4,2490 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>KhataPro  Smart Accounting Software for Small Businesses</title>
+<title>Billentra - Smart Billing. Easy Business.</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="google-site-verification" content="qgwYgM58Am4jqgwxbMwEpjkdVPX3ojtyiBytcDi3Ui4" />
 
-<meta name="description" content="KhataPro helps Indian small businesses manage billing, inventory, GST, reports and payments easily. Secure cloud accounting software.">
+<meta name="description" content="Billentra helps Indian small businesses manage billing, inventory, GST, reports and payments easily. Smart Billing. Easy Business.">
 
-<link rel="icon" href="{% static 'images/default-avatar.png' %}">
+<link rel="icon" href="{% static 'img/billentra-favicon.ico' %}?v=20260405">
 
 <style>
+:root{
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --ink:#0f172a;
+  --muted:#475569;
+  --border:#dbe4f0;
+  --brand:#2563eb;
+  --brand2:#1d4ed8;
+  --brandSoft:#eff6ff;
+}
 *{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui,-apple-system}
-body{background:#f8fafc;color:#0f172a}
+body{background:var(--bg);color:var(--ink)}
 .container{max-width:1200px;margin:auto;padding:0 20px}
-a{text-decoration:none}
+a{text-decoration:none;color:inherit}
+html{scroll-behavior:smooth}
+section[id]{scroll-margin-top:88px}
+#pricing-cards,#pricing-compare{scroll-margin-top:88px}
+#hiring{scroll-margin-top:88px}
 
 /* HEADER */
 header{background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:999}
 .nav{display:flex;align-items:center;justify-content:space-between;height:72px}
 .nav img{height:42px}
-.nav a{margin-left:18px;color:#334155;font-weight:500}
-.btn{padding:10px 18px;border-radius:6px;font-weight:600}
-.btn-primary{background:#2563eb;color:#fff}
-.btn-outline{border:1px solid #2563eb;color:#2563eb}
+.nav-links{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+.nav-links a{color:#334155;font-weight:600;font-size:14px;padding:8px 10px;border-radius:10px}
+.nav-links a:hover{background:#f1f5f9}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:10px 16px;border-radius:12px;font-weight:800;letter-spacing:-0.01em}
+.btn-primary{background:linear-gradient(180deg,#2b7cff 0%, var(--brand2) 100%);color:#fff;box-shadow:0 16px 34px rgba(37,99,235,.22)}
+.btn-primary:hover{filter:saturate(1.05) brightness(1.01)}
+.btn-outline{background:rgba(255,255,255,.96);color:var(--ink);border:1px solid rgba(15,23,42,.14);box-shadow:0 10px 26px rgba(15,23,42,.10)}
+.btn-outline:hover{background:#f8fafc}
+.btn-muted{
+  background:#e2e8f0;
+  color:#0f172a;
+  border:1px solid rgba(15,23,42,.10);
+  box-shadow:none;
+}
+.btn-muted:hover{background:#dbe6f5}
 
 /* HERO */
-/* Slider Container */
-.hero-slider {
-    position: relative;
-    width: 100%;
-    height: 85vh;
-    overflow: hidden;
+.hero{
+  position:relative;
+  overflow:hidden;
+  padding:72px 0 54px;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(37,99,235,.14), transparent 36%),
+    radial-gradient(circle at 88% 18%, rgba(59,130,246,.12), transparent 30%),
+    linear-gradient(180deg,#ffffff 0%, #f6faff 100%);
+  border-bottom:1px solid #edf2f7;
 }
-
-/* Slides */
-.hero-slide {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 50px 0;
-    opacity: 0;
-    transition: opacity 1s ease;
-    background-size: cover;
-    background-position: center;
+.hero::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(circle at 20% 10%, rgba(0,0,0,.95), transparent 60%);
+  pointer-events:none;
 }
-
-.hero-slide.active {
-    opacity: 1;
+.hero-grid{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);
+  gap:44px;
+  align-items:center;
 }
-
-/* Overlay */
-.hero-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, rgba(0,0,0,0.6), rgba(0,0,0,0.3));
+.hero-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:var(--brandSoft);
+  color:var(--brand2);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.1em;
+  text-transform:uppercase;
 }
-
-/* Content */
-.hero-content {
-    position: relative;
-    z-index: 5;
-    max-width: 650px;
-    color: #fff;
-    text-align: left;
-    animation: fadeUp 1.2s ease forwards;
-    opacity: 0;
+.hero h1{
+  margin-top:14px;
+  font-size:clamp(2.35rem, 4.2vw, 4.05rem);
+  font-weight:950;
+  letter-spacing:-0.045em;
+  line-height:1.02;
 }
-
-.hero-slide.active .hero-content {
-    opacity: 1;
+.hero p{
+  margin-top:16px;
+  max-width:56ch;
+  color:var(--muted);
+  line-height:1.7;
+  font-size:16px;
 }
-
-@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: translateY(0); }
+.hero-actions{
+  margin-top:26px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
 }
-
-.hero-content h1 {
-    font-size: 2.8rem;
-    font-weight: 700;
-    margin-bottom: 15px;
+.hero-subactions{
+  margin-top:16px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
 }
-
-.hero-content p {
-    font-size: 1.2rem;
-    margin-bottom: 25px;
-    line-height: 1.6;
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:999px;
+  border:1px solid rgba(15,23,42,.12);
+  background:rgba(255,255,255,.8);
+  font-size:13px;
+  font-weight:800;
+  color:#0f172a;
 }
-
-/* Buttons */
-.btn-primary {
-    background: #2563EB;
-    color: white;
-    padding: 14px 28px;
-    border-radius: 10px;
-    margin-right: 10px;
-    text-decoration: none;
+.pill small{
+  font-size:12px;
+  font-weight:700;
+  color:#64748b;
 }
-
-.btn-outline {
-    background: white;
-    color: #444;
-    padding: 14px 28px;
-    border-radius: 10px;
-    text-decoration: none;
+.stats{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  margin-top:26px;
 }
-
-.btn-outline:hover {
-    background: #f5f5f5;
+.stat{
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(15,23,42,.10);
+  border-radius:18px;
+  padding:14px 16px;
+  min-width:160px;
+  box-shadow:0 18px 42px rgba(15,23,42,.06);
 }
-
-/* === OPTION 2: Animated Counters === */
-.stats {
-    display: flex;
-    justify-content: center;
-    gap: 50px;
-    text-align: center;
-    margin-top: 40px;
+.stat-number{
+  font-size:20px;
+  font-weight:950;
+  letter-spacing:-0.03em;
 }
-
-.stat {
-    color: white;
+.stat-label{
+  margin-top:4px;
+  font-size:12px;
+  color:#64748b;
+  font-weight:800;
 }
-
-.stat-number {
-    font-size: 2.4rem;
-    font-weight: 700;
+.hero-visual{
+  position:relative;
 }
-
-.stat-label {
-    font-size: 1rem;
-    opacity: 0.8;
+.mock{
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(15,23,42,.12);
+  border-radius:26px;
+  box-shadow:0 28px 70px rgba(15,23,42,.12);
+  overflow:hidden;
 }
-
-.popup-container {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.6);
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
+.mock-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 16px;
+  background:linear-gradient(180deg,#ffffff 0%, #f8fafc 100%);
+  border-bottom:1px solid rgba(15,23,42,.08);
 }
-
-.popup-box {
-    background: white;
-    padding: 25px;
-    width: 350px;
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.3);
-    animation: popIn 0.3s ease-out;
+.mock-dots{display:flex;gap:8px}
+.mock-dot{width:10px;height:10px;border-radius:999px}
+.mock-dot.red{background:#ef4444}
+.mock-dot.amber{background:#f59e0b}
+.mock-dot.green{background:#22c55e}
+.mock-title{
+  font-size:12px;
+  font-weight:900;
+  color:#334155;
 }
-
-@keyframes popIn {
-    from { transform: scale(0.7); opacity: 0; }
-    to   { transform: scale(1); opacity: 1; }
+.mock-body{padding:18px 18px 22px}
+.mock-card{
+  border-radius:18px;
+  border:1px solid rgba(15,23,42,.10);
+  padding:16px;
+  background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);
 }
-
-.popup-box button {
-    margin-top: 15px;
-    padding: 10px 20px;
-    background: #2b7cff;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
+.mock-card h3{
+  font-size:13px;
+  font-weight:950;
+  color:#0f172a;
+  letter-spacing:-0.01em;
 }
+.mock-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid rgba(15,23,42,.06);
+  font-size:13px;
+  color:#334155;
+  font-weight:700;
+}
+.mock-row:last-child{border-bottom:none}
+.mock-tag{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  background:rgba(37,99,235,.10);
+  color:var(--brand2);
+}
+.mock-total{
+  margin-top:14px;
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  border-top:1px dashed rgba(15,23,42,.18);
+  padding-top:14px;
+}
+.mock-total strong{font-size:14px;font-weight:950}
+.mock-total span{font-size:22px;font-weight:950;letter-spacing:-0.03em}
+.mock-float{
+  position:absolute;
+  right:-14px;
+  bottom:-14px;
+  width:min(240px, 78%);
+  border-radius:20px;
+  background:linear-gradient(180deg,#0f7cff 0%, #0c63d4 100%);
+  color:#fff;
+  padding:16px 16px 14px;
+  border:1px solid rgba(37,99,235,.24);
+  box-shadow:0 22px 56px rgba(37,99,235,.22);
+}
+.mock-float h4{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;opacity:.9}
+.mock-float p{margin-top:10px;font-size:13px;line-height:1.55;color:rgba(255,255,255,.92)}
+.mock-float .mock-tag{margin-top:12px;background:rgba(255,255,255,.16);color:#fff}
 
-@media(max-width: 768px){
-  .hero-content h1{font-size:2rem;}
-  .stats{flex-direction:column;gap:15px;}
+/* WORKFORCE HIRING */
+.hiring{
+  padding:76px 0;
+  background:linear-gradient(180deg,#f8fbff 0%, #ffffff 100%);
+  border-bottom:1px solid #edf2f7;
+}
+.hiring-grid{
+  display:grid;
+  grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);
+  gap:28px;
+  align-items:start;
+}
+.hiring-copy{
+  border:1px solid rgba(15,23,42,.10);
+  border-radius:24px;
+  background:#fff;
+  box-shadow:0 22px 56px rgba(15,23,42,.08);
+  padding:28px;
+}
+.hiring-kicker{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 12px;
+  border-radius:999px;
+  background:#eaf2ff;
+  color:#1d4ed8;
+  font-size:12px;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.hiring h2{
+  margin-top:14px;
+  font-size:clamp(2rem, 3vw, 3rem);
+  line-height:1.05;
+  letter-spacing:-0.04em;
+  font-weight:950;
+}
+.hiring-copy p{
+  margin-top:14px;
+  color:#475569;
+  line-height:1.7;
+  font-size:15px;
+}
+.hiring-types{
+  margin-top:20px;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.hiring-type{
+  padding:12px;
+  border:1px solid #dbe4f0;
+  border-radius:14px;
+  background:#f8fafc;
+  color:#0f172a;
+  font-size:13px;
+  font-weight:900;
+}
+.hiring-flow{
+  margin-top:20px;
+  display:grid;
+  gap:10px;
+}
+.hiring-flow span{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:13px;
+  color:#334155;
+  font-weight:850;
+}
+.hiring-flow b{
+  width:24px;
+  height:24px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:#2563eb;
+  color:#fff;
+  font-size:12px;
+}
+.hiring-form-card{
+  border:1px solid rgba(15,23,42,.10);
+  border-radius:24px;
+  background:#fff;
+  box-shadow:0 22px 56px rgba(15,23,42,.08);
+  padding:22px;
+}
+.hiring-form-title{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:16px;
+}
+.hiring-form-title h3{
+  font-size:20px;
+  letter-spacing:-0.02em;
+  font-weight:950;
+}
+.hiring-form-title p{
+  margin-top:5px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:750;
+}
+.hiring-badge{
+  white-space:nowrap;
+  border-radius:999px;
+  background:#ecfdf5;
+  color:#047857;
+  padding:8px 10px;
+  font-size:11px;
+  font-weight:950;
+}
+.hiring-form{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.hiring-form label{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  color:#334155;
+  font-size:12px;
+  font-weight:900;
+}
+.hiring-form input,
+.hiring-form select,
+.hiring-form textarea{
+  width:100%;
+  border:1px solid #dbe4f0;
+  border-radius:12px;
+  padding:11px 12px;
+  color:#0f172a;
+  background:#fff;
+  outline:none;
+  font-size:14px;
+}
+.hiring-form textarea{min-height:86px;resize:vertical}
+.hiring-form input:focus,
+.hiring-form select:focus,
+.hiring-form textarea:focus{
+  border-color:#2563eb;
+  box-shadow:0 0 0 4px rgba(37,99,235,.10);
+}
+.hiring-wide{grid-column:1 / -1}
+.hiring-actions{
+  grid-column:1 / -1;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.hiring-status{
+  color:#475569;
+  font-size:13px;
+  font-weight:800;
+}
+@media(max-width:900px){
+  .hiring{padding:56px 0}
+  .hiring-grid{grid-template-columns:1fr}
+  .hiring-types{grid-template-columns:1fr}
+  .hiring-form{grid-template-columns:1fr}
+}
+@media(max-width: 900px){
+  .nav{height:auto;padding:14px 0;gap:10px;align-items:flex-start}
+  .nav-links{justify-content:flex-start}
+  .hero{padding:54px 0 44px}
+  .hero-grid{grid-template-columns:1fr;gap:22px}
+  .mock-float{position:relative;right:auto;bottom:auto;margin-top:14px;width:100%}
 }
 /* TRUST */
-.trust{padding:50px 0;background:#fff;text-align:center}
-.trust span{margin:0 15px;color:#475569;font-weight:600}
+.trust{
+    padding:42px 0;
+    background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+    text-align:center;
+    border-top:1px solid #edf2f7;
+    border-bottom:1px solid #edf2f7;
+}
+.trust span{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin:8px 14px;
+    padding:10px 14px;
+    color:#334155;
+    font-weight:700;
+    border:1px solid #dbe4f0;
+    border-radius:999px;
+    background:#fff;
+    box-shadow:0 8px 18px rgba(15,23,42,.04);
+}
+
+/* CLIENTS */
+.clients{
+    padding:46px 0 26px;
+    background:#ffffff;
+    border-bottom:1px solid #edf2f7;
+}
+.clients h2{
+    text-align:center;
+    font-size:18px;
+    letter-spacing:-0.02em;
+    font-weight:950;
+    color:#0f172a;
+}
+.clients h2 span{
+    font-weight:950;
+    color:#2563eb;
+}
+.clients-row{
+    margin-top:22px;
+    overflow:hidden;
+    position:relative;
+}
+.clients-row::before,
+.clients-row::after{
+    content:"";
+    position:absolute;
+    top:0;
+    width:90px;
+    height:100%;
+    z-index:2;
+    pointer-events:none;
+}
+.clients-row::before{
+    left:0;
+    background:linear-gradient(90deg,#fff 0%, rgba(255,255,255,0) 100%);
+}
+.clients-row::after{
+    right:0;
+    background:linear-gradient(270deg,#fff 0%, rgba(255,255,255,0) 100%);
+}
+.clients-track{
+    display:flex;
+    align-items:center;
+    gap:34px;
+    width:max-content;
+    animation:clientsScroll 26s linear infinite;
+    padding:8px 10px 12px;
+}
+.clients-row:hover .clients-track{animation-play-state:paused}
+.client{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    height:32px;
+    padding:0 4px;
+    color:#64748b;
+    font-weight:900;
+    letter-spacing:.04em;
+    font-size:11px;
+    white-space:nowrap;
+    filter:grayscale(1);
+    opacity:.86;
+    text-transform:uppercase;
+}
+.client a{display:inline-flex;align-items:center;justify-content:center;gap:10px;color:inherit;text-decoration:none}
+.client img{height:26px;width:auto;object-fit:contain;filter:grayscale(1);opacity:.92}
+@keyframes clientsScroll{
+    from{transform:translateX(0)}
+    to{transform:translateX(-50%)}
+}
+@media(max-width:900px){
+    .clients-row::before,.clients-row::after{width:54px}
+    .clients-track{gap:18px;animation-duration:18s}
+}
+
+/* USE CASES */
+.usecases{
+    padding:84px 0 76px;
+    background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);
+    border-bottom:1px solid #edf2f7;
+}
+.usecases .kicker{
+    text-align:center;
+    color:#2563eb;
+    font-weight:950;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-size:12px;
+}
+.usecases h2{
+    text-align:center;
+    font-size:40px;
+    margin-top:10px;
+    letter-spacing:-0.03em;
+    font-weight:950;
+    color:#0f172a;
+}
+.usecases .sub{
+    text-align:center;
+    max-width:760px;
+    margin:14px auto 0;
+    color:#475569;
+    font-size:14px;
+    line-height:1.7;
+}
+.uc-shell{
+    margin-top:44px;
+    position:relative;
+}
+.uc-viewport{
+    position:relative;
+    overflow:hidden;
+    border-radius:22px;
+    padding:14px;
+}
+.uc-viewport::before,
+.uc-viewport::after{
+    content:"";
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:84px;
+    pointer-events:none;
+    z-index:2;
+}
+.uc-viewport::before{
+    left:0;
+    background:linear-gradient(90deg, rgba(248,251,255,1) 0%, rgba(248,251,255,0) 100%);
+}
+.uc-viewport::after{
+    right:0;
+    background:linear-gradient(270deg, rgba(248,251,255,1) 0%, rgba(248,251,255,0) 100%);
+}
+.uc-track{
+    display:flex;
+    gap:16px;
+    transition:transform .55s cubic-bezier(.2,.8,.2,1);
+    will-change:transform;
+    padding:4px;
+}
+.uc-card{
+    flex:0 0 74%;
+    height:220px;
+    border-radius:22px;
+    border:1px solid rgba(15,23,42,.10);
+    box-shadow:0 20px 50px rgba(15,23,42,.10);
+    position:relative;
+    overflow:hidden;
+    background:#0f172a;
+    transform:scale(.94);
+    opacity:.55;
+    filter:saturate(.95);
+}
+.uc-card.active{
+    transform:scale(1);
+    opacity:1;
+    filter:none;
+}
+.uc-bg{
+    position:absolute;
+    inset:0;
+    background-size:cover;
+    background-position:center;
+    transform:scale(1.04);
+}
+.uc-ov{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(90deg, rgba(2,6,23,.86) 0%, rgba(2,6,23,.40) 60%, rgba(2,6,23,.18) 100%);
+}
+.uc-body{
+    position:absolute;
+    left:22px;
+    bottom:20px;
+    right:22px;
+    color:#fff;
+}
+.uc-body h3{
+    font-size:22px;
+    font-weight:950;
+    letter-spacing:-0.02em;
+}
+.uc-body p{
+    margin-top:10px;
+    max-width:62ch;
+    font-size:12px;
+    line-height:1.6;
+    color:rgba(255,255,255,.9);
+}
+.uc-controls{
+    margin-top:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+}
+.uc-cta{
+    margin-top:22px;
+    display:flex;
+    justify-content:center;
+}
+.uc-cta .btn{min-width:220px}
+.uc-btn{
+    width:38px;height:38px;
+    border-radius:999px;
+    border:1px solid rgba(15,23,42,.12);
+    background:#fff;
+    color:#0f172a;
+    box-shadow:0 12px 26px rgba(15,23,42,.08);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:950;
+    cursor:pointer;
+}
+.uc-btn:hover{background:#f8fafc}
+.uc-dots{
+    display:flex;
+    gap:8px;
+    margin-left:6px;
+}
+.uc-dot{
+    width:8px;height:8px;border-radius:999px;
+    background:rgba(37,99,235,.22);
+    border:1px solid rgba(37,99,235,.25);
+}
+.uc-dot.active{background:#2563eb}
+@media(max-width:900px){
+    .usecases{padding:68px 0 64px}
+    .usecases h2{font-size:32px}
+    .uc-card{flex-basis:88%;height:210px}
+}
+
+/* HOW IT WORKS */
+.howworks{
+    padding:86px 0 80px;
+    background:#ffffff;
+}
+.howworks .kicker{
+    text-align:center;
+    color:#2563eb;
+    font-weight:950;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-size:12px;
+}
+.howworks h2{
+    text-align:center;
+    font-size:40px;
+    margin-top:10px;
+    letter-spacing:-0.03em;
+    font-weight:950;
+    color:#0f172a;
+}
+.howworks .sub{
+    text-align:center;
+    max-width:760px;
+    margin:14px auto 0;
+    color:#475569;
+    font-size:14px;
+    line-height:1.7;
+}
+.hw-card{
+    margin:42px auto 0;
+    max-width:980px;
+    border:1px solid #dbe4f0;
+    border-radius:22px;
+    background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);
+    box-shadow:0 18px 45px rgba(15,23,42,.06);
+    overflow:hidden;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+}
+.hw-art{
+    background:radial-gradient(circle at 20% 20%, rgba(37,99,235,.14), transparent 40%),
+               radial-gradient(circle at 86% 70%, rgba(59,130,246,.12), transparent 42%),
+               linear-gradient(180deg,#f7fbff 0%, #eef6ff 100%);
+    padding:26px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+.hw-art svg{width:min(420px, 100%); height:auto}
+.hw-copy{
+    padding:28px 28px 26px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+.hw-copy h3{
+    font-size:18px;
+    font-weight:950;
+    color:#0f172a;
+    letter-spacing:-0.02em;
+}
+.hw-copy ul{
+    list-style:none;
+    margin:16px 0 0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+.hw-copy li{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    font-size:13px;
+    line-height:1.55;
+    color:#334155;
+    font-weight:800;
+}
+.hw-copy li::before{
+    content:"✓";
+    width:18px;height:18px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    background:rgba(22,163,74,.12);
+    color:#16a34a;
+    font-weight:950;
+    flex:0 0 18px;
+    margin-top:2px;
+}
+.hw-actions{
+    margin-top:18px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+}
+.hw-actions .btn{min-width:160px}
+.hw-steps{
+    margin:44px auto 0;
+    max-width:1100px;
+    border:1px solid rgba(37,99,235,.22);
+    border-radius:20px;
+    padding:22px 22px 18px;
+    background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);
+}
+.hw-line{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0,1fr));
+    gap:18px;
+    align-items:start;
+    position:relative;
+}
+.hw-line::before{
+    content:"";
+    position:absolute;
+    left:64px;
+    right:64px;
+    top:14px;
+    border-top:2px dashed rgba(37,99,235,.18);
+    z-index:0;
+}
+.hw-item{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    position:relative;
+    z-index:1;
+}
+.hw-num{
+    width:28px;height:28px;border-radius:999px;
+    border:1px solid rgba(37,99,235,.24);
+    background:rgba(37,99,235,.08);
+    color:#2563eb;
+    font-weight:950;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 28px;
+}
+.hw-item h4{
+    font-size:14px;
+    font-weight:950;
+    color:#0f172a;
+}
+.hw-item p{
+    margin-top:6px;
+    font-size:12px;
+    color:#64748b;
+    line-height:1.6;
+    font-weight:700;
+}
+@media(max-width:900px){
+    .howworks{padding:68px 0 64px}
+    .howworks h2{font-size:32px}
+    .hw-card{grid-template-columns:1fr}
+    .hw-steps{padding:18px 16px 14px}
+    .hw-line{grid-template-columns:1fr;gap:14px}
+    .hw-line::before{display:none}
+}
+
+/* LANDING VIDEOS */
+.videos{
+    padding:88px 0 84px;
+    background:radial-gradient(circle at 20% 20%, rgba(37,99,235,.08), transparent 30%),
+               radial-gradient(circle at 85% 40%, rgba(59,130,246,.07), transparent 28%),
+               linear-gradient(180deg,#ffffff 0%, #f7fbff 100%);
+    border-top:1px solid #edf2f7;
+    border-bottom:1px solid #edf2f7;
+}
+.videos .kicker{
+    text-align:center;
+    color:#2563eb;
+    font-weight:950;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-size:12px;
+}
+.videos h2{
+    text-align:center;
+    font-size:40px;
+    margin-top:10px;
+    letter-spacing:-0.03em;
+    font-weight:950;
+    color:#0f172a;
+}
+.videos .sub{
+    text-align:center;
+    max-width:760px;
+    margin:14px auto 0;
+    color:#475569;
+    font-size:14px;
+    line-height:1.7;
+}
+.vid-shell{
+    margin:42px auto 0;
+    max-width:1100px;
+    display:grid;
+    grid-template-columns:44px 1fr 44px;
+    gap:12px;
+    align-items:center;
+}
+.vid-nav{
+    width:44px;height:44px;border-radius:999px;
+    border:1px solid rgba(15,23,42,.12);
+    background:#fff;
+    color:#0f172a;
+    box-shadow:0 12px 26px rgba(15,23,42,.08);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:950;
+    cursor:pointer;
+}
+.vid-nav:hover{background:#f8fafc}
+.vid-viewport{
+    overflow:auto;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(148,163,184,.7) transparent;
+    padding:8px 6px 14px;
+    border-radius:20px;
+}
+.vid-track{
+    display:flex;
+    gap:14px;
+    width:max-content;
+    padding:2px 2px 6px;
+}
+.vid-card{
+    scroll-snap-align:center;
+    width:160px;
+    aspect-ratio:9/16;
+    border-radius:18px;
+    overflow:hidden;
+    background:#020617;
+    position:relative;
+    border:1px solid rgba(15,23,42,.10);
+    box-shadow:0 18px 48px rgba(15,23,42,.10);
+}
+.vid-card video,
+.vid-card iframe{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    border:0;
+}
+.vid-overlay{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(2,6,23,.05) 0%, rgba(2,6,23,.55) 85%);
+    pointer-events:none;
+}
+.vid-play{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:56px;height:56px;border-radius:999px;
+    background:rgba(255,255,255,.92);
+    border:1px solid rgba(15,23,42,.12);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 14px 30px rgba(15,23,42,.22);
+    pointer-events:none;
+}
+.vid-play::before{
+    content:"";
+    width:0;height:0;
+    border-left:14px solid #2563eb;
+    border-top:9px solid transparent;
+    border-bottom:9px solid transparent;
+    margin-left:4px;
+}
+.vid-caption{
+    position:absolute;
+    left:12px;
+    right:12px;
+    bottom:10px;
+    color:#fff;
+    font-weight:900;
+    font-size:12px;
+    line-height:1.35;
+    letter-spacing:-0.01em;
+    text-shadow:0 6px 16px rgba(0,0,0,.35);
+}
+.vid-card.is-playing .vid-play{display:none}
+@media(max-width:900px){
+    .videos{padding:70px 0 66px}
+    .videos h2{font-size:32px}
+    .vid-shell{grid-template-columns:1fr}
+    .vid-nav{display:none}
+    .vid-card{width:150px}
+}
+
+/* REVIEWS */
+.reviews{
+    padding:86px 0 78px;
+    background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);
+    border-bottom:1px solid #edf2f7;
+}
+.reviews .kicker{
+    text-align:center;
+    color:#2563eb;
+    font-weight:950;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-size:12px;
+}
+.reviews h2{
+    text-align:center;
+    font-size:38px;
+    margin-top:10px;
+    letter-spacing:-0.03em;
+    font-weight:950;
+    color:#0f172a;
+}
+.reviews .sub{
+    text-align:center;
+    max-width:760px;
+    margin:12px auto 0;
+    color:#475569;
+    font-size:14px;
+    line-height:1.7;
+}
+.review-track{
+    margin:34px auto 0;
+    max-width:1100px;
+    display:flex;
+    gap:16px;
+    overflow:auto;
+    padding:8px 6px 14px;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+}
+.review-card{
+    scroll-snap-align:start;
+    flex:0 0 420px;
+    background:#fff;
+    border:1px solid #dbe4f0;
+    border-radius:18px;
+    padding:18px;
+    box-shadow:0 18px 44px rgba(15,23,42,.07);
+}
+.review-head{
+    display:flex;
+    gap:12px;
+    align-items:center;
+}
+.review-avatar{
+    width:42px;height:42px;border-radius:999px;
+    background:rgba(37,99,235,.12);
+    border:1px solid rgba(15,23,42,.10);
+    overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    flex:0 0 42px;
+}
+.review-avatar img{width:100%;height:100%;object-fit:cover}
+.review-name{font-weight:950;color:#0f172a;letter-spacing:-0.01em}
+.review-meta{font-size:11px;color:#64748b;font-weight:750}
+.review-stars{margin-top:2px;color:#f59e0b;font-size:12px;letter-spacing:.04em}
+.review-body{margin-top:12px;color:#0f172a;font-weight:700;line-height:1.7;font-size:13px;white-space:pre-wrap}
+@media(max-width:900px){
+    .reviews{padding:68px 0 62px}
+    .reviews h2{font-size:30px}
+    .review-card{flex-basis:320px}
+}
 
 /* FEATURES */
-.features{padding:80px 0}
-.features h2{text-align:center;font-size:36px;margin-bottom:50px}
-.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:30px}
-.card{background:#fff;border-radius:14px;padding:30px;box-shadow:0 15px 40px rgba(0,0,0,.06)}
+.features{padding:88px 0;background:#f8fbff}
+.features h2{text-align:center;font-size:40px;margin-bottom:18px;letter-spacing:-0.03em;font-weight:900}
+.features .section-subtitle{
+    text-align:center;
+    max-width:720px;
+    margin:0 auto 42px;
+    color:#475569;
+    font-size:16px;
+    line-height:1.7;
+}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px}
+.card{background:#fff;border-radius:18px;padding:28px;box-shadow:0 16px 38px rgba(15,23,42,.06);border:1px solid #dbe4f0;transition:transform .2s ease, box-shadow .2s ease}
+.card:hover{transform:translateY(-4px);box-shadow:0 22px 46px rgba(15,23,42,.1)}
 .card h3{margin-bottom:10px}
 
+/* INTEGRATIONS / APPS */
+.integrations{
+  padding:88px 0;
+  background:#ffffff;
+  border-top:1px solid #edf2f7;
+  border-bottom:1px solid #edf2f7;
+}
+.integrations h2{
+  text-align:center;
+  font-size:40px;
+  margin-top:10px;
+  margin-bottom:16px;
+  letter-spacing:-0.03em;
+  font-weight:950;
+  color:#0f172a;
+}
+.integrations .section-subtitle{
+  text-align:center;
+  max-width:840px;
+  margin:0 auto 42px;
+  color:#475569;
+  font-size:15px;
+  line-height:1.7;
+}
+.integration-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:18px;
+}
+.integration-card{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.integration-head{
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+.integration-badge{
+  width:46px;
+  height:46px;
+  border-radius:16px;
+  background:var(--brandSoft);
+  border:1px solid rgba(37,99,235,.20);
+  color:var(--brand2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:950;
+  letter-spacing:-0.02em;
+  flex:0 0 46px;
+}
+.integration-card .integration-title{
+  margin:0;
+  font-size:16px;
+  font-weight:950;
+  letter-spacing:-0.01em;
+  color:#0f172a;
+}
+.integration-meta{
+  margin-top:4px;
+  font-size:12px;
+  font-weight:800;
+  color:#64748b;
+}
+.integration-card p{
+  margin:0;
+  color:#475569;
+  font-size:14px;
+  line-height:1.7;
+}
+.integration-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.integration-tags .tag{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(15,23,42,.12);
+  background:rgba(248,250,252,.9);
+  color:#334155;
+  font-size:12px;
+  font-weight:800;
+}
+.integrations-toolbar{
+  margin:26px auto 14px;
+  max-width:980px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  align-items:center;
+  justify-content:center;
+}
+.integration-search-wrap{
+  position:relative;
+  flex:1 1 360px;
+  max-width:520px;
+}
+.integration-search{
+  width:100%;
+  height:44px;
+  padding:0 14px 0 44px;
+  border-radius:14px;
+  border:1px solid rgba(15,23,42,.14);
+  background:rgba(255,255,255,.96);
+  color:#0f172a;
+  outline:none;
+  box-shadow:0 10px 26px rgba(15,23,42,.06);
+  font-weight:700;
+}
+.integration-search:focus{
+  border-color:rgba(37,99,235,.35);
+  box-shadow:0 14px 34px rgba(37,99,235,.14);
+}
+.integration-search-icon{
+  position:absolute;
+  left:14px;
+  top:50%;
+  transform:translateY(-50%);
+  width:18px;
+  height:18px;
+  opacity:.7;
+}
+.integration-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  justify-content:center;
+}
+.chip{
+  appearance:none;
+  border:1px solid rgba(15,23,42,.12);
+  background:rgba(255,255,255,.92);
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  color:#0f172a;
+  cursor:pointer;
+  transition:transform .14s ease, box-shadow .14s ease, background .14s ease, border-color .14s ease;
+}
+.chip:hover{
+  transform:translateY(-1px);
+  box-shadow:0 12px 30px rgba(15,23,42,.08);
+}
+.chip.active{
+  background:var(--brandSoft);
+  color:var(--brand2);
+  border-color:rgba(37,99,235,.22);
+}
+.integration-note{
+  text-align:center;
+  color:#64748b;
+  font-size:12px;
+  font-weight:800;
+  margin:0 auto 20px;
+}
+.integrations-footer{
+  margin-top:28px;
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.integrations-disclaimer{
+  margin-top:14px;
+  text-align:center;
+  color:#64748b;
+  font-size:12px;
+  line-height:1.6;
+  font-weight:750;
+}
+.integration-actions{
+  margin-top:auto;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+@media(max-width:900px){
+  .integrations{padding:68px 0}
+  .integrations h2{font-size:30px}
+}
+
 /* WHY */
-.why{background:#f1f5f9;padding:80px 0}
-.why-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:30px}
-.why h2{text-align:center;font-size:36px;margin-bottom:40px}
+.why{background:linear-gradient(180deg,#f8fbff 0%,#eef6ff 100%);padding:88px 0}
+.why-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px}
+.why h2{text-align:center;font-size:40px;margin-bottom:14px;letter-spacing:-0.03em;font-weight:900}
+.why .section-subtitle{
+    text-align:center;
+    max-width:720px;
+    margin:0 auto 42px;
+    color:#475569;
+    font-size:16px;
+    line-height:1.7;
+}
 
 /* PRICING */
-.pricing{padding:90px 0}
-.pricing h2{text-align:center;font-size:36px}
-.pricing p{text-align:center;color:#475569;margin:10px 0 50px}
-.price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:30px}
-.price{background:#fff;border-radius:16px;padding:40px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.08)}
-.price h3{font-size:22px}
-.amount{font-size:44px;color:#2563eb;margin:20px 0}
-.price ul{list-style:none}
-.price ul li{margin:10px 0;color:#475569}
+.pricing{
+    position:relative;
+    overflow:hidden;
+    padding:96px 0 92px;
+    background:
+      radial-gradient(circle at 12% 12%, rgba(37,99,235,.08), transparent 28%),
+      radial-gradient(circle at 88% 8%, rgba(59,130,246,.07), transparent 24%),
+      linear-gradient(180deg,#ffffff 0%,#f7fbff 100%);
+}
+.pricing::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:linear-gradient(rgba(37,99,235,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,.03) 1px, transparent 1px);
+    background-size:56px 56px;
+    mask-image:radial-gradient(circle at center, rgba(0,0,0,.8), transparent 85%);
+    pointer-events:none;
+}
+.pricing .section-kicker{
+    display:inline-flex;
+    align-items:center;
+    padding:8px 14px;
+    border-radius:999px;
+    background:#eff6ff;
+    color:#2563eb;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    margin-bottom:12px;
+}
+.pricing-top{
+    display:grid;
+    grid-template-columns:minmax(0,1.2fr) minmax(260px,320px);
+    gap:18px;
+    margin-bottom:26px;
+    position:relative;
+    z-index:1;
+}
+.pricing-head{
+    position:relative;
+    z-index:1;
+    text-align:center;
+    margin:0 auto 22px;
+    max-width:880px;
+}
+.pricing-head h2{
+    font-size:clamp(2.1rem, 3.6vw, 3rem);
+    line-height:1.05;
+    letter-spacing:-0.04em;
+    font-weight:950;
+}
+.pricing-head p{
+    margin-top:12px;
+    color:#475569;
+    font-size:16px;
+    line-height:1.7;
+}
+.pricing-actions{
+    margin-top:18px;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:12px;
+}
+.pricing-vs{
+    position:relative;
+    z-index:1;
+    margin:18px 0 22px;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+}
+.vs-card{
+    background:rgba(255,255,255,.92);
+    border:1px solid #dbe4f0;
+    border-radius:22px;
+    padding:20px 20px 18px;
+    box-shadow:0 18px 45px rgba(15,23,42,.06);
+}
+.vs-card h3{
+    font-size:14px;
+    font-weight:950;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#0f172a;
+}
+.vs-card ul{
+    margin:14px 0 0;
+    padding:0;
+    list-style:none;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+.vs-card li{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    font-size:14px;
+    line-height:1.5;
+    color:#334155;
+    font-weight:700;
+}
+.vs-bullet{
+    width:18px;height:18px;border-radius:999px;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:950;flex:0 0 18px;margin-top:1px;
+}
+.vs-good{background:rgba(22,163,74,.12);color:#16a34a}
+.vs-bad{background:rgba(239,68,68,.10);color:#ef4444}
+
+/* Match apna-style pricing: keep cards + compare table only */
+.pricing-head,
+.pricing-vs,
+.pricing-top{
+    display:none;
+}
+.pricing-top > div{
+    background:rgba(255,255,255,.9);
+    border:1px solid #dbe4f0;
+    border-radius:24px;
+    padding:28px 28px 24px;
+    box-shadow:0 18px 45px rgba(15,23,42,.06);
+    backdrop-filter:blur(8px);
+}
+.pricing-top > div:first-child{
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+}
+.pricing-top h2{
+    font-size:40px;
+    line-height:1.05;
+    letter-spacing:-0.03em;
+    font-weight:900;
+}
+.pricing-top p{
+    margin-top:10px;
+    color:#475569;
+    font-size:16px;
+}
+.pricing-subcard{
+    max-width:none;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:20px 22px;
+    border-radius:20px;
+    background:linear-gradient(180deg,#0f7cff 0%,#0c63d4 100%);
+    border:1px solid rgba(37,99,235,.18);
+    box-shadow:0 18px 42px rgba(37,99,235,.18);
+    color:#fff;
+    font-size:14px;
+    line-height:1.7;
+    min-height:100%;
+}
+.pricing-subcard strong{
+    display:block;
+    font-size:18px;
+    line-height:1.15;
+    margin-bottom:8px;
+}
+.pricing-top-highlights{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:18px;
+}
+.pricing-top-highlights span{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 12px;
+    border-radius:999px;
+    background:#eef6ff;
+    color:#1d4ed8;
+    font-size:12px;
+    font-weight:800;
+}
+.pricing-top-highlights span::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:#2563eb;
+}
+.plan-hero-grid{
+    display:grid;
+    grid-template-columns:1.05fr repeat(var(--plan-cols, 3),minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+    align-items:stretch;
+}
+.plan-card,
+.plan-hero-copy{
+    position:relative;
+    background:#fff;
+    border-radius:22px;
+    padding:24px;
+    box-shadow:0 22px 50px rgba(15,23,42,.08);
+    border:1px solid #dbe4f0;
+}
+.plan-hero-copy{
+    background:linear-gradient(180deg,#f8fbff 0%,#eef4ff 100%);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    gap:18px;
+}
+.plan-hero-badge,
+.plan-badge{
+    display:inline-flex;
+    align-items:center;
+    width:max-content;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+}
+.plan-hero-badge{
+    background:#eff6ff;
+    color:#2563eb;
+}
+.plan-badge{
+    position:absolute;
+    top:16px;
+    right:16px;
+    background:#ffedd5;
+    color:#ea580c;
+}
+.plan-hero-copy h3,
+.plan-card-head .plan-title{
+    font-weight:900;
+    color:#0f172a;
+    letter-spacing:-0.02em;
+}
+.plan-hero-copy h3{
+    font-size:28px;
+    margin:12px 0 10px;
+}
+.plan-hero-copy p,
+.plan-card p{
+    color:#475569;
+    line-height:1.65;
+    font-size:14px;
+}
+.plan-caption{
+    margin-top:6px;
+    font-size:12px;
+    font-weight:800;
+    color:#64748b;
+}
+.plan-card.popular .plan-caption{
+    color:rgba(255,255,255,.86);
+}
+.plan-feature-list{
+    list-style:none;
+    margin:18px 0 0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+.plan-feature-list li{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    color:#0f172a;
+    font-size:13px;
+    line-height:1.45;
+}
+.plan-feature-list .feature-bullet{
+    width:18px;
+    height:18px;
+    flex:0 0 18px;
+    border-radius:999px;
+    background:#e0f2fe;
+    color:#2563eb;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:900;
+    margin-top:1px;
+}
+.plan-feature-list small{
+    display:block;
+    color:#64748b;
+    font-size:12px;
+    margin-top:2px;
+}
+.plan-more{
+    margin-top:14px;
+    font-size:12px;
+    font-weight:800;
+    color:#2563eb;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+}
+.plan-offer{
+    margin-top:12px;
+    display:inline-flex;
+    align-items:center;
+    padding:8px 12px;
+    border-radius:999px;
+    background:#ef4444;
+    color:#fff;
+    font-size:12px;
+    font-weight:950;
+    letter-spacing:.02em;
+}
+.plan-card.popular .plan-offer{
+    background:rgba(239,68,68,.92);
+}
+.plan-price,
+.plan-hero-copy .amount{
+    font-size:44px;
+    line-height:1;
+    font-weight:900;
+    color:#2563eb;
+    margin:18px 0 4px;
+}
+.plan-price span{
+    font-size:14px;
+    color:#64748b;
+    font-weight:700;
+    margin-left:4px;
+}
+.plan-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:18px;
+}
+.plan-actions .btn-strong,
+.plan-actions .btn{
+    flex:1 1 150px;
+}
+.plan-card{
+    background:#fff;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    min-height:100%;
+    transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.plan-card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 26px 58px rgba(15,23,42,.12);
+    border-color:#bfd0e6;
+}
+.plan-card.popular{
+    background:linear-gradient(180deg,#1677ff 0%,#0c63d4 100%);
+    color:#fff;
+    border-color:#1677ff;
+    box-shadow:0 28px 62px rgba(22,119,255,.28);
+    transform:translateY(-10px);
+    position:relative;
+    overflow:hidden;
+}
+.plan-card.popular:hover{
+    transform:translateY(-12px) scale(1.01);
+}
+.plan-card.popular::before{
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background:radial-gradient(circle at 20% 10%, rgba(255,255,255,.18), transparent 32%);
+    pointer-events:none;
+}
+.plan-card.popular p,
+.plan-card.popular .plan-title,
+.plan-card.popular .plan-name{
+    color:#fff;
+}
+.plan-card.popular .plan-feature-list li,
+.plan-card.popular .plan-feature-list small{
+    color:#fff;
+}
+.plan-card.popular .plan-feature-list .feature-bullet{
+    background:rgba(255,255,255,.2);
+    color:#fff;
+}
+.plan-card.popular .plan-badge{
+    background:#fff;
+    color:#0c63d4;
+}
+.plan-card.popular .plan-price{
+    color:#fff;
+}
+.plan-card-head{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    margin-bottom:12px;
+    padding-right:88px;
+}
+.plan-name{
+    color:#2563eb;
+    font-size:14px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+}
+.plan-title{
+    font-size:24px;
+}
+.pricing-table{
+    min-width:980px;
+    display:grid;
+    grid-template-columns: 1.1fr 1fr 1fr 1fr;
+    border:1px solid #dbe4f0;
+    border-radius:18px;
+    overflow:hidden;
+    background:#fff;
+}
+.pricing-table .cell{
+    padding:12px 14px;
+    border-right:1px solid #eef2f7;
+    border-bottom:1px solid #eef2f7;
+    font-size:13px;
+    line-height:1.45;
+}
+.pricing-table .cell:nth-child(4n){
+    border-right:none;
+}
+.pricing-table .head{
+    background:#f8fbff;
+    font-weight:800;
+    color:#0f172a;
+}
+.pricing-table .label{
+    font-weight:700;
+    color:#0f172a;
+}
+.pricing-table .ok{
+    color:#16a34a;
+    font-weight:800;
+}
+.pricing-table .no{
+    color:#ef4444;
+    font-weight:800;
+}
+.pricing-cta-strip{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    margin-top:18px;
+    flex-wrap:wrap;
+}
+.plan-card .pricing-cta-strip{
+    margin-top:auto;
+    padding-top:10px;
+}
+.pricing-cta-strip .btn{
+    min-width:160px;
+}
+.pricing-cta-strip .btn-muted{
+    flex:1 1 100%;
+    width:100%;
+}
+.matrix-details{display:none}
+.compare-wrap{
+    overflow-x:auto;
+    border-radius:18px;
+    box-shadow:0 18px 42px rgba(15,23,42,.05);
+    margin-top:8px;
+}
+.compare{
+    min-width:980px;
+    background:#fff;
+    border:1px solid #dbe4f0;
+    border-radius:20px;
+    overflow:hidden;
+    position:relative;
+}
+.compare-head,
+.compare-row{
+    display:grid;
+    grid-template-columns:1.2fr repeat(var(--plan-cols, 3), minmax(0, 1fr));
+}
+.compare-cell{
+    padding:12px 14px;
+    border-right:1px solid #eef2f7;
+    border-top:1px solid #eef2f7;
+    font-size:13px;
+    line-height:1.45;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+}
+.compare-head .compare-cell{
+    background:linear-gradient(180deg,#f9fbff 0%,#eef4ff 100%);
+    border-top:none;
+    font-weight:950;
+    color:#0f172a;
+}
+.compare-cell.label{
+    justify-content:flex-start;
+    font-weight:900;
+    color:#0f172a;
+    position:sticky;
+    left:0;
+    background:#fff;
+    z-index:2;
+    text-align:left;
+}
+.compare-head .compare-cell.label{
+    background:linear-gradient(180deg,#f9fbff 0%,#eef4ff 100%);
+    z-index:4;
+}
+.compare-cell:last-child{border-right:none}
+.compare-cell.popular-col{
+    border-left:2px solid rgba(12,99,212,.85);
+    border-right:2px solid rgba(12,99,212,.85);
+    background:rgba(37,99,235,.04);
+}
+.compare-head .compare-cell.popular-col{
+    background:rgba(37,99,235,.08);
+}
+.compare-row:last-child .compare-cell{border-bottom:1px solid #eef2f7}
+.compare-text{font-weight:800;color:#334155}
+.compare-state{
+    width:22px;height:22px;border-radius:999px;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:950;
+}
+.compare-state.ok{background:rgba(22,163,74,.12);color:#16a34a}
+.compare-state.no{background:rgba(239,68,68,.10);color:#ef4444}
+.compare-state.trial{background:rgba(245,158,11,.14);color:#b45309}
+.compare-trial-text{margin-left:8px;font-weight:900;color:#b45309;font-size:12px}
+.pricing-table-wrap{
+    overflow-x:auto;
+    border-radius:18px;
+    box-shadow:0 18px 42px rgba(15,23,42,.05);
+    margin-top:8px;
+}
+.pricing-matrix{
+    min-width:980px;
+    background:#fff;
+    border:1px solid #dbe4f0;
+    border-radius:20px;
+    overflow:hidden;
+    position:relative;
+}
+.pricing-matrix-head{
+    display:grid;
+    grid-template-columns:1.2fr repeat(var(--plan-cols, 3),minmax(0,1fr));
+    background:linear-gradient(180deg,#f9fbff 0%,#eef4ff 100%);
+    border-bottom:1px solid #dbe4f0;
+    position:sticky;
+    top:0;
+    z-index:3;
+}
+.pricing-matrix-head .matrix-cell,
+.pricing-matrix-row .matrix-cell{
+    padding:18px 18px;
+    border-right:1px solid #eef2f7;
+}
+.pricing-matrix-head .matrix-cell:first-child,
+.pricing-matrix-row .matrix-cell:first-child{
+    position:sticky;
+    left:0;
+    z-index:2;
+    background:inherit;
+    box-shadow:1px 0 0 #eef2f7;
+}
+.pricing-matrix-head .matrix-cell:first-child{
+    z-index:4;
+    background:linear-gradient(180deg,#f9fbff 0%,#eef4ff 100%);
+}
+.pricing-matrix-row.group .matrix-cell:first-child{
+    background:#f8fbff;
+}
+.pricing-matrix-row:not(.group) .matrix-cell:first-child{
+    background:#fff;
+}
+.pricing-matrix-head .matrix-cell:last-child,
+.pricing-matrix-row .matrix-cell:last-child{
+    border-right:none;
+}
+.matrix-feature-head{
+    color:#0f172a;
+    font-size:14px;
+    font-weight:900;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+}
+.matrix-plan-head{
+    position:relative;
+    min-height:154px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+}
+.matrix-plan-head.popular{
+    background:linear-gradient(180deg,#1677ff 0%,#0c63d4 100%);
+    color:#fff;
+}
+.matrix-plan-head.popular::after{
+    content:"Best Value";
+    position:absolute;
+    top:12px;
+    right:12px;
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.18);
+    color:#fff;
+    font-size:10px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+}
+.matrix-plan-head .plan-tag{
+    display:inline-flex;
+    width:max-content;
+    align-items:center;
+    padding:5px 10px;
+    border-radius:999px;
+    background:#ffedd5;
+    color:#ea580c;
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+}
+.matrix-plan-head.popular .plan-tag{
+    background:#fff;
+    color:#177df5;
+}
+.matrix-plan-head h3{
+    margin-top:12px;
+    font-size:26px;
+    line-height:1.05;
+}
+.matrix-plan-price{
+    margin-top:10px;
+    font-size:30px;
+    font-weight:900;
+}
+.matrix-plan-price span{
+    font-size:13px;
+    font-weight:700;
+    opacity:.9;
+}
+.matrix-plan-copy{
+    font-size:13px;
+    line-height:1.55;
+    color:#475569;
+    margin-top:10px;
+}
+.matrix-plan-head.popular .matrix-plan-copy,
+.matrix-plan-head.popular .matrix-plan-price{
+    color:#fff;
+}
+.pricing-matrix-row{
+    display:grid;
+    grid-template-columns:1.2fr repeat(var(--plan-cols, 3),minmax(0,1fr));
+    border-top:1px solid #eef2f7;
+    background:#fff;
+    transition:background .2s ease;
+}
+.pricing-matrix-row.group{
+    background:#f8fbff;
+}
+.pricing-matrix-row:not(.group):nth-child(even){
+    background:#fcfdff;
+}
+.pricing-matrix-row:not(.group):hover{
+    background:#f5f9ff;
+}
+.pricing-matrix-row.group .matrix-cell{
+    font-size:12px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    color:#2563eb;
+}
+.matrix-feature{
+    color:#0f172a;
+    font-weight:700;
+    background:inherit;
+    padding-left:22px;
+}
+.matrix-feature small{
+    display:block;
+    color:#64748b;
+    font-size:12px;
+    font-weight:500;
+    margin-top:4px;
+    line-height:1.45;
+}
+.matrix-state{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100%;
+    font-size:20px;
+    font-weight:900;
+}
+.matrix-state.ok{
+    color:#16a34a;
+}
+.matrix-state.no{
+    color:#ef4444;
+}
+.matrix-state.text{
+    color:#0f172a;
+    font-size:13px;
+    font-weight:700;
+    text-align:center;
+    line-height:1.45;
+}
 
 /* CTA */
-.cta{background:#2563eb;color:#fff;padding:80px 0;text-align:center}
-.cta h2{font-size:36px;margin-bottom:15px}
+/* CTA (Download banner) */
+.cta{
+    padding:90px 0;
+    background:linear-gradient(90deg, #0ea5ff 0%, #00d7b4 100%);
+    color:#fff;
+    text-align:left;
+}
+.cta-grid{
+    display:grid;
+    grid-template-columns:1.15fr .85fr;
+    gap:26px;
+    align-items:center;
+    border-radius:22px;
+    padding:34px;
+    background:rgba(2,6,23,.08);
+    border:1px solid rgba(255,255,255,.18);
+    box-shadow:0 30px 70px rgba(2,6,23,.22);
+    overflow:hidden;
+    position:relative;
+}
+.cta-grid::before{
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background:
+      radial-gradient(circle at 22% 30%, rgba(255,255,255,.22), transparent 34%),
+      radial-gradient(circle at 85% 20%, rgba(255,255,255,.18), transparent 38%),
+      radial-gradient(circle at 70% 85%, rgba(255,255,255,.12), transparent 42%);
+    pointer-events:none;
+}
+.cta-copy{position:relative;z-index:1}
+.cta-eyebrow{
+    font-weight:950;
+    letter-spacing:.02em;
+    opacity:.98;
+    font-size:16px;
+}
+.cta h2{
+    margin-top:10px;
+    font-size:34px;
+    letter-spacing:-0.03em;
+    font-weight:950;
+    line-height:1.18;
+}
+.cta p{
+    margin-top:12px;
+    max-width:70ch;
+    font-size:13px;
+    line-height:1.7;
+    opacity:.92;
+    font-weight:650;
+}
+.cta-badges{
+    margin-top:18px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+.cta-badges-label{
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    opacity:.9;
+}
+.badge-row{display:flex;gap:10px;flex-wrap:wrap}
+.store-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:14px;
+    background:rgba(255,255,255,.16);
+    border:1px solid rgba(255,255,255,.24);
+    color:#fff;
+    text-decoration:none;
+    backdrop-filter:blur(8px);
+    position:relative;
+}
+.store-badge:hover{background:rgba(255,255,255,.22)}
+.store-badge.disabled{
+    opacity:.55;
+    cursor:not-allowed;
+    pointer-events:none;
+    filter:grayscale(.25);
+}
+.store-badge.recommended{
+    outline:2px solid rgba(255,255,255,.85);
+    box-shadow:0 18px 44px rgba(0,0,0,.18);
+}
+.store-badge.recommended::after{
+    content:"Recommended";
+    position:absolute;
+    top:-10px;
+    right:10px;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:950;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    background:rgba(255,255,255,.92);
+    color:#0f172a;
+    border:1px solid rgba(15,23,42,.18);
+    box-shadow:0 10px 22px rgba(2,6,23,.18);
+}
+.store-badge:focus-visible{
+    outline:2px solid rgba(255,255,255,.92);
+    outline-offset:2px;
+}
+.store-meta{
+    margin-left:auto;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:5px 9px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:950;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    background:rgba(2,6,23,.28);
+    border:1px solid rgba(255,255,255,.22);
+    opacity:.96;
+}
+.store-ico{
+    width:28px;height:28px;border-radius:10px;
+    background:rgba(2,6,23,.20);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid rgba(255,255,255,.20);
+}
+.store-ico svg{width:16px;height:16px;fill:#fff;opacity:.95}
+.store-txt{display:flex;flex-direction:column;line-height:1.05}
+.store-txt small{font-size:10px;opacity:.92;font-weight:800}
+.store-txt strong{font-size:12px;font-weight:950}
+.cta-points{
+    margin:18px 0 0;
+    padding:0;
+    list-style:none;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    font-size:12px;
+    font-weight:800;
+    opacity:.95;
+}
+.cta-points li{display:flex;gap:10px;align-items:flex-start}
+.cta-points li::before{
+    content:"✓";
+    width:18px;height:18px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.18);
+    border:1px solid rgba(255,255,255,.26);
+    font-weight:950;
+    flex:0 0 18px;
+    margin-top:1px;
+}
+.cta-art{position:relative;z-index:1}
+.cta-art svg{width:100%;height:auto;display:block;filter:drop-shadow(0 22px 40px rgba(2,6,23,.28))}
+@media(max-width:900px){
+    .cta{padding:70px 0}
+    .cta-grid{grid-template-columns:1fr;padding:24px}
+    .cta h2{font-size:28px}
+}
+
+/* DOWNLOAD POPUP (Apna-style) */
+.dl-modal{
+    position:fixed;
+    inset:0;
+    z-index:10050;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+}
+.dl-modal.open{display:flex}
+.dl-backdrop{
+    position:absolute;
+    inset:0;
+    background:rgba(2,6,23,.62);
+    backdrop-filter:blur(4px);
+}
+.dl-dialog{
+    position:relative;
+    z-index:1;
+    width:min(980px, 100%);
+    border-radius:22px;
+    overflow:hidden;
+    display:grid;
+    grid-template-columns:1.15fr .85fr;
+    border:1px solid rgba(255,255,255,.16);
+    box-shadow:0 40px 120px rgba(2,6,23,.45);
+}
+.dl-close{
+    position:absolute;
+    right:12px;
+    top:10px;
+    width:34px;
+    height:34px;
+    border-radius:999px;
+    border:1px solid rgba(15,23,42,.18);
+    background:rgba(255,255,255,.92);
+    color:#0f172a;
+    font-weight:950;
+    cursor:pointer;
+    z-index:2;
+}
+.dl-left{
+    padding:22px 24px 20px;
+    background:linear-gradient(135deg, #0ea5ff 0%, #0b5fff 40%, #00d7b4 100%);
+    color:#fff;
+    position:relative;
+}
+.dl-left::before{
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,.28), transparent 38%),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,.18), transparent 42%);
+    pointer-events:none;
+    opacity:.9;
+}
+.dl-left > *{position:relative;z-index:1}
+.dl-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:rgba(2,6,23,.22);
+    border:1px solid rgba(255,255,255,.22);
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+}
+.dl-left h3{
+    margin-top:14px;
+    font-size:22px;
+    font-weight:950;
+    letter-spacing:-0.02em;
+    line-height:1.25;
+}
+.dl-left p{
+    margin-top:10px;
+    font-size:12px;
+    line-height:1.7;
+    opacity:.92;
+    font-weight:650;
+    max-width:72ch;
+}
+.dl-steps{
+    margin-top:14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    font-size:12px;
+    line-height:1.6;
+    font-weight:700;
+}
+.dl-steps strong{font-weight:950}
+.dl-actions{
+    margin-top:16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+}
+.dl-actions .store-badge{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.26)}
+.dl-actions .store-badge:hover{background:rgba(255,255,255,.22)}
+.dl-primary{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:11px 14px;
+    border-radius:14px;
+    background:#fff;
+    color:#0f172a;
+    text-decoration:none;
+    font-weight:950;
+    border:1px solid rgba(255,255,255,.35);
+}
+.dl-primary:hover{background:#f8fafc}
+.dl-right{
+    background:#f8fafc;
+    padding:22px 22px 20px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:14px;
+}
+.dl-card{
+    border-radius:18px;
+    border:1px solid #dbe4f0;
+    background:#fff;
+    padding:18px;
+    box-shadow:0 18px 44px rgba(15,23,42,.08);
+}
+.dl-card h4{font-size:15px;font-weight:950;color:#0f172a}
+.dl-form{
+    margin-top:12px;
+    display:flex;
+    gap:10px;
+}
+.dl-form input{
+    flex:1;
+    padding:12px 12px;
+    border-radius:14px;
+    border:1px solid rgba(15,23,42,.14);
+    outline:none;
+    font-weight:750;
+}
+.dl-form button{
+    padding:12px 14px;
+    border-radius:14px;
+    border:0;
+    background:linear-gradient(180deg,#2b7cff 0%, var(--brand2) 100%);
+    color:#fff;
+    font-weight:900;
+    cursor:pointer;
+    min-width:120px;
+}
+.dl-note{
+    margin-top:10px;
+    color:#64748b;
+    font-size:12px;
+    line-height:1.6;
+    font-weight:650;
+}
+.dl-status{
+    margin-top:10px;
+    font-size:12px;
+    font-weight:800;
+    color:#0f172a;
+}
+@media(max-width:900px){
+    .dl-dialog{grid-template-columns:1fr}
+    .dl-left{padding:18px}
+    .dl-right{padding:16px}
+}
 
 /* FOOTER */
-footer{background:#0f172a;color:#cbd5f5;padding:50px 0}
+footer{
+    background:linear-gradient(180deg,#f8fbff 0%,#eef4ff 100%);
+    color:#0f172a;
+    padding:54px 0;
+    border-top:1px solid #dbe4f0;
+}
 .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:30px}
-footer a{color:#94a3b8;display:block;margin:8px 0;font-size:14px}
+footer h4{
+    font-size:15px;
+    font-weight:900;
+    margin-bottom:10px;
+}
+footer a{
+    color:#475569;
+    display:block;
+    margin:8px 0;
+    font-size:14px;
+}
+footer p{
+    color:#334155;
+    line-height:1.7;
+}
 
 @media(max-width:900px){
 .hero-grid{grid-template-columns:1fr}
-.hero h1{font-size:36px}
+.plan-hero-grid{grid-template-columns:1fr}
+.pricing-vs{grid-template-columns:1fr}
+.pricing-table{min-width:860px}
+.pricing-matrix{min-width:860px}
+.pricing-top h2{font-size:32px}
+.pricing-top p{font-size:15px}
+.pricing-top > div{padding:22px}
+.pricing-subcard{padding:18px}
+.plan-card,
+.plan-hero-copy{padding:20px}
+.plan-card-head{padding-right:74px}
+.plan-hero-copy h3{font-size:24px}
+.plan-price{font-size:36px}
+.plan-title{font-size:22px}
+.pricing-matrix-head .matrix-cell,
+.pricing-matrix-row .matrix-cell{padding:14px 12px}
+.matrix-plan-head{min-height:130px}
+.matrix-plan-head h3{font-size:22px}
+.matrix-plan-price{font-size:24px}
+.matrix-feature{padding-left:14px}
+.matrix-state{font-size:18px}
+.pricing-top-highlights span{padding:8px 10px}
+}
+
+@media(max-width:1200px){
+    .plan-hero-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .plan-hero-copy{
+        grid-column:1/-1;
+    }
+    .pricing-top{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:640px){
+    .pricing{
+        padding:72px 0 70px;
+    }
+    .pricing-top{
+        gap:12px;
+        margin-bottom:18px;
+    }
+    .pricing-top > div{
+        padding:18px;
+        border-radius:18px;
+    }
+    .pricing-top h2{
+        font-size:28px;
+    }
+    .pricing-top p{
+        font-size:14px;
+    }
+    .pricing-top-highlights{
+        gap:8px;
+        margin-top:14px;
+    }
+    .pricing-top-highlights span{
+        font-size:11px;
+        padding:7px 10px;
+    }
+    .pricing-subcard strong{
+        font-size:16px;
+    }
+    .plan-hero-grid{
+        gap:12px;
+        margin-bottom:14px;
+    }
+    .plan-card,
+    .plan-hero-copy{
+        padding:18px;
+        border-radius:18px;
+    }
+    .plan-card.popular{
+        transform:none;
+    }
+    .plan-card.popular:hover{
+        transform:none;
+    }
+    .plan-hero-copy h3{
+        font-size:22px;
+    }
+    .plan-card p,
+    .plan-hero-copy p,
+    .matrix-plan-copy{
+        font-size:13px;
+    }
+    .plan-price{
+        font-size:32px;
+    }
+    .plan-title{
+        font-size:20px;
+    }
+    .pricing-cta-strip .btn{
+        min-width:0;
+        width:100%;
+    }
+    .pricing-cta-strip{
+        flex-direction:column;
+        align-items:stretch;
+    }
+    .pricing-matrix{
+        min-width:760px;
+        border-radius:16px;
+    }
+    .pricing-matrix-head .matrix-cell,
+    .pricing-matrix-row .matrix-cell{
+        padding:12px 10px;
+    }
+    .matrix-feature{
+        padding-left:12px;
+    }
+    .matrix-plan-head{
+        min-height:118px;
+    }
+    .matrix-plan-head h3{
+        font-size:20px;
+    }
+    .matrix-plan-price{
+        font-size:22px;
+    }
+    .matrix-state{
+        font-size:16px;
+    }
+    .pricing-table{min-width:760px}
+    .footer-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -228,109 +2497,786 @@ footer a{color:#94a3b8;display:block;margin:8px 0;font-size:14px}
 <!-- HEADER -->
 <header>
 <div class="container nav">
-  <img src="{% static 'images/default-avatar.png' %}" alt="KhataPro">
-  <div>
+  <img src="{% static 'img/billentra-logo.png' %}?v=20260405" alt="Billentra" style="height:250px;width:auto;object-fit:contain;">
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="/apps/">Apps</a>
+    <a href="#hiring">Hiring</a>
     <a href="#pricing">Pricing</a>
+    <a href="#distributor">Partner</a>
+    <a href="#support">Support</a>
+    {% if not landing or landing.show_download_popup %}
+      <a href="#" class="btn btn-outline js-dl-open" data-platform="app">Get App</a>
+    {% endif %}
+    {% if desktop_download_url %}
+      <a href="{{ desktop_download_url }}" class="btn btn-outline js-dl-open" data-platform="desktop">{{ desktop_download_label|default:"Download Desktop App" }}</a>
+    {% endif %}
+    {% if android_download_url %}
+      <a href="{{ android_download_url }}" class="btn btn-outline js-dl-open" data-platform="android">{{ android_download_label|default:"Download Android APK" }}</a>
+    {% endif %}
     <a href="/accounts/login/" class="btn btn-outline">Login</a>
     <a href="/accounts/signup/" class="btn btn-primary">Sign Up</a>
   </div>
 </div>
 </header>
-<!-- ===== HERO SLIDER START ===== -->
-<section class="hero-slider">
+<!-- HERO -->
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <div class="hero-kicker">{{ landing.hero_kicker|default:"Smart Billing • Easy Business" }}</div>
+      <h1>{{ landing.hero_title|default:"Billing & Khata software built for Indian small businesses" }}</h1>
+      <p>{{ landing.hero_subtitle|default:"Create GST invoices, manage inventory, track ledger/khata, and get reports in one clean, fast system." }}</p>
 
-    <!-- Slide 1 -->
-    <div class="hero-slide active" style="background-image:url('https://images.pexels.com/photos/3183171/pexels-photo-3183171.jpeg');">
-        <div class="hero-overlay"></div>
-        <div class="container hero-content">
-            <h1>Accounting & Billing Software Built for Small Businesses</h1>
-            <p>KhataPro helps shop owners, traders and service providers manage billing, GST, inventory and reports easily.</p>
+      <div class="hero-actions">
+        <a href="/accounts/signup/" class="btn btn-primary">Start Free</a>
+        <a href="#hiring" class="btn btn-outline">Hire / Join Team</a>
+        <a href="#pricing" class="btn btn-outline">See Pricing</a>
+      </div>
 
-            <div class="hero-actions">
-                <a href="/accounts/signup/" class="btn-primary">Start Free</a>
-                 <a href="{% provider_login_url 'google' %}" class="btn btn-outline">
-                    Continue with Google
-                 </a>
-            </div>
+      <div class="hero-subactions">
+        <a href="#distributor" class="pill">Become an Agent <small>Distributor / Partner</small></a>
+        <a href="#hiring" class="pill">Join Workforce <small>Employee / Freelancer / Delivery</small></a>
+        {% if not landing or landing.show_download_popup %}
+          <a href="#" class="pill js-dl-open" data-platform="app">Get App <small>Android / Windows</small></a>
+        {% endif %}
+        {% if desktop_download_url %}
+          <a href="{{ desktop_download_url }}" class="pill js-dl-open" data-platform="desktop">Desktop App <small>Windows</small></a>
+        {% endif %}
+        {% if android_download_url %}
+          <a href="{{ android_download_url }}" class="pill js-dl-open" data-platform="android">Android App <small>APK</small></a>
+        {% endif %}
+        <a href="/accounts/login/" class="pill">Already have an account? <small>Login</small></a>
+      </div>
 
-            <!-- OPTION 2 (Counters) -->
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-number" data-count="45000">0</div>
-                    <div class="stat-label">Businesses Joined</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-number" data-count="1250000">0</div>
-                    <div class="stat-label">Invoices Created</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-number" data-count="98000">0</div>
-                    <div class="stat-label">GST Reports Generated</div>
-                </div>
-            </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-number" data-count="{{ landing.stat_businesses|default:45000 }}">0</div>
+          <div class="stat-label">Businesses onboarded</div>
         </div>
+        <div class="stat">
+          <div class="stat-number" data-count="{{ landing.stat_invoices|default:1250000 }}">0</div>
+          <div class="stat-label">Invoices created</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number" data-count="{{ landing.stat_reports|default:98000 }}">0</div>
+          <div class="stat-label">GST reports generated</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Slide 2 -->
-    <div class="hero-slide" style="background-image:url('https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg');">
-        <div class="hero-overlay"></div>
-        <div class="container hero-content">
-            <h1>Smarter Billing, Faster Payments</h1>
-            <p>Share instant payment links, automate reminders, and grow your business faster.</p>
-
-            <div class="hero-actions">
-                <a href="/accounts/signup/" class="btn-primary">Start Free</a>
-                <a href="{% provider_login_url 'google' %}" class="btn-outline">
-                    Continue with Google
-                </a>
-            </div>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="mock">
+        <div class="mock-top">
+          <div class="mock-dots">
+            <span class="mock-dot red"></span>
+            <span class="mock-dot amber"></span>
+            <span class="mock-dot green"></span>
+          </div>
+          <div class="mock-title">Invoice Preview</div>
         </div>
-    </div>
+        <div class="mock-body">
+          <div class="mock-card">
+            <h3>Tax Invoice</h3>
+            <div class="mock-row"><span>Invoice No.</span><span class="mock-tag">#INV-1042</span></div>
+            <div class="mock-row"><span>Customer</span><span>Rahul Traders</span></div>
+            <div class="mock-row"><span>Items</span><span>12</span></div>
+            <div class="mock-row"><span>Payment</span><span class="mock-tag">UPI / Cash</span></div>
+            <div class="mock-total"><strong>Total</strong><span>&#8377; 18,540</span></div>
+          </div>
 
-    <!-- Slide 3 -->
-    <div class="hero-slide" style="background-image:url('https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg');">
-        <div class="hero-overlay"></div>
-        <div class="container hero-content">
-            <h1>Track Business Anytime, Anywhere</h1>
-            <p>Real-time insights and advanced reports at your fingertips.</p>
-
-            <div class="hero-actions">
-                <a href="/accounts/signup/" class="btn-primary">Start Free</a>
-                <a href="{% provider_login_url 'google' %}" class="btn-outline">
-                    Continue with Google
-                </a>
-            </div>
+          <div class="mock-float">
+            <h4>Collections</h4>
+            <p>Share payment link, auto reminders, and track outstanding in one place.</p>
+            <div class="mock-tag">Instant Payment Link</div>
+          </div>
         </div>
+      </div>
     </div>
-
+  </div>
 </section>
-<!-- ===== HERO SLIDER END ===== -->
+
+<section class="hiring" id="hiring">
+  <div class="container hiring-grid">
+    <div class="hiring-copy">
+      <div class="hiring-kicker">Workforce Cloud</div>
+      <h2>Hire employees, onboard freelancers, partners and part-time workers from one page.</h2>
+      <p>
+        Yahi se candidate resume upload karega, interview preference dalega, aur HR team screening start karegi.
+        Employee, remote worker, freelancer, agency, franchise, reseller, field agent, delivery partner sab ek pipeline me aayenge.
+      </p>
+      <div class="hiring-types">
+        <div class="hiring-type">Full-time Employee</div>
+        <div class="hiring-type">Remote Worker</div>
+        <div class="hiring-type">Freelancer / Consultant</div>
+        <div class="hiring-type">Part-time Worker</div>
+        <div class="hiring-type">Delivery / Field Agent</div>
+        <div class="hiring-type">Partner / Franchise</div>
+      </div>
+      <div class="hiring-flow">
+        <span><b>1</b> Apply with mobile, resume and skills</span>
+        <span><b>2</b> Screening and interview scheduling</span>
+        <span><b>3</b> Onboarding into workforce, gig or partner cloud</span>
+      </div>
+    </div>
+
+    <div class="hiring-form-card">
+      <div class="hiring-form-title">
+        <div>
+          <h3>Apply / Signup for Work</h3>
+          <p>Employee, freelancer, partner, field staff and delivery style roles.</p>
+        </div>
+        <span class="hiring-badge">Interview Ready</span>
+      </div>
+      <form id="workforceApplyForm" class="hiring-form" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label>
+          I want to join as
+          <select name="applicant_type" required>
+            <option value="employee">Employee</option>
+            <option value="remote">Remote Worker</option>
+            <option value="freelancer">Freelancer</option>
+            <option value="part_time">Part-time Worker</option>
+            <option value="delivery">Delivery Partner</option>
+            <option value="field">Field Agent</option>
+            <option value="partner">Business Partner</option>
+            <option value="franchise">Franchise</option>
+            <option value="reseller">Reseller</option>
+            <option value="agency">Agency</option>
+          </select>
+        </label>
+        <label>
+          Full name
+          <input type="text" name="full_name" placeholder="Your full name" required>
+        </label>
+        <label>
+          Mobile number
+          <input type="tel" name="mobile" placeholder="10 digit mobile" required>
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" placeholder="name@example.com">
+        </label>
+        <label>
+          City / Area
+          <input type="text" name="city" placeholder="City, district or work area">
+        </label>
+        <label>
+          Role interest
+          <input type="text" name="role_interest" placeholder="Sales, support, delivery, developer">
+        </label>
+        <label>
+          Experience
+          <input type="number" step="0.5" min="0" name="experience_years" placeholder="0">
+        </label>
+        <label>
+          Interview slot
+          <input type="text" name="interview_slot" placeholder="Today evening, tomorrow morning">
+        </label>
+        <label class="hiring-wide">
+          Skills / work details
+          <textarea name="skills" placeholder="Tell us your skills, previous work, language, vehicle/device availability, or partner territory"></textarea>
+        </label>
+        <label>
+          Resume / profile
+          <input type="file" name="resume" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+        </label>
+        <label>
+          Portfolio / profile link
+          <input type="url" name="portfolio_url" placeholder="LinkedIn, website, GitHub, agency profile">
+        </label>
+        <label>
+          Referral code
+          <input type="text" name="referral_code" placeholder="Optional">
+        </label>
+        <div class="hiring-actions">
+          <button class="btn btn-primary" type="submit">Submit Application</button>
+          <span id="workforceApplyStatus" class="hiring-status">HR team will contact you after screening.</span>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
 
 <!-- TRUST -->
 <section class="trust">
-  <span> Made for India</span>
-  <span> GST Ready</span>
-  <span> Secure Cloud</span>
-  <span> Small Business Friendly</span>
+  <span>Made for India</span>
+  <span>GST Ready</span>
+  <span>Secure Cloud</span>
+  <span>Small Business Friendly</span>
 </section>
 
+{% if not landing or landing.show_clients %}
+<!-- CLIENTS -->
+<section class="clients" aria-label="Clients and collaborators">
+  <div class="container">
+    <h2>{{ landing.clients_title|default:'They “Work With Us” — As Clients and Collaborators' }}</h2>
+    <div class="clients-row" aria-hidden="true">
+      <div class="clients-track">
+        {% if landing_clients %}
+          {% for c in landing_clients %}
+            <div class="client">
+              {% if c.website_url %}<a href="{{ c.website_url }}" target="_blank" rel="nofollow noopener">{% endif %}
+              {% if c.logo %}<img src="{{ c.logo.url }}" alt="{{ c.name }}">{% else %}{{ c.name }}{% endif %}
+              {% if c.website_url %}</a>{% endif %}
+            </div>
+          {% endfor %}
+          {% for c in landing_clients %}
+            <div class="client">
+              {% if c.website_url %}<a href="{{ c.website_url }}" target="_blank" rel="nofollow noopener">{% endif %}
+              {% if c.logo %}<img src="{{ c.logo.url }}" alt="{{ c.name }}">{% else %}{{ c.name }}{% endif %}
+              {% if c.website_url %}</a>{% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="client">Swiggy</div>
+          <div class="client">Zomato</div>
+          <div class="client">PhonePe</div>
+          <div class="client">Paytm</div>
+          <div class="client">Razorpay</div>
+          <div class="client">Google Pay</div>
+          <div class="client">Pine Labs</div>
+          <div class="client">Amazon Pay</div>
+          <div class="client">BharatPe</div>
+          <div class="client">UPI</div>
+          <div class="client">Swiggy</div>
+          <div class="client">Zomato</div>
+          <div class="client">PhonePe</div>
+          <div class="client">Paytm</div>
+          <div class="client">Razorpay</div>
+          <div class="client">Google Pay</div>
+          <div class="client">Pine Labs</div>
+          <div class="client">Amazon Pay</div>
+          <div class="client">BharatPe</div>
+          <div class="client">UPI</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if not landing or landing.show_usecases %}
+<!-- USE CASES (Image 1 style) -->
+<section class="usecases" id="use-cases">
+  <div class="container">
+    <div class="kicker">{{ landing.usecases_kicker|default:"Designed for Every Business, Big or Small" }}</div>
+    <h2>{{ landing.usecases_title|default:"Who can use Billentra?" }}</h2>
+    <div class="sub">
+      {{ landing.usecases_subtitle|default:"Whether you run a retail store, wholesale business, or service-based company — Billentra helps you manage billing, inventory, khata and reports with a clean workflow." }}
+    </div>
+
+    <div class="uc-shell">
+      <div class="uc-viewport">
+        <div class="uc-track" id="ucTrack">
+          {% if landing_usecases %}
+            {% for u in landing_usecases %}
+              <article class="uc-card" data-idx="{{ forloop.counter0 }}">
+                <div class="uc-bg" style="background-image:linear-gradient(120deg, rgba(37,99,235,.45), rgba(2,6,23,.75)), {% if u.image %}url('{{ u.image.url }}'){% else %}radial-gradient(circle at 30% 20%, rgba(255,255,255,.14), transparent 56%){% endif %};"></div>
+                <div class="uc-ov"></div>
+                <div class="uc-body">
+                  <h3>{{ u.title }}</h3>
+                  <p>{{ u.description }}</p>
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <article class="uc-card" data-idx="0">
+              <div class="uc-bg" style="background-image:linear-gradient(120deg, rgba(236,72,153,.55), rgba(2,6,23,.62)), radial-gradient(circle at 20% 30%, rgba(255,255,255,.18), transparent 35%);"></div>
+              <div class="uc-ov"></div>
+              <div class="uc-body">
+                <h3>Decoration Services Owner</h3>
+                <p>Track service bookings, advance payments, and customer invoices. Keep work orders and collections in one place.</p>
+              </div>
+            </article>
+            <article class="uc-card" data-idx="1">
+              <div class="uc-bg" style="background-image:linear-gradient(120deg, rgba(37,99,235,.75), rgba(2,6,23,.55)), radial-gradient(circle at 78% 30%, rgba(255,255,255,.16), transparent 36%);"></div>
+              <div class="uc-ov"></div>
+              <div class="uc-body">
+                <h3>Electronic Store Owner</h3>
+                <p>Track electronics inventory, warranties, and GST billing. Manage purchase/sales, payments, and reports easily.</p>
+              </div>
+            </article>
+            <article class="uc-card" data-idx="2">
+              <div class="uc-bg" style="background-image:linear-gradient(120deg, rgba(16,185,129,.55), rgba(2,6,23,.62)), radial-gradient(circle at 30% 20%, rgba(255,255,255,.18), transparent 36%);"></div>
+              <div class="uc-ov"></div>
+              <div class="uc-body">
+                <h3>Boutique / Garment Owner</h3>
+                <p>Create invoices fast, manage variants (size/color), handle returns, and check profit with reports.</p>
+              </div>
+            </article>
+            <article class="uc-card" data-idx="3">
+              <div class="uc-bg" style="background-image:linear-gradient(120deg, rgba(245,158,11,.55), rgba(2,6,23,.62)), radial-gradient(circle at 30% 20%, rgba(255,255,255,.18), transparent 36%);"></div>
+              <div class="uc-ov"></div>
+              <div class="uc-body">
+                <h3>Restaurant / Café Owner</h3>
+                <p>Quick billing, KOT-style workflows, daily sales reports, and payment tracking for peak hours.</p>
+              </div>
+            </article>
+            <article class="uc-card" data-idx="4">
+              <div class="uc-bg" style="background-image:linear-gradient(120deg, rgba(168,85,247,.55), rgba(2,6,23,.62)), radial-gradient(circle at 78% 30%, rgba(255,255,255,.16), transparent 36%);"></div>
+              <div class="uc-ov"></div>
+              <div class="uc-body">
+                <h3>Pharmacy / Medical Store</h3>
+                <p>Batch-wise stock, fast billing, purchase tracking, expiry-aware inventory, and GST-ready reports.</p>
+              </div>
+            </article>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="uc-controls" aria-label="Use cases controls">
+        <button type="button" class="uc-btn" id="ucPrev" aria-label="Previous">‹</button>
+        <div class="uc-dots" id="ucDots" aria-label="Use cases pagination"></div>
+        <button type="button" class="uc-btn" id="ucNext" aria-label="Next">›</button>
+      </div>
+
+      <div class="uc-cta">
+        <a href="#features" class="btn btn-primary">Start Exploring Features</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- HOW IT WORKS (Image 2 style) -->
+<section class="howworks" id="how-it-works">
+  <div class="container">
+    <div class="kicker">How it Works?</div>
+    <h2>Let’s see Billentra in action</h2>
+    <div class="sub">A simple flow: install, sign up, and start billing with GST-ready invoices and clear reports.</div>
+
+    <div class="hw-card">
+      <div class="hw-art" aria-hidden="true">
+        <svg viewBox="0 0 900 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="70" y="50" width="360" height="460" rx="36" fill="white" stroke="rgba(15,23,42,.12)" stroke-width="4"/>
+          <rect x="110" y="110" width="280" height="50" rx="16" fill="rgba(37,99,235,.08)"/>
+          <rect x="110" y="180" width="280" height="220" rx="20" fill="rgba(15,23,42,.04)"/>
+          <rect x="110" y="420" width="170" height="50" rx="18" fill="rgba(37,99,235,.16)"/>
+          <rect x="300" y="420" width="90" height="50" rx="18" fill="rgba(22,163,74,.14)"/>
+          <circle cx="250" cy="500" r="14" fill="rgba(15,23,42,.18)"/>
+
+          <path d="M570 130C620 84 700 84 750 130" stroke="rgba(37,99,235,.35)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M570 190C620 144 700 144 750 190" stroke="rgba(37,99,235,.22)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M570 250C620 204 700 204 750 250" stroke="rgba(37,99,235,.16)" stroke-width="10" stroke-linecap="round"/>
+
+          <rect x="520" y="300" width="330" height="170" rx="24" fill="white" stroke="rgba(15,23,42,.10)" stroke-width="4"/>
+          <rect x="548" y="332" width="240" height="18" rx="9" fill="rgba(15,23,42,.08)"/>
+          <rect x="548" y="362" width="280" height="18" rx="9" fill="rgba(15,23,42,.06)"/>
+          <rect x="548" y="392" width="180" height="18" rx="9" fill="rgba(15,23,42,.06)"/>
+          <rect x="548" y="422" width="130" height="34" rx="16" fill="rgba(37,99,235,.18)"/>
+        </svg>
+      </div>
+      <div class="hw-copy">
+        <h3>See Billentra in action</h3>
+        <ul>
+          <li>Easy GST invoicing & billing</li>
+          <li>Inventory + khata/ledger tracking</li>
+          <li>Real-time business insights</li>
+        </ul>
+        <div class="hw-actions">
+          <a href="#features" class="btn btn-primary">Start Exploring Features</a>
+          <a href="#support" class="btn btn-outline">Book Demo</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="hw-steps" aria-label="How it works steps">
+      <div class="hw-line">
+        <div class="hw-item">
+          <div class="hw-num">1</div>
+          <div>
+            <h4>Install Billentra App</h4>
+            <p>Get started in minutes on Desktop or Android.</p>
+          </div>
+        </div>
+        <div class="hw-item">
+          <div class="hw-num">2</div>
+          <div>
+            <h4>Sign Up Instantly</h4>
+            <p>Create your business account and set your GST details.</p>
+          </div>
+        </div>
+        <div class="hw-item">
+          <div class="hw-num">3</div>
+          <div>
+            <h4>Start Billing Like a Pro</h4>
+            <p>Print invoices, collect payments, and track reports.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if not landing or landing.show_videos %}
+<!-- LANDING VIDEOS (admin-managed) -->
+<section class="videos" id="videos">
+  <div class="container">
+    <div class="kicker">{{ landing.videos_kicker|default:"A Peek Into Billentra" }}</div>
+    <h2>{{ landing.videos_title|default:"Swipe · Watch · Grow" }}</h2>
+    <div class="sub">{{ landing.videos_subtitle|default:"Add short demo videos from Admin and they will show here automatically." }}</div>
+
+    <div class="vid-shell" aria-label="Demo videos">
+      <button type="button" class="vid-nav" id="vidPrev" aria-label="Previous">‹</button>
+
+      <div class="vid-viewport" id="vidViewport">
+        <div class="vid-track" id="vidTrack">
+          {% if landing_videos %}
+            {% for v in landing_videos %}
+              <div class="vid-card" data-idx="{{ forloop.counter0 }}">
+                {% if v.video_file %}
+                  <video playsinline preload="metadata" muted {% if v.thumbnail %}poster="{{ v.thumbnail.url }}"{% endif %} data-src="{{ v.video_file.url }}"></video>
+                {% elif v.video_url %}
+                  <video playsinline preload="metadata" muted data-src="{{ v.video_url }}"></video>
+                {% else %}
+                  <div class="vid-overlay"></div>
+                {% endif %}
+                <div class="vid-overlay"></div>
+                <div class="vid-play" aria-hidden="true"></div>
+                {% if v.title %}<div class="vid-caption">{{ v.title }}</div>{% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="vid-card"><div class="vid-overlay"></div><div class="vid-play"></div><div class="vid-caption">Add videos from Admin</div></div>
+            <div class="vid-card"><div class="vid-overlay"></div><div class="vid-play"></div><div class="vid-caption">Short demos work best</div></div>
+            <div class="vid-card"><div class="vid-overlay"></div><div class="vid-play"></div><div class="vid-caption">MP4 / WebM supported</div></div>
+          {% endif %}
+        </div>
+      </div>
+
+      <button type="button" class="vid-nav" id="vidNext" aria-label="Next">›</button>
+    </div>
+
+    <div style="display:flex;justify-content:center;margin-top:22px;">
+      <a href="#pricing" class="btn btn-primary">See Pricing</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if not landing or landing.show_reviews %}
+<!-- REVIEWS -->
+<section class="reviews" id="reviews">
+  <div class="container">
+    <div class="kicker">{{ landing.reviews_title|default:"Google Play Reviews" }}</div>
+    <h2>{{ landing.brand_name|default:"Billentra" }} Reviews</h2>
+    <div class="sub">{{ landing.reviews_subtitle|default:"What customers say about Billentra" }}</div>
+
+    <div class="review-track" aria-label="Reviews">
+      {% if landing_reviews %}
+        {% for r in landing_reviews %}
+          <article class="review-card">
+            <div class="review-head">
+              <div class="review-avatar">
+                {% if r.avatar %}<img src="{{ r.avatar.url }}" alt="{{ r.name }}">{% else %}★{% endif %}
+              </div>
+              <div>
+                <div class="review-name">{{ r.name }}</div>
+                <div class="review-meta">{{ r.source|default:"Google Play" }}</div>
+                <div class="review-stars" aria-label="{{ r.rating }} out of 5 stars">
+                  {% for i in "12345" %}
+                    {% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            <div class="review-body">{{ r.review }}</div>
+          </article>
+        {% endfor %}
+      {% else %}
+        <article class="review-card">
+          <div class="review-head">
+            <div class="review-avatar">★</div>
+            <div>
+              <div class="review-name">Add reviews from Admin</div>
+              <div class="review-meta">Google Play</div>
+              <div class="review-stars">★★★★★</div>
+            </div>
+          </div>
+          <div class="review-body">Create 2–5 short reviews in admin and they will show here automatically.</div>
+        </article>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <!-- FEATURES -->
-<section class="features">
+<section id="features" class="features">
 <div class="container">
 <h2>Everything You Need to Run Your Business</h2>
+<div class="section-subtitle">A compact, modern toolkit for billing, stock, khata, and reporting - built to feel simple on day one and scalable as your business grows.</div>
 <div class="feature-grid">
-  <div class="card"><h3>Billing & Invoicing</h3><p>Create professional GST & non-GST invoices.</p></div>
-  <div class="card"><h3>Inventory Management</h3><p>Track stock, purchase & sales automatically.</p></div>
-  <div class="card"><h3>Khata & Ledger</h3><p>Customer & supplier account tracking.</p></div>
-  <div class="card"><h3>Reports</h3><p>Profit, loss, outstanding & GST reports.</p></div>
+  {% if landing_features %}
+    {% for f in landing_features %}
+      <div class="card"><h3>{{ f.title }}</h3><p>{{ f.description }}</p></div>
+    {% endfor %}
+  {% else %}
+    <div class="card"><h3>Billing &amp; Invoicing</h3><p>Create professional GST &amp; non-GST invoices.</p></div>
+    <div class="card"><h3>Inventory Management</h3><p>Track stock, purchase &amp; sales automatically.</p></div>
+    <div class="card"><h3>Khata &amp; Ledger</h3><p>Customer &amp; supplier account tracking.</p></div>
+    <div class="card"><h3>Reports</h3><p>Profit, loss, outstanding &amp; GST reports.</p></div>
+  {% endif %}
 </div>
 </div>
+</section>
+
+<!-- INTEGRATIONS / APPS -->
+<section id="integrations" class="integrations" aria-label="Third-party apps and integrations">
+  <div class="container">
+    <div class="kicker">Integrations</div>
+    <h2>Useful 3rd-Party Apps for Shopify</h2>
+    <div class="section-subtitle">
+      Shopify store chalate ho to ye recommended apps dekho — shipping, marketing, reviews aur support ke liye.
+      Search + filter se jaldi choose karo. (Links external hain, new tab me open honge.)
+    </div>
+
+    <div class="integrations-toolbar" aria-label="Search and filter apps">
+      <div class="integration-search-wrap">
+        <svg class="integration-search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2"/>
+          <path d="M16.2 16.2 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <input id="integrationSearch" class="integration-search" type="search" placeholder="Search apps: shiprocket, reviews, chat, tracking..." aria-label="Search apps">
+      </div>
+      <div class="integration-chips" aria-label="Filter apps">
+        <button type="button" class="chip active" data-filter="all">All</button>
+        <button type="button" class="chip" data-filter="shipping">Shipping</button>
+        <button type="button" class="chip" data-filter="marketing">Marketing</button>
+        <button type="button" class="chip" data-filter="reviews">Reviews</button>
+        <button type="button" class="chip" data-filter="support">Support</button>
+        <button type="button" class="chip" data-filter="cro">CRO</button>
+        <button type="button" class="chip" data-filter="category">Categories</button>
+      </div>
+    </div>
+    <div class="integration-note">Tip: Chip pe click karke filter karo, ya search box me type karo.</div>
+
+    <div class="integration-grid">
+      <article class="card integration-card" data-name="Shiprocket" data-tags="shipping india 3pl">
+        <div class="integration-head">
+          <div class="integration-badge">SR</div>
+          <div>
+            <h3 class="integration-title">Shiprocket</h3>
+            <div class="integration-meta">Shipping • India</div>
+          </div>
+        </div>
+        <p>Courier partners, shipping labels, tracking, and COD workflows for Indian sellers.</p>
+        <div class="integration-tags" aria-label="Tags">
+          <span class="tag">Shipping</span>
+          <span class="tag">India</span>
+          <span class="tag">COD</span>
+        </div>
+        <div class="integration-actions">
+          <a class="btn btn-outline" href="https://apps.shopify.com/shiprocket" target="_blank" rel="nofollow noopener">Open on Shopify</a>
+        </div>
+      </article>
+
+      <article class="card integration-card" data-name="Shipping Solutions" data-tags="shipping category">
+        <div class="integration-head">
+          <div class="integration-badge">SH</div>
+          <div>
+            <h3 class="integration-title">Shipping Solutions</h3>
+            <div class="integration-meta">Category • Orders &amp; Shipping</div>
+          </div>
+        </div>
+        <p>Explore shipping apps: delivery, rates, 3PL, label printing, and tracking.</p>
+        <div class="integration-tags" aria-label="Tags">
+          <span class="tag">Category</span>
+          <span class="tag">Shipping</span>
+        </div>
+        <div class="integration-actions">
+          <a class="btn btn-outline" href="https://apps.shopify.com/categories/orders-and-shipping-shipping-solutions" target="_blank" rel="nofollow noopener">Browse Category</a>
+        </div>
+      </article>
+
+      <article class="card integration-card" data-name="Sales Channels" data-tags="sales category">
+        <div class="integration-head">
+          <div class="integration-badge">SC</div>
+          <div>
+            <h3 class="integration-title">Sales Channels</h3>
+            <div class="integration-meta">Category • Selling Online</div>
+          </div>
+        </div>
+        <p>Sell on marketplaces &amp; social channels, sync products, and manage multi-channel orders.</p>
+        <div class="integration-tags" aria-label="Tags">
+          <span class="tag">Category</span>
+          <span class="tag">Sales</span>
+          <span class="tag">Channels</span>
+        </div>
+        <div class="integration-actions">
+          <a class="btn btn-outline" href="https://apps.shopify.com/categories/sales-channels" target="_blank" rel="nofollow noopener">Browse Category</a>
+        </div>
+      </article>
+
+      <article class="card integration-card" data-name="Klaviyo" data-tags="marketing email sms">
+        <div class="integration-head">
+          <div class="integration-badge">KL</div>
+          <div>
+            <h3 class="integration-title">Klaviyo</h3>
+            <div class="integration-meta">Email • SMS • WhatsApp</div>
+          </div>
+        </div>
+        <p>Email + SMS marketing automation, segmentation, and abandoned cart flows.</p>
+        <div class="integration-tags" aria-label="Tags">
+          <span class="tag">Marketing</span>
+          <span class="tag">Email</span>
+          <span class="tag">SMS</span>
+        </div>
+        <div class="integration-actions">
+          <a class="btn btn-outline" href="https://apps.shopify.com/klaviyo-email-marketing" target="_blank" rel="nofollow noopener">Open on Shopify</a>
+        </div>
+      </article>
+
+      <article class="card integration-card" data-name="Omnisend" data-tags="marketing email sms popups">
+        <div class="integration-head">
+          <div class="integration-badge">OM</div>
+          <div>
+            <h3 class="integration-title">Omnisend</h3>
+            <div class="integration-meta">Email • SMS • Popups</div>
+          </div>
+        </div>
+        <p>Marketing automation with templates, popups, and ready-made workflows.</p>
+        <div class="integration-tags" aria-label="Tags">
+          <span class="tag">Marketing</span>
+          <span class="tag">Popups</span>
+          <span class="tag">Automation</span>
+        </div>
+        <div class="integration-actions">
+          <a class="btn btn-outline" href="https://apps.shopify.com/omnisend" target="_blank" rel="nofollow noopener">Open on Shopify</a>
+        </div>
+      </article>
+
+      <article class="card integration-card" data-name="Judge.me" data-tags="reviews ugc">
+        <div class="integration-head">
+          <div class="integration-badge">JM</div>
+          <div>
+            <h3 class="integration-title">Judge.me</h3>
+            <div class="integration-meta">Reviews • UGC</div>
+          </div>
+        </div>
+        <p>Collect and display product reviews, ratings, photos/videos, and testimonials.</p>
+        <div class="integration-tags" aria-label="Tags">
+          <span class="tag">Reviews</span>
+          <span class="tag">UGC</span>
+          <span class="tag">Trust</span>
+        </div>
+        <div class="integration-actions">
+          <a class="btn btn-outline" href="https://apps.shopify.com/judgeme" target="_blank" rel="nofollow noopener">Open on Shopify</a>
+        </div>
+      </article>
+
+      <article class="card integration-card" data-name="Loox" data-tags="reviews ugc photos">
+        <div class="integration-head">
+          <div class="integration-badge">LX</div>
+          <div>
+            <h3 class="integration-title">Loox</h3>
+            <div class="integration-meta">Photo Reviews • Social Proof</div>
+          </div>
+        </div>
+        <p>Visual photo/video reviews + widgets to boost conversion and trust.</p>
+        <div class="integration-tags" aria-label="Tags">
+          <span class="tag">Reviews</span>
+          <span class="tag">Photos</span>
+          <span class="tag">CRO</span>
+        </div>
+        <div class="integration-actions">
+          <a class="btn btn-outline" href="https://apps.shopify.com/loox" target="_blank" rel="nofollow noopener">Open on Shopify</a>
+        </div>
+      </article>
+
+      <article class="card integration-card" data-name="AfterShip" data-tags="shipping tracking">
+        <div class="integration-head">
+          <div class="integration-badge">AS</div>
+          <div>
+            <h3 class="integration-title">AfterShip</h3>
+            <div class="integration-meta">Order Tracking • WISMO</div>
+          </div>
+        </div>
+        <p>Branded order tracking page + notifications to reduce “Where is my order?” queries.</p>
+        <div class="integration-tags" aria-label="Tags">
+          <span class="tag">Shipping</span>
+          <span class="tag">Tracking</span>
+          <span class="tag">CX</span>
+        </div>
+        <div class="integration-actions">
+          <a class="btn btn-outline" href="https://apps.shopify.com/aftership" target="_blank" rel="nofollow noopener">Open on Shopify</a>
+        </div>
+      </article>
+
+      <article class="card integration-card" data-name="Gorgias" data-tags="support helpdesk chat">
+        <div class="integration-head">
+          <div class="integration-badge">GG</div>
+          <div>
+            <h3 class="integration-title">Gorgias</h3>
+            <div class="integration-meta">Helpdesk • Chat • Support</div>
+          </div>
+        </div>
+        <p>Centralize email + chat + social support in one helpdesk built for ecommerce brands.</p>
+        <div class="integration-tags" aria-label="Tags">
+          <span class="tag">Support</span>
+          <span class="tag">Helpdesk</span>
+          <span class="tag">Chat</span>
+        </div>
+        <div class="integration-actions">
+          <a class="btn btn-outline" href="https://apps.shopify.com/helpdesk" target="_blank" rel="nofollow noopener">Open on Shopify</a>
+        </div>
+      </article>
+
+      <article class="card integration-card" data-name="Tidio" data-tags="support chat bot">
+        <div class="integration-head">
+          <div class="integration-badge">TD</div>
+          <div>
+            <h3 class="integration-title">Tidio</h3>
+            <div class="integration-meta">Live Chat • AI Chatbot</div>
+          </div>
+        </div>
+        <p>Live chat + chatbot to support shoppers and improve conversion.</p>
+        <div class="integration-tags" aria-label="Tags">
+          <span class="tag">Support</span>
+          <span class="tag">Live Chat</span>
+          <span class="tag">Bot</span>
+        </div>
+        <div class="integration-actions">
+          <a class="btn btn-outline" href="https://apps.shopify.com/tidio-chat" target="_blank" rel="nofollow noopener">Open on Shopify</a>
+        </div>
+      </article>
+
+      <article class="card integration-card" data-name="PageFly" data-tags="cro pagebuilder">
+        <div class="integration-head">
+          <div class="integration-badge">PF</div>
+          <div>
+            <h3 class="integration-title">PageFly</h3>
+            <div class="integration-meta">Landing Pages • CRO</div>
+          </div>
+        </div>
+        <p>Build landing/product pages with drag-and-drop sections and templates.</p>
+        <div class="integration-tags" aria-label="Tags">
+          <span class="tag">CRO</span>
+          <span class="tag">Pages</span>
+          <span class="tag">Builder</span>
+        </div>
+        <div class="integration-actions">
+          <a class="btn btn-outline" href="https://apps.shopify.com/pagefly" target="_blank" rel="nofollow noopener">Open on Shopify</a>
+        </div>
+      </article>
+    </div>
+
+    <div class="integrations-footer" aria-label="More apps">
+      <a class="btn btn-primary" href="/apps/">View Apps Page</a>
+      <a class="btn btn-primary" href="https://apps.shopify.com/" target="_blank" rel="nofollow noopener">Open Shopify App Store</a>
+      <a class="btn btn-outline" href="https://apps.shopify.com/categories" target="_blank" rel="nofollow noopener">Browse All Categories</a>
+    </div>
+    <div class="integrations-disclaimer">
+      Note: Ye external apps Shopify App Store se install hote hain. Install karne se pehle permissions + pricing check kar lo.
+    </div>
+  </div>
 </section>
 
 <!-- WHY -->
 <section class="why">
 <div class="container">
-<h2>Why Choose KhataPro?</h2>
+<h2>Why Choose Billentra?</h2>
+<div class="section-subtitle">Designed for small businesses that want a clean, reliable billing experience without losing enterprise-grade control under the hood.</div>
 <div class="why-grid">
   <div class="card"> Simple for non-accountants</div>
   <div class="card"> Affordable pricing</div>
@@ -342,72 +3288,356 @@ footer a{color:#94a3b8;display:block;margin:8px 0;font-size:14px}
 <!-- PRICING -->
 <section id="pricing" class="pricing">
 <div class="container">
-<h2>Pricing Plans</h2>
-<p>Simple plans for growing businesses</p>
 
-<div class="price-grid">
-<div class="price">
-  <h3>Free</h3>
-  <div class="amount">0</div>
-  <ul>
-    <li>Basic Billing</li>
-    <li>1 User</li>
-  </ul>
-  <a href="/accounts/signup/" class="btn btn-outline">Start Free</a>
+<div class="pricing-head">
+  <h2>Make a smart pricing choice for your business</h2>
+  <p>Choose an affordable plan that fits your needs. Compare features and upgrade anytime as you grow.</p>
+  <div class="pricing-actions">
+    <a href="#pricing-cards" class="btn btn-primary">Check Offers – Subscribe Now</a>
+    <a href="#pricing-compare" class="btn btn-outline">Compare Plans</a>
+  </div>
 </div>
 
-<div class="price">
-  <h3>Professional</h3>
-  <div class="amount">999 / year</div>
-  <ul>
-    <li>GST Billing</li>
-    <li>Inventory</li>
-    <li>Reports</li>
-  </ul>
-  <a href="/billing/choose-plan/" class="btn btn-primary">Buy Now</a>
+<div class="pricing-vs" aria-label="Billentra vs Others">
+  <div class="vs-card">
+    <h3>Billentra</h3>
+    <ul>
+      <li><span class="vs-bullet vs-good">&#10004;</span><span>Simple billing + inventory + khata in one place</span></li>
+      <li><span class="vs-bullet vs-good">&#10004;</span><span>GST-ready invoices and business reports</span></li>
+      <li><span class="vs-bullet vs-good">&#10004;</span><span>Works for shops, retail, services, and growing teams</span></li>
+    </ul>
+  </div>
+  <div class="vs-card">
+    <h3>Others</h3>
+    <ul>
+      <li><span class="vs-bullet vs-bad">&#10006;</span><span>Hidden limits (users, devices, features) in free plans</span></li>
+      <li><span class="vs-bullet vs-bad">&#10006;</span><span>Complex setup or confusing workflows for staff</span></li>
+      <li><span class="vs-bullet vs-bad">&#10006;</span><span>Reports and add-ons locked behind expensive tiers</span></li>
+    </ul>
+  </div>
 </div>
 
-<div class="price">
-  <h3>Business</h3>
-  <div class="amount">1999 / year</div>
-  <ul>
-    <li>Multi User</li>
-    <li>Advanced Reports</li>
-    <li>Priority Support</li>
-  </ul>
-  <a href="/billing/choose-plan/" class="btn btn-primary">Buy Now</a>
+<div class="pricing-top">
+  <div>
+    <div class="section-kicker">Special Offer Available</div>
+    <h2>Compare plans</h2>
+    <p>Choose a plan according to your business needs.</p>
+    <div class="pricing-top-highlights">
+      <span>Admin-managed features</span>
+      <span>Live plan sync</span>
+      <span>Enterprise-ready comparison</span>
+    </div>
+  </div>
+  <div class="pricing-subcard">
+    <strong>Billentra pricing is admin-driven.</strong>
+    Update features once in the dashboard and the homepage cards, table, and highlights refresh automatically.
+  </div>
+</div>
+
+<div id="pricing-cards" class="plan-hero-grid" style="--plan-cols: {{ pricing_cards|length|default:3 }};">
+  <div class="plan-hero-copy">
+    <div>
+      <div class="section-kicker">Special Offer Available</div>
+      <h3>Compare plans</h3>
+      <p>Choose your plan according to your business needs.</p>
+      <div class="pricing-top-highlights" style="margin-top:16px;">
+        <span>GST Ready</span>
+        <span>Inventory + Khata</span>
+        <span>Easy Reports</span>
+      </div>
+    </div>
+  </div>
+
+  {% for plan in pricing_cards %}
+  <div class="plan-card {% if plan.popular %}popular{% endif %}">
+    {% if plan.badge %}
+      <div class="plan-badge">{{ plan.badge }}</div>
+    {% endif %}
+    <div class="plan-card-head">
+      <div class="plan-name">{{ plan.tier|default:plan.name }}</div>
+      <div class="plan-title">{{ plan.title }}</div>
+      <div class="plan-caption">{{ plan.name }}</div>
+    </div>
+    <p>{{ plan.description }}</p>
+    <div class="plan-price">{{ plan.price|safe }}{% if plan.suffix %} <span>{{ plan.suffix }}</span>{% endif %}</div>
+    {% if plan.offer_text %}
+      <div class="plan-offer">{{ plan.offer_text }}</div>
+    {% endif %}
+    {% if plan.features %}
+    <ul class="plan-feature-list">
+      {% for feature in plan.features %}
+        <li>
+          <span class="feature-bullet">&#10003;</span>
+          <span>
+            {{ feature.label }}
+            {% if feature.description %}
+              <small>{{ feature.description }}</small>
+            {% endif %}
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if plan.extra_feature_count %}
+      <div class="plan-more">+{{ plan.extra_feature_count }} more feature{{ plan.extra_feature_count|pluralize }}</div>
+    {% endif %}
+    {% endif %}
+    <div class="pricing-cta-strip">
+      {% for btn in plan.buttons %}
+        {% if btn.contact %}
+          <a href="javascript:void(0)" onclick="toggleWA()" class="btn btn-outline">{{ btn.label }}</a>
+        {% else %}
+          <a href="{{ btn.url }}" class="btn {% if btn.variant == 'primary' %}btn-primary{% elif btn.variant == 'muted' %}btn-muted{% else %}btn-outline{% endif %}">{{ btn.label }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if pricing_compare_rows %}
+<div id="pricing-compare" class="compare-wrap">
+  <div class="compare" style="--plan-cols: {{ pricing_cards|length|default:3 }};">
+    <div class="compare-head">
+      <div class="compare-cell label">Features</div>
+      {% for plan in pricing_cards %}
+        <div class="compare-cell {% if forloop.counter0 == pricing_popular_index %}popular-col{% endif %}">
+          <div>{{ plan.tier|default:plan.name }}</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% for row in pricing_compare_rows %}
+      <div class="compare-row">
+        <div class="compare-cell label">{{ row.label }}</div>
+        {% for cell in row.cells %}
+          <div class="compare-cell {% if forloop.counter0 == pricing_popular_index %}popular-col{% endif %}">
+            {% if cell.state == "text" %}
+              <span class="compare-text">{{ cell.text }}</span>
+            {% elif cell.state == "ok" %}
+              <span class="compare-state ok">&#10004;</span>
+            {% elif cell.state == "no" %}
+              <span class="compare-state no">&#10006;</span>
+            {% elif cell.state == "trial" %}
+              <span class="compare-state trial">&#9888;</span>
+              <span class="compare-trial-text">{{ cell.text|default:"Trial Only" }}</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<details class="matrix-details" style="margin-top:14px;">
+  <summary class="btn btn-outline" style="width:max-content;">View full feature matrix</summary>
+  <div class="pricing-table-wrap" style="margin-top:10px;">
+  <div class="pricing-matrix" style="--plan-cols: {{ pricing_cards|length|default:3 }};">
+    <div class="pricing-matrix-head">
+      <div class="matrix-cell matrix-feature-head">Features</div>
+      {% for plan in pricing_cards %}
+      <div class="matrix-cell matrix-plan-head {% if plan.popular %}popular{% endif %}">
+        <div>
+          {% if plan.badge %}
+            <div class="plan-tag">{{ plan.badge }}</div>
+          {% endif %}
+          <h3>{{ plan.tier|default:plan.name }}</h3>
+          <div class="matrix-plan-copy">{{ plan.title }}</div>
+        </div>
+        <div class="matrix-plan-price">{{ plan.price|safe }}{% if plan.suffix %} <span>{{ plan.suffix }}</span>{% endif %}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% for group in pricing_matrix %}
+      <div class="pricing-matrix-row group">
+        <div class="matrix-cell">{{ group.title }}</div>
+        {% for plan in pricing_cards %}
+          <div class="matrix-cell"></div>
+        {% endfor %}
+      </div>
+      {% for feature in group.items %}
+      <div class="pricing-matrix-row">
+        <div class="matrix-cell matrix-feature">
+          {{ feature.label }}
+          {% if feature.description %}
+            <small>{{ feature.description }}</small>
+          {% endif %}
+        </div>
+        {% for enabled in feature.enabled %}
+          <div class="matrix-cell">
+            <div class="matrix-state {% if enabled %}ok{% else %}no{% endif %}">
+              {% if enabled %}&#10004;{% else %}&#10006;{% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    {% empty %}
+      <div class="pricing-matrix-row">
+        <div class="matrix-cell matrix-feature">No active features found</div>
+        {% for plan in pricing_cards %}
+          <div class="matrix-cell"><div class="matrix-state text">Sync registry in admin</div></div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
 </div>
 </div>
+</details>
 </div>
 </section>
+<!-- CTA (Apna-style download banner, Billentra branding) -->
+<section class="cta" id="download">
+  <div class="container">
+    <div class="cta-grid">
+      <div class="cta-copy">
+        <div class="cta-eyebrow">{{ landing.cta_title|default:"Get started with Billentra" }}</div>
+        <h2>"Free GST Invoice Software"</h2>
+        <p>{{ landing.cta_subtitle|default:"Join thousands of businesses using Billentra for faster invoicing, easier udhaar tracking, and better financial management." }}</p>
 
-<!-- CTA -->
-<section class="cta">
-<div class="container">
-<h2>Start Managing Your Business Smarter Today</h2>
-<a href="/accounts/signup/" class="btn">Create Free Account</a>
-</div>
+        <div class="cta-badges">
+          <div class="cta-badges-label">Download now on:</div>
+          <div class="badge-row">
+            {% if android_download_url %}
+              <a class="store-badge js-dl-open" data-platform="android" href="{{ android_download_url }}">
+                <span class="store-ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M7.5 7.5l-1.6-2.8c-.2-.4 0-.9.3-1.1.4-.2.9 0 1.1.3l1.7 3c.8-.3 1.8-.4 2.9-.4s2.1.1 2.9.4l1.7-3c.2-.4.7-.5 1.1-.3.4.2.5.7.3 1.1l-1.6 2.8c1.7 1 2.8 2.7 3 4.7H4.5c.2-2 1.3-3.7 3-4.7zm-2.1 6.2h13.2v6.1c0 .9-.7 1.6-1.6 1.6h-1.1v-5.2c0-.4-.3-.7-.7-.7s-.7.3-.7.7v5.2H9.2v-5.2c0-.4-.3-.7-.7-.7s-.7.3-.7.7v5.2H6.9c-.9 0-1.6-.7-1.6-1.6v-6.1z"/></svg>
+                </span>
+                <span class="store-txt"><small>Get it for</small><strong>Android (APK)</strong></span>
+              </a>
+            {% endif %}
+            {% if desktop_download_url %}
+              <a class="store-badge js-dl-open" data-platform="desktop" href="{{ desktop_download_url }}">
+                <span class="store-ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M4 5.8c0-1 .8-1.8 1.8-1.8h12.4c1 0 1.8.8 1.8 1.8v8.6c0 1-.8 1.8-1.8 1.8H13v1.6h3c.4 0 .8.3.8.8s-.3.8-.8.8H8c-.4 0-.8-.3-.8-.8s.3-.8.8-.8h3V16H5.8c-1 0-1.8-.8-1.8-1.8V5.8zm1.8-.2v8.8h12.4V5.6H5.8z"/></svg>
+                </span>
+                <span class="store-txt"><small>Download for</small><strong>Windows Desktop</strong></span>
+              </a>
+            {% endif %}
+            <a class="store-badge" href="/accounts/signup/">
+              <span class="store-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 12.2a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 1.6c-3.3 0-7 1.7-7 5v.6c0 .4.3.8.8.8h12.4c.4 0 .8-.3.8-.8v-.6c0-3.3-3.7-5-7-5z"/></svg>
+              </span>
+              <span class="store-txt"><small>Create</small><strong>Free Account</strong></span>
+            </a>
+          </div>
+        </div>
+
+        <ul class="cta-points">
+          <li>Try the best billing &amp; accounting software in India</li>
+          <li>No credit card required &ndash; start free today</li>
+        </ul>
+      </div>
+
+      <div class="cta-art" aria-hidden="true">
+        <svg viewBox="0 0 760 460" xmlns="http://www.w3.org/2000/svg" fill="none">
+          <rect x="178" y="46" width="404" height="270" rx="24" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.30)" stroke-width="2"/>
+          <rect x="204" y="72" width="352" height="44" rx="14" fill="rgba(255,255,255,.20)"/>
+          <rect x="204" y="130" width="352" height="150" rx="18" fill="rgba(2,6,23,.18)"/>
+          <rect x="318" y="306" width="124" height="16" rx="8" fill="rgba(255,255,255,.28)"/>
+
+          <rect x="292" y="330" width="176" height="20" rx="10" fill="rgba(2,6,23,.22)"/>
+          <rect x="236" y="356" width="288" height="38" rx="16" fill="rgba(2,6,23,.22)"/>
+
+          <rect x="86" y="254" width="170" height="130" rx="22" fill="rgba(2,6,23,.24)" stroke="rgba(255,255,255,.26)" stroke-width="2"/>
+          <rect x="108" y="276" width="126" height="18" rx="9" fill="rgba(255,255,255,.26)"/>
+          <rect x="108" y="304" width="126" height="50" rx="14" fill="rgba(255,255,255,.12)"/>
+          <circle cx="128" cy="370" r="10" fill="rgba(255,255,255,.22)"/>
+          <circle cx="162" cy="370" r="10" fill="rgba(255,255,255,.22)"/>
+          <rect x="190" y="362" width="44" height="18" rx="9" fill="rgba(255,255,255,.18)"/>
+
+          <rect x="548" y="256" width="150" height="130" rx="22" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.28)" stroke-width="2"/>
+          <rect x="572" y="276" width="102" height="20" rx="10" fill="rgba(255,255,255,.22)"/>
+          <rect x="572" y="304" width="102" height="54" rx="14" fill="rgba(2,6,23,.18)"/>
+          <rect x="586" y="370" width="74" height="16" rx="8" fill="rgba(2,6,23,.20)"/>
+
+          <path d="M140 240c46-52 118-86 204-96" stroke="rgba(255,255,255,.35)" stroke-width="6" stroke-linecap="round"/>
+          <path d="M620 240c-42-52-108-86-192-96" stroke="rgba(255,255,255,.28)" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
 </section>
 
-<!-- FOOTER -->
-<footer>
-<div class="container footer-grid">
-<div>
-  <img src="{% static 'images/default-avatar.png' %}" height="40">
-  <p>Station Road, Basti, Uttar Pradesh, India  272002<br> 9555733478</p>
+{% if not landing or landing.show_download_popup %}
+<!-- DOWNLOAD POPUP (Apna-style) -->
+<div id="downloadPopup" class="dl-modal" aria-hidden="true">
+  <div class="dl-backdrop" data-dl-close="1"></div>
+  <div class="dl-dialog" role="dialog" aria-modal="true" aria-label="Download Billentra">
+    <button type="button" class="dl-close" data-dl-close="1" aria-label="Close">×</button>
+
+    <div class="dl-left">
+      <div class="dl-tag">Download Add-on</div>
+      <h3>Apps Store on Android &amp; Windows</h3>
+      <p>Get the Billentra app for fast billing, inventory, and khata/ledger tracking.</p>
+
+      <div class="dl-steps">
+        <div><strong>Step 1:</strong> Click on download button/link in the menu and follow the steps.</div>
+        <div><strong>Step 2:</strong> Once downloaded, double-click the file and follow the on-screen instructions.</div>
+        <div><strong>Step 3:</strong> For connecting printer, you need to download printer driver.</div>
+      </div>
+
+      <div class="dl-actions" aria-label="Download actions">
+        <a
+          class="store-badge js-dl-choice {% if not android_download_url %}disabled{% endif %}"
+          data-dl-choice="1"
+          data-platform="android"
+          href="{% if android_download_url %}{{ android_download_url }}{% else %}#{% endif %}"
+          {% if not android_download_url %}aria-disabled="true" tabindex="-1"{% endif %}
+        >
+          <span class="store-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7.5 7.5l-1.6-2.8c-.2-.4 0-.9.3-1.1.4-.2.9 0 1.1.3l1.7 3c.8-.3 1.8-.4 2.9-.4s2.1.1 2.9.4l1.7-3c.2-.4.7-.5 1.1-.3.4.2.5.7.3 1.1l-1.6 2.8c1.7 1 2.8 2.7 3 4.7H4.5c.2-2 1.3-3.7 3-4.7zm-2.1 6.2h13.2v6.1c0 .9-.7 1.6-1.6 1.6h-1.1v-5.2c0-.4-.3-.7-.7-.7s-.7.3-.7.7v5.2H9.2v-5.2c0-.4-.3-.7-.7-.7s-.7.3-.7.7v5.2H6.9c-.9 0-1.6-.7-1.6-1.6v-6.1z"/></svg>
+          </span>
+          <span class="store-txt"><small>Get it for</small><strong>Android (APK)</strong></span>
+          <span class="store-meta">{% if android_download_url %}Available{% else %}Not published{% endif %}</span>
+        </a>
+
+        <a
+          class="store-badge js-dl-choice {% if not desktop_download_url %}disabled{% endif %}"
+          data-dl-choice="1"
+          data-platform="desktop"
+          href="{% if desktop_download_url %}{{ desktop_download_url }}{% else %}#{% endif %}"
+          {% if not desktop_download_url %}aria-disabled="true" tabindex="-1"{% endif %}
+        >
+          <span class="store-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 5.8c0-1 .8-1.8 1.8-1.8h12.4c1 0 1.8.8 1.8 1.8v8.6c0 1-.8 1.8-1.8 1.8H13v1.6h3c.4 0 .8.3.8.8s-.3.8-.8.8H8c-.4 0-.8-.3-.8-.8s.3-.8.8-.8h3V16H5.8c-1 0-1.8-.8-1.8-1.8V5.8zm1.8-.2v8.8h12.4V5.6H5.8z"/></svg>
+          </span>
+          <span class="store-txt"><small>Download for</small><strong>Windows Desktop</strong></span>
+          <span class="store-meta">{% if desktop_download_url %}Available{% else %}Not published{% endif %}</span>
+        </a>
+
+        <a id="dlClickNow" class="dl-primary" href="#" rel="nofollow">Click Now</a>
+      </div>
+    </div>
+
+    <div class="dl-right">
+      <div class="dl-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <img src="{% static 'img/billentra-logo.png' %}?v=20260405" alt="Billentra" style="height:28px;width:auto;object-fit:contain;">
+          <div style="font-size:11px;font-weight:900;color:#2563eb;letter-spacing:.06em;text-transform:uppercase;">Get your app now</div>
+        </div>
+
+        <h4 style="margin-top:10px;">Enter your mobile number</h4>
+        <div class="dl-form">
+          <input id="dlMobile" type="tel" inputmode="tel" autocomplete="tel" placeholder="Enter Your Mobile No." maxlength="15" />
+          <button id="dlSendBtn" type="button">Get The App</button>
+        </div>
+        <div class="dl-note">If SMS is enabled in admin settings, we will send you the download link on SMS.</div>
+        <div id="dlStatus" class="dl-status" aria-live="polite"></div>
+      </div>
+
+      <div class="dl-card" style="background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);">
+        <h4>Need help?</h4>
+        <div class="dl-note" style="margin-top:8px;">
+          You can also <a href="#support" style="color:#2563eb;font-weight:900;text-decoration:none;">Book Demo</a> or chat with us on WhatsApp.
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-<div>
-  <h4>Legal</h4>
-  <a href="/privacy-policy/">Privacy Policy</a>
-  <a href="/terms/">Terms & Conditions</a>
-</div>
-<div>
-  <h4>Account</h4>
-  <a href="/accounts/login/">Login</a>
-  <a href="/accounts/signup/">Sign Up</a>
-</div>
-</div>
-</footer>
+{% endif %}
+
 <!-- ==== ALL-IN-ONE SUPPORT SYSTEM ==== -->
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
@@ -465,28 +3695,177 @@ footer a{color:#94a3b8;display:block;margin:8px 0;font-size:14px}
 
 /* SUPPORT FORM */
 .support{
- padding:60px 20px;background:#f8fafc;
+  padding:70px 0;
+  background:#ffffff;
+  border-top:1px solid #edf2f7;
 }
-.support h2{text-align:center;font-size:32px}
-.support p{text-align:center;color:#64748b;margin-bottom:30px}
+.support .support-head{
+  text-align:center;
+  max-width:760px;
+  margin:0 auto 28px;
+}
+.support .support-head h2{font-size:34px;letter-spacing:-0.03em}
+.support .support-head p{color:#64748b;margin-top:10px;font-weight:650}
+
+.contact-grid{
+  display:grid;
+  grid-template-columns:380px 1fr;
+  gap:22px;
+  align-items:stretch;
+}
+.contact-card{
+  background:#fff;
+  border:1px solid #dbe4f0;
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 20px 50px rgba(15,23,42,.08);
+}
+.contact-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.contact-head img{height:34px;width:auto;object-fit:contain}
+.contact-title{font-weight:950;color:#0f172a;letter-spacing:-0.02em}
+.contact-sub{margin-top:2px;color:#64748b;font-size:12px;font-weight:650;line-height:1.5}
+.contact-list{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.contact-item{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  color:#0f172a;
+  text-decoration:none;
+  font-weight:800;
+  font-size:12.5px;
+  line-height:1.55;
+}
+.contact-item i{width:18px;margin-top:2px;color:#2563eb}
+.contact-divider{height:1px;background:#edf2f7;margin:14px 0}
+
 .support form{
- max-width:520px;margin:auto;
- background:#fff;padding:30px;
- border-radius:14px;
- box-shadow:0 20px 40px rgba(0,0,0,.08);
+  margin-top:10px;
+  background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);
+  border:1px solid #e2e8f0;
+  padding:14px;
+  border-radius:14px;
 }
 .support input,.support textarea{
- width:100%;padding:12px;margin-bottom:15px;
- border-radius:8px;border:1px solid #cbd5e1;
+  width:100%;
+  padding:12px 12px;
+  margin-bottom:12px;
+  border-radius:12px;
+  border:1px solid rgba(15,23,42,.14);
+  font-weight:750;
+  outline:none;
 }
+.support textarea{min-height:110px;resize:vertical}
 .support button{
- width:100%;padding:12px;
- background:#2563eb;color:#fff;
- border:none;border-radius:8px;
- font-size:16px;font-weight:600;
+  width:100%;
+  padding:12px 14px;
+  background:linear-gradient(180deg,#2b7cff 0%, var(--brand2) 100%);
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.map-card{
+  border-radius:18px;
+  overflow:hidden;
+  border:1px solid #dbe4f0;
+  background:#fff;
+  box-shadow:0 20px 50px rgba(15,23,42,.08);
+  min-height:420px;
+}
+.map-card iframe{width:100%;height:100%;display:block;border:0}
+
+/* PARTNER / AGENT SIGNUP */
+.partner{
+  padding:84px 0;
+  background:linear-gradient(180deg,#f8fbff 0%, #ffffff 60%, #f8fbff 100%);
+  border-top:1px solid #dbe4f0;
+}
+.partner-head{
+  text-align:center;
+  max-width:80ch;
+  margin:0 auto 18px;
+}
+.partner-head h2{
+  font-size:32px;
+  font-weight:950;
+  letter-spacing:-0.02em;
+  color:#0f172a;
+}
+.partner-head p{margin-top:10px;color:#475569;line-height:1.7;font-weight:650}
+.partner-grid{
+  margin-top:18px;
+  display:grid;
+  grid-template-columns:1.1fr .9fr;
+  gap:18px;
+  align-items:stretch;
+}
+.partner-benefits{
+  border-radius:18px;
+  border:1px solid #dbe4f0;
+  background:linear-gradient(135deg, rgba(14,165,255,.14) 0%, rgba(11,95,255,.10) 40%, rgba(0,215,180,.12) 100%);
+  padding:20px;
+  box-shadow:0 20px 50px rgba(15,23,42,.06);
+}
+.partner-benefits h3{font-size:18px;font-weight:950;color:#0f172a}
+.partner-benefits ul{margin-top:12px;list-style:none;padding:0;display:flex;flex-direction:column;gap:10px}
+.partner-benefits li{display:flex;gap:10px;align-items:flex-start;color:#334155;font-weight:750;line-height:1.6}
+.partner-benefits li::before{
+  content:"\\2713";
+  width:18px;height:18px;flex:0 0 18px;
+  border-radius:999px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:rgba(37,99,235,.10);
+  color:#2563eb;
+  border:1px solid rgba(37,99,235,.18);
+  font-weight:950;
+  margin-top:1px;
+}
+.partner-card{
+  border-radius:18px;
+  border:1px solid #dbe4f0;
+  background:#fff;
+  padding:20px;
+  box-shadow:0 20px 50px rgba(15,23,42,.08);
+}
+.partner-card h3{font-size:18px;font-weight:950;color:#0f172a}
+.partner-card .muted{margin-top:8px;color:#64748b;font-size:13px;line-height:1.6;font-weight:650}
+.partner-form{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+.partner-form input{
+  width:100%;
+  padding:12px 12px;
+  border-radius:12px;
+  border:1px solid rgba(15,23,42,.14);
+  font-weight:750;
+  outline:none;
+}
+.partner-form button{
+  width:100%;
+  padding:12px 14px;
+  background:linear-gradient(180deg,#2b7cff 0%, var(--brand2) 100%);
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.partner-status{margin-top:10px;font-size:13px;font-weight:800;color:#0f172a}
+.partner-status.error{color:#dc2626}
+
+@media(max-width:980px){
+  .partner-grid{grid-template-columns:1fr}
+  .contact-grid{grid-template-columns:1fr}
+  .map-card{min-height:340px}
 }
 </style>
 
+{% if not landing or landing.show_whatsapp_widget %}
 <!-- WHATSAPP FLOAT -->
 <div class="wa-float" onclick="toggleWA()">
  <i class="fab fa-whatsapp"></i> Chat with us
@@ -497,61 +3876,112 @@ footer a{color:#94a3b8;display:block;margin:8px 0;font-size:14px}
  <div class="wa-header">WhatsApp Support</div>
  <div class="wa-body">
   <p>Hello <br>How can we help you?</p>
-  <textarea id="waMsg">Hi, I need help with KhataPro</textarea>
+  <textarea id="waMsg">{{ landing.whatsapp_default_message|default:"Hi, I need help with Billentra" }}</textarea>
   <button onclick="sendWA()">Start Chat</button>
  </div>
 </div>
+{% endif %}
 
+{% if not landing or landing.show_social_bar %}
 <!-- SOCIAL MEDIA -->
 <div class="social-bar">
- <a href="https://facebook.com/yourpage" class="fb" target="_blank"><i class="fab fa-facebook-f"></i></a>
- <a href="https://instagram.com/yourpage" class="ig" target="_blank"><i class="fab fa-instagram"></i></a>
- <a href="https://youtube.com/@yourchannel" class="yt" target="_blank"><i class="fab fa-youtube"></i></a>
- <a href="https://twitter.com/yourhandle" class="tw" target="_blank"><i class="fab fa-twitter"></i></a>
- <a href="https://linkedin.com/company/yourcompany" class="li" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+ {% if not landing or landing.facebook_url %}<a href="{{ landing.facebook_url|default:'https://facebook.com/yourpage' }}" class="fb" target="_blank" rel="nofollow noopener"><i class="fab fa-facebook-f"></i></a>{% endif %}
+ {% if not landing or landing.instagram_url %}<a href="{{ landing.instagram_url|default:'https://instagram.com/yourpage' }}" class="ig" target="_blank" rel="nofollow noopener"><i class="fab fa-instagram"></i></a>{% endif %}
+ {% if not landing or landing.youtube_url %}<a href="{{ landing.youtube_url|default:'https://youtube.com/@yourchannel' }}" class="yt" target="_blank" rel="nofollow noopener"><i class="fab fa-youtube"></i></a>{% endif %}
+ {% if not landing or landing.twitter_url %}<a href="{{ landing.twitter_url|default:'https://twitter.com/yourhandle' }}" class="tw" target="_blank" rel="nofollow noopener"><i class="fab fa-twitter"></i></a>{% endif %}
+ {% if not landing or landing.linkedin_url %}<a href="{{ landing.linkedin_url|default:'https://linkedin.com/company/yourcompany' }}" class="li" target="_blank" rel="nofollow noopener"><i class="fab fa-linkedin-in"></i></a>{% endif %}
 </div>
+{% endif %}
 
-<!-- SUPPORT FORM -->
+<!-- PARTNER / DISTRIBUTOR (Agent Signup) -->
+<section class="partner" id="distributor">
+  <div class="container">
+    <div class="partner-head">
+      <h2>Become a Distributor / Agent</h2>
+      <p>Create your agent account and start onboarding businesses with your referral code.</p>
+    </div>
+
+    <div class="partner-grid">
+      <div class="partner-benefits">
+        <h3>Why join?</h3>
+        <ul>
+          <li>Get your own referral code after verification</li>
+          <li>Track customers you onboard from day one</li>
+          <li>Faster support and onboarding help</li>
+          <li>Works with OTP verification (SMS/Email/WhatsApp if configured)</li>
+        </ul>
+      </div>
+
+      <div class="partner-card" aria-label="Agent signup form">
+        <h3>Create agent account</h3>
+        <div class="muted">Fill details and verify OTP to activate your agent account.</div>
+
+        <form id="agentSignupForm" class="partner-form" method="post" action="{% url 'accounts:agent_signup' %}" novalidate>
+          {% csrf_token %}
+          <input name="username" type="text" placeholder="Full Name" required />
+          <input name="email" type="email" placeholder="Email" required />
+          <input name="mobile" type="tel" inputmode="tel" placeholder="Mobile Number" required />
+          <input name="password" type="password" placeholder="Password" required />
+          <input name="referrer_code" type="text" placeholder="Referral Code (Optional)" />
+          <button type="submit">Create Account</button>
+        </form>
+
+        <div id="agentSignupStatus" class="partner-status" aria-live="polite"></div>
+        <div class="muted" style="margin-top:8px;">
+          Already have an account? <a href="/accounts/login/" style="color:#2563eb;font-weight:900;text-decoration:none;">Login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT (Map + form like screenshot) -->
 <section class="support" id="support">
-    <h2>Contact Support</h2>
-    <p>Station Road, Basti, Uttar Pradesh  272002 |  9555733478</p>
+  <div class="container">
+    <div class="support-head">
+      <h2>{{ landing.support_title|default:"Contact Billentra" }}</h2>
+      <p>{{ landing.support_subtitle|default:"Call, email, or send a message — we usually respond within 24 hours." }}</p>
+    </div>
 
-    <form id="supportForm">
-        {% csrf_token %}
+    <div class="contact-grid">
+      <div class="contact-card">
+        <div class="contact-head">
+          <img src="{% static 'img/billentra-logo.png' %}?v=20260405" alt="Billentra"  style="height:100px;width:auto;object-fit:contain;">
+          <div>
+            <div class="contact-title">{{ landing.brand_name|default:"Billentra" }} Support</div>
+            <div class="contact-sub">Billing, inventory &amp; khata software for Indian businesses.</div>
+          </div>
+        </div>
 
-        <input
-            type="text"
-            id="name"
-            name="name"
-            placeholder="Your Name"
-            required
-        >
+        <div class="contact-list" aria-label="Contact details">
+          <a class="contact-item" href="tel:{{ landing.support_phone|default:'+91 95557 33478'|cut:' ' }}"><i class="fa-solid fa-phone"></i><span>{{ landing.support_phone|default:"+91 95557 33478" }}</span></a>
+          <a class="contact-item" href="mailto:{{ landing.support_email|default:'support@billentra.com' }}"><i class="fa-solid fa-envelope"></i><span>{{ landing.support_email|default:"support@billentra.com" }}</span></a>
+          <div class="contact-item"><i class="fa-solid fa-location-dot"></i><span>{{ landing.support_address|default:"Station Road, Basti, Uttar Pradesh 272002" }}</span></div>
+        </div>
 
-        <input
-            type="text"
-            name="mobile"
-            id="mobile"
-            placeholder="Your Mobile Number"
-            required
-        >
+        <div class="contact-divider"></div>
 
-        <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="Your Email"
-            required
-        >
+        <form id="supportForm">
+          {% csrf_token %}
 
-        <textarea
-            id="message"
-            name="message"
-            placeholder="Your Message"
-            required
-        ></textarea>
+          <input type="text" id="name" name="name" placeholder="Your Name" required>
+          <input type="text" name="mobile" id="mobile" placeholder="Your Mobile Number" required>
+          <input type="email" id="email" name="email" placeholder="Your Email" required>
+          <textarea id="message" name="message" placeholder="Your Message" required></textarea>
+          <button type="submit">Send Message</button>
+        </form>
+      </div>
 
-        <button type="submit">Send Message</button>
-    </form>
+      <div class="map-card" aria-label="Map">
+        <iframe
+          title="Billentra Location"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          src="{{ landing.map_embed_url|default:'https://www.google.com/maps?q=Station%20Road%20Basti%20Uttar%20Pradesh%20272002&output=embed' }}">
+        </iframe>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- POPUP SUCCESS MODAL -->
@@ -595,6 +4025,26 @@ footer a{color:#94a3b8;display:block;margin:8px 0;font-size:14px}
 }
 </style>
 
+<!-- FOOTER -->
+<footer>
+<div class="container footer-grid">
+<div>
+  <img src="{% static 'img/billentra-logo.png' %}?v=20260405" alt="Billentra" style="height:100px;width:auto;object-fit:contain;">
+  <p>{{ landing.support_address|default:"Station Road, Basti, Uttar Pradesh, India  272002" }}<br> {{ landing.support_phone|default:"9555733478" }}</p>
+</div>
+<div>
+  <h4>Legal</h4>
+  <a href="/privacy-policy/">Privacy Policy</a>
+  <a href="/terms/">Terms & Conditions</a>
+</div>
+<div>
+  <h4>Account</h4>
+  <a href="/accounts/login/">Login</a>
+  <a href="/accounts/signup/">Sign Up</a>
+</div>
+</div>
+</footer>
+
 <!-- ==== WhatsUp Support ==== -->
 <script>
 function toggleWA(){
@@ -603,7 +4053,7 @@ function toggleWA(){
 }
 function sendWA(){
  let msg=document.getElementById("waMsg").value;
- window.open("https://wa.me/919555733478?text="+encodeURIComponent(msg));
+ window.open("https://wa.me/{{ landing.whatsapp_number|default:'919555733478' }}?text="+encodeURIComponent(msg));
 }
 </script>
 
@@ -612,7 +4062,7 @@ function sendWA(){
 <!-- ===== SMART ADMIN CONTROLLED CHATBOT ===== -->
 <style>
 #bot-launch{
-  position:fixed;bottom:20px;right:20px;
+  position:fixed;bottom:86px;right:20px;
   background:#2563eb;color:#fff;
   padding:14px 18px;border-radius:50px;
   cursor:pointer;font-weight:600;z-index:9999
@@ -674,15 +4124,16 @@ function sendWA(){
 }
 </style>
 
+{% if landing and landing.show_chatbot_widget %}
 <!-- LEFT SIDE CHATBOT -->
 <div id="bot-btn"></div>
 
 <div id="bot-box">
-  <div id="bot-head">KhataApp Assistant</div>
+  <div id="bot-head">{{ landing.brand_name|default:"Billentra" }} Assistant</div>
   <div id="bot-body"></div>
   <div id="bot-input">
     <input id="bot-msg" placeholder="Type your question..." />
-    <button onclick="sendBot()"></button>
+    <button type="button" onclick="sendBot()">Send</button>
   </div>
 </div>
 <style>
@@ -736,29 +4187,34 @@ function addMsg(t,c){
 </script>
 
 <script>
-let socket = new WebSocket("wss://" + window.location.host + "/ws/chat/");
+ const enableWs = {{ landing.enable_websocket_chat|yesno:"true,false" }};
+ if(enableWs){
+  let socket = null;
+  try{
+   const wsProto = (window.location.protocol === "https:") ? "wss://" : "ws://";
+   socket = new WebSocket(wsProto + window.location.host + "/ws/chat/");
+  }catch(e){
+   socket = null;
+  }
 
-socket.onmessage = function(e){
- let data = JSON.parse(e.data);
- if(data.typing){
-   document.getElementById("bot-body")
-     .innerHTML += `<div class="bot">Typing...</div>`;
+  if(socket) socket.onmessage = function(e){
+   let data = {};
+   try{ data = JSON.parse(e.data || "{}"); }catch(_e){ data = {}; }
+   if(data.typing){
+     document.getElementById("bot-body")
+       .innerHTML += `<div class="bot">Typing...</div>`;
+   }
+   if(data.reply){
+     addMsg(data.reply,"bot");
+   }
+  }
+
+  if(socket) socket.onerror = function(){ try{ socket.close(); }catch(e){} }
  }
- if(data.reply){
-   addMsg(data.reply,"bot");
- }
-}
+</script>
+{% endif %}
 
-// Slider Auto Switch
-let slides = document.querySelectorAll('.hero-slide');
-let index = 0;
-
-setInterval(() => {
-    slides[index].classList.remove('active');
-    index = (index + 1) % slides.length;
-    slides[index].classList.add('active');
-}, 6000);
-
+<script>
 // Animation Counter
 const counters = document.querySelectorAll(".stat-number");
 const animateCounters = () => {
@@ -782,8 +4238,566 @@ const animateCounters = () => {
 setTimeout(animateCounters, 1500);
 </script>
 
+<script>
+(function(){
+  const track = document.getElementById("ucTrack");
+  if(!track) return;
+
+  const viewport = track.closest(".uc-viewport");
+  const cards = Array.from(track.querySelectorAll(".uc-card"));
+  const dotsEl = document.getElementById("ucDots");
+  const prevBtn = document.getElementById("ucPrev");
+  const nextBtn = document.getElementById("ucNext");
+
+  if(!viewport || !cards.length || !dotsEl || !prevBtn || !nextBtn) return;
+
+  let activeIndex = Math.min(1, cards.length - 1);
+  let autoplayTimer = null;
+  let isPointerDown = false;
+  let pointerStartX = 0;
+  let pointerStartIndex = activeIndex;
+
+  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+  function maxTranslate(){
+    const max = track.scrollWidth - viewport.clientWidth;
+    return Math.max(0, max);
+  }
+
+  function setTransformFor(index, immediate){
+    const card = cards[index];
+    if(!card) return;
+
+    const desired = card.offsetLeft - (viewport.clientWidth - card.offsetWidth) / 2;
+    const x = clamp(desired, 0, maxTranslate());
+
+    if(immediate){
+      const prev = track.style.transition;
+      track.style.transition = "none";
+      track.style.transform = `translateX(${-x}px)`;
+      // force layout
+      void track.offsetHeight;
+      track.style.transition = prev;
+      return;
+    }
+
+    track.style.transform = `translateX(${-x}px)`;
+  }
+
+  function renderDots(){
+    dotsEl.innerHTML = "";
+    cards.forEach((_, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "uc-dot";
+      b.setAttribute("aria-label", `Go to slide ${i + 1}`);
+      b.addEventListener("click", () => setActive(i));
+      dotsEl.appendChild(b);
+    });
+  }
+
+  function updateActiveStyles(){
+    cards.forEach((c, i) => c.classList.toggle("active", i === activeIndex));
+    Array.from(dotsEl.children).forEach((d, i) => {
+      d.classList.toggle("active", i === activeIndex);
+      d.setAttribute("aria-current", i === activeIndex ? "true" : "false");
+    });
+  }
+
+  function setActive(i, opts){
+    const immediate = !!(opts && opts.immediate);
+    activeIndex = (i + cards.length) % cards.length;
+    updateActiveStyles();
+    setTransformFor(activeIndex, immediate);
+  }
+
+  function next(){ setActive(activeIndex + 1); }
+  function prev(){ setActive(activeIndex - 1); }
+
+  function stopAutoplay(){
+    if(autoplayTimer){
+      clearInterval(autoplayTimer);
+      autoplayTimer = null;
+    }
+  }
+
+  function startAutoplay(){
+    stopAutoplay();
+    autoplayTimer = setInterval(() => {
+      if(document.hidden) return;
+      next();
+    }, 5200);
+  }
+
+  prevBtn.addEventListener("click", () => { stopAutoplay(); prev(); startAutoplay(); });
+  nextBtn.addEventListener("click", () => { stopAutoplay(); next(); startAutoplay(); });
+
+  viewport.addEventListener("mouseenter", stopAutoplay);
+  viewport.addEventListener("mouseleave", startAutoplay);
+  viewport.addEventListener("focusin", stopAutoplay);
+  viewport.addEventListener("focusout", startAutoplay);
+
+  viewport.addEventListener("pointerdown", (e) => {
+    isPointerDown = true;
+    pointerStartX = e.clientX;
+    pointerStartIndex = activeIndex;
+    viewport.setPointerCapture(e.pointerId);
+    stopAutoplay();
+  });
+
+  viewport.addEventListener("pointermove", (e) => {
+    if(!isPointerDown) return;
+    const dx = e.clientX - pointerStartX;
+    // allow a tiny drag feedback by translating a bit
+    const baseCard = cards[pointerStartIndex];
+    if(!baseCard) return;
+    const desired = baseCard.offsetLeft - (viewport.clientWidth - baseCard.offsetWidth) / 2;
+    const x = clamp(desired - dx, 0, maxTranslate());
+    track.style.transition = "none";
+    track.style.transform = `translateX(${-x}px)`;
+  });
+
+  function pointerEnd(e){
+    if(!isPointerDown) return;
+    isPointerDown = false;
+    track.style.transition = "";
+    const dx = e.clientX - pointerStartX;
+    const threshold = Math.min(80, viewport.clientWidth * 0.15);
+    if(dx > threshold) prev();
+    else if(dx < -threshold) next();
+    else setActive(pointerStartIndex);
+    startAutoplay();
+  }
+
+  viewport.addEventListener("pointerup", pointerEnd);
+  viewport.addEventListener("pointercancel", pointerEnd);
+
+  window.addEventListener("resize", () => setActive(activeIndex, { immediate: true }));
+  document.addEventListener("visibilitychange", () => { if(document.hidden) stopAutoplay(); else startAutoplay(); });
+
+  renderDots();
+  setActive(activeIndex, { immediate: true });
+  startAutoplay();
+})();
+</script>
+
+<script>
+(function(){
+  const viewport = document.getElementById("vidViewport");
+  const track = document.getElementById("vidTrack");
+  const prev = document.getElementById("vidPrev");
+  const next = document.getElementById("vidNext");
+  if(!viewport || !track || !prev || !next) return;
+
+  const cards = Array.from(track.querySelectorAll(".vid-card"));
+  if(!cards.length) return;
+
+  function getStep(){
+    const first = cards[0];
+    const style = window.getComputedStyle(track);
+    const gap = parseFloat(style.columnGap || style.gap || "0") || 0;
+    return (first ? first.getBoundingClientRect().width : 160) + gap;
+  }
+
+  function scrollByDir(dir){
+    viewport.scrollBy({ left: dir * getStep() * 2, behavior: "smooth" });
+  }
+
+  prev.addEventListener("click", () => scrollByDir(-1));
+  next.addEventListener("click", () => scrollByDir(1));
+
+  function pauseAll(except){
+    cards.forEach(card => {
+      const v = card.querySelector("video");
+      if(!v) return;
+      if(v !== except){
+        try{ v.pause(); }catch(e){}
+        card.classList.remove("is-playing");
+      }
+    });
+  }
+
+  function ensureSrc(video){
+    const src = video.getAttribute("src");
+    if(src) return;
+    const ds = video.getAttribute("data-src");
+    if(ds) video.src = ds;
+  }
+
+  cards.forEach(card => {
+    const video = card.querySelector("video");
+    if(!video) return;
+    card.style.cursor = "pointer";
+
+    card.addEventListener("click", () => {
+      ensureSrc(video);
+      if(video.paused){
+        pauseAll(video);
+        card.classList.add("is-playing");
+        video.muted = false;
+        video.controls = true;
+        const p = video.play();
+        if(p && p.catch) p.catch(() => { video.muted = true; video.play().catch(()=>{}); });
+      }else{
+        try{ video.pause(); }catch(e){}
+        card.classList.remove("is-playing");
+        video.controls = false;
+        video.muted = true;
+      }
+    });
+
+    video.addEventListener("ended", () => {
+      card.classList.remove("is-playing");
+      video.controls = false;
+      video.muted = true;
+    });
+
+    video.addEventListener("pause", () => {
+      card.classList.remove("is-playing");
+    });
+  });
+})();
+</script>
+
+<script>
+(function(){
+  const popup = document.getElementById("downloadPopup");
+  if(!popup) return;
+
+  const clickNow = document.getElementById("dlClickNow");
+  const choiceEls = Array.from(popup.querySelectorAll("[data-dl-choice='1']"));
+  const mobileInput = document.getElementById("dlMobile");
+  const sendBtn = document.getElementById("dlSendBtn");
+  const statusEl = document.getElementById("dlStatus");
+  const closeEls = popup.querySelectorAll("[data-dl-close]");
+
+  let prevOverflow = "";
+  const DISMISS_KEY = "billentra_dl_popup_dismissed_at";
+  const DISMISS_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+
+  function setStatus(text, kind){
+    if(!statusEl) return;
+    statusEl.textContent = text || "";
+    statusEl.style.color = (kind === "error") ? "#dc2626" : "#0f172a";
+  }
+
+  function getChoiceHref(platform){
+    const el = choiceEls.find(x => (x.dataset.platform || "").toLowerCase() === platform);
+    if(!el) return "";
+    if(el.classList.contains("disabled")) return "";
+    const href = (el.getAttribute("href") || "").trim();
+    if(!href || href === "#") return "";
+    return href;
+  }
+
+  function setRecommended(platform){
+    choiceEls.forEach(el => el.classList.remove("recommended"));
+    const el = choiceEls.find(x => (x.dataset.platform || "").toLowerCase() === platform);
+    if(el) el.classList.add("recommended");
+  }
+
+  function autoPreferredPlatform(){
+    const ua = (navigator.userAgent || "");
+    if(/android/i.test(ua)) return "android";
+    if(/windows/i.test(ua)) return "desktop";
+    return "";
+  }
+
+  function openPopup(href, platform){
+    popup.classList.add("open");
+    popup.setAttribute("aria-hidden", "false");
+    prevOverflow = document.documentElement.style.overflow || "";
+    document.documentElement.style.overflow = "hidden";
+
+    setStatus("", "ok");
+
+    if(clickNow){
+      const p = (platform || "").toLowerCase();
+      const preferred = (p === "android" || p === "desktop") ? p : (autoPreferredPlatform() || "android");
+      const hrefFromChoice = getChoiceHref(preferred);
+      const fallbackHref = getChoiceHref(preferred === "android" ? "desktop" : "android");
+      const finalHref = hrefFromChoice || fallbackHref || (String(href || "").trim() === "#" ? "" : String(href || "").trim());
+
+      const finalPlatform = hrefFromChoice ? preferred : (fallbackHref ? (preferred === "android" ? "desktop" : "android") : preferred);
+      setRecommended(finalPlatform);
+
+      clickNow.href = finalHref ? finalHref : "#";
+      clickNow.textContent = finalPlatform === "android" ? "Download Android" : "Download Windows";
+      clickNow.style.display = finalHref ? "inline-flex" : "none";
+    }
+
+    try{
+      const saved = localStorage.getItem("billentra_dl_mobile") || "";
+      if(mobileInput && saved && !mobileInput.value) mobileInput.value = saved;
+    }catch(e){}
+
+    setTimeout(() => {
+      if(mobileInput){ mobileInput.focus(); mobileInput.select?.(); }
+    }, 50);
+  }
+
+  function closePopup(){
+    popup.classList.remove("open");
+    popup.setAttribute("aria-hidden", "true");
+    document.documentElement.style.overflow = prevOverflow;
+    try{ localStorage.setItem(DISMISS_KEY, String(Date.now())); }catch(e){}
+  }
+
+  closeEls.forEach(el => el.addEventListener("click", closePopup));
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape" && popup.classList.contains("open")) closePopup();
+  });
+
+  document.querySelectorAll(".js-dl-open").forEach(a => {
+    a.addEventListener("click", (e) => {
+      // Keep normal navigation if JS is disabled (but we are here).
+      e.preventDefault();
+      openPopup(a.getAttribute("href") || "", (a.dataset.platform || "").toLowerCase());
+    });
+  });
+
+  // If a choice is disabled, show a friendly message instead of doing nothing.
+  choiceEls.forEach(el => {
+    el.addEventListener("click", (e) => {
+      const platform = (el.dataset.platform || "").toLowerCase();
+      const href = getChoiceHref(platform);
+
+      if(el.classList.contains("disabled")){
+        e.preventDefault();
+        setStatus("Downloads are not published yet. Please contact support.", "error");
+        return;
+      }
+
+      // Keep direct download behavior, but also keep the UI in sync (smart selection).
+      if(clickNow && href){
+        setRecommended(platform);
+        clickNow.href = href;
+        clickNow.textContent = platform === "android" ? "Download Android" : "Download Windows";
+        clickNow.style.display = "inline-flex";
+      }
+    });
+  });
+
+  function hasAnyDownload(){
+    return !!(getChoiceHref("android") || getChoiceHref("desktop"));
+  }
+
+  function shouldAutoOpen(){
+    try{
+      const params = new URLSearchParams(window.location.search || "");
+      if(params.has("dl")){
+        const v = (params.get("dl") || "").trim().toLowerCase();
+        return v !== "0" && v !== "false" && v !== "no";
+      }
+    }catch(e){}
+
+    try{
+      const ts = parseInt(localStorage.getItem(DISMISS_KEY) || "0", 10);
+      if(ts && (Date.now() - ts) < DISMISS_TTL_MS) return false;
+    }catch(e){}
+
+    return true;
+  }
+
+  // Auto-open occasionally (and only when at least one download exists).
+  if(shouldAutoOpen() && hasAnyDownload()){
+    window.setTimeout(() => {
+      if(!popup.classList.contains("open")){
+        openPopup("#", autoPreferredPlatform());
+      }
+    }, 900);
+  }
+
+  function normalizeMobile(value){
+    const digits = (value || "").replace(/[^\d]/g, "");
+    if(digits.length < 10 || digits.length > 15) return "";
+    return digits;
+  }
+
+  async function sendLink(){
+    if(!mobileInput) return;
+    const mobile = normalizeMobile(mobileInput.value);
+    if(!mobile){
+      setStatus("Please enter a valid mobile number.", "error");
+      return;
+    }
+
+    try{ localStorage.setItem("billentra_dl_mobile", mobile); }catch(e){}
+
+    setStatus("Sending link...", "ok");
+    if(sendBtn) sendBtn.disabled = true;
+
+    try{
+      const res = await fetch("/landing/send-app-link/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mobile })
+      });
+      const data = await res.json().catch(() => ({}));
+      if(!res.ok || data.ok === false){
+        setStatus((data && data.message) ? data.message : "Failed to send link.", "error");
+      }else{
+        setStatus(data.message || "Done.", "ok");
+      }
+    }catch(err){
+      setStatus("Network error. Please use the download buttons.", "error");
+    }finally{
+      if(sendBtn) sendBtn.disabled = false;
+    }
+  }
+
+  if(sendBtn) sendBtn.addEventListener("click", sendLink);
+  if(mobileInput) mobileInput.addEventListener("keydown", (e) => {
+    if(e.key === "Enter"){ e.preventDefault(); sendLink(); }
+  });
+})();
+</script>
+
+<script>
+(function(){
+  const form = document.getElementById("agentSignupForm");
+  if(!form) return;
+
+  const statusEl = document.getElementById("agentSignupStatus");
+  const submitBtn = form.querySelector("button[type='submit']");
+
+  function setStatus(text, kind){
+    if(!statusEl) return;
+    statusEl.textContent = text || "";
+    statusEl.classList.toggle("error", kind === "error");
+  }
+
+  function flattenErrors(errors){
+    try{
+      const out = [];
+      Object.keys(errors || {}).forEach((k) => {
+        const arr = errors[k] || [];
+        arr.forEach((e) => out.push(e && e.message ? e.message : String(e)));
+      });
+      return out;
+    }catch(e){
+      return [];
+    }
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    setStatus("", "ok");
+
+    if(submitBtn) submitBtn.disabled = true;
+    try{
+      const res = await fetch(form.action, {
+        method: "POST",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin",
+        body: new FormData(form),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if(!res.ok || data.ok === false){
+        const msg = data.message || (flattenErrors(data.errors || {}).join(" ") || "Signup failed.");
+        setStatus(msg, "error");
+        return;
+      }
+
+      setStatus(data.message || "OTP sent. Please verify your account.", "ok");
+      if(data.redirect_url){
+        window.setTimeout(() => { window.location.href = data.redirect_url; }, 600);
+      }
+    }catch(err){
+      setStatus("Network error. Please try again.", "error");
+    }finally{
+      if(submitBtn) submitBtn.disabled = false;
+    }
+  });
+})();
+</script>
+
+<script>
+(function(){
+  const section = document.getElementById("integrations");
+  if(!section) return;
+
+  const searchInput = document.getElementById("integrationSearch");
+  const chips = Array.from(section.querySelectorAll(".chip[data-filter]"));
+  const cards = Array.from(section.querySelectorAll(".integration-card"));
+
+  let activeFilter = "all";
+
+  function normalize(value){
+    return (value || "").toString().toLowerCase();
+  }
+
+  function hasFilter(tags, filter){
+    if(filter === "all") return true;
+    const list = normalize(tags).split(/\s+/).filter(Boolean);
+    return list.indexOf(filter) !== -1;
+  }
+
+  function applyFilters(){
+    const q = normalize(searchInput ? searchInput.value : "").trim();
+
+    cards.forEach((card) => {
+      const tags = card.getAttribute("data-tags") || "";
+      const name = card.getAttribute("data-name") || "";
+      const text = card.textContent || "";
+
+      const matchFilter = hasFilter(tags, activeFilter);
+      const matchQuery = !q || normalize(name).indexOf(q) !== -1 || normalize(tags).indexOf(q) !== -1 || normalize(text).indexOf(q) !== -1;
+      const show = matchFilter && matchQuery;
+
+      card.style.display = show ? "" : "none";
+    });
+  }
+
+  chips.forEach((btn) => {
+    btn.addEventListener("click", function(){
+      chips.forEach((b) => b.classList.remove("active"));
+      this.classList.add("active");
+      activeFilter = this.getAttribute("data-filter") || "all";
+      applyFilters();
+    });
+  });
+
+  if(searchInput){
+    searchInput.addEventListener("input", applyFilters);
+  }
+
+  applyFilters();
+})();
+</script>
+
 <!-- === FIXED AJAX SUBMISSION + POPUP === -->
 <script>
+const workforceApplyForm = document.getElementById("workforceApplyForm");
+if (workforceApplyForm) {
+    workforceApplyForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        const status = document.getElementById("workforceApplyStatus");
+        const formData = new FormData(this);
+        status.innerText = "Submitting application...";
+
+        fetch("/workforce/apply/", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": this.querySelector("[name=csrfmiddlewaretoken]").value
+            },
+            body: formData
+        })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+            status.innerText = data.message || (ok ? "Application submitted." : "Please check your details.");
+            if (ok) {
+                this.reset();
+            }
+        })
+        .catch(() => {
+            status.innerText = "Something went wrong. Please try again.";
+        });
+    });
+}
+
 document.getElementById("supportForm").addEventListener("submit", function(e) {
     e.preventDefault();
 

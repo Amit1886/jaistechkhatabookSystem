@@ -1,40 +1,76 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container mt-4">
-  <h3>Sales Voucher #{{ voucher.invoice_no }}</h3>
+<div class="container-fluid py-2" style="max-width: 1100px;">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">Sales Voucher #{{ voucher.invoice_no }}</h3>
+        <div class="unified-subtitle">
+          {{ voucher.party.name }} â€¢ {{ voucher.date|date:"d M Y" }}
+          {% if voucher.order %} â€¢ Order #{{ voucher.order.id }}{% endif %}
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if voucher.order and voucher.order.invoice %}
+          <a href="{% url 'ledger:receipt' %}?reference_type=commerce.Invoice&reference_id={{ voucher.order.invoice.id }}" class="btn unified-btn-outline">Receipt</a>
+        {% endif %}
+        <a class="btn unified-btn-outline" href="{{ print_url }}">Print View</a>
+        <a class="btn unified-btn-outline" href="{{ download_url }}">Download PDF</a>
+        {% include "core/includes/document_action_bar.html" with doc_title="Sales Voucher" doc_pdf_url=download_url doc_pdf_inline_url=download_url|add:"?inline=1" %}
+      </div>
+    </div>
 
-  <p><strong>Party:</strong> {{ voucher.party.name }}</p>
-  <p><strong>Date:</strong> {{ voucher.date }}</p>
-  <p><strong>GST Applied:</strong> {{ voucher.is_gst }}</p>
-  <p><strong>Total Amount:</strong> {{ voucher.total_amount }}</p>
+    <div class="unified-body">
+      <div class="report-summary-grid">
+        <div class="report-summary-card">
+          <div class="label">Party</div>
+          <div class="value">{{ voucher.party.name }}</div>
+          <div class="meta">{{ voucher.party.mobile|default:"" }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">GST</div>
+          <div class="value">{% if voucher.is_gst %}Yes{% else %}No{% endif %}</div>
+          <div class="meta">Date: {{ voucher.date|date:"d M Y" }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Total</div>
+          <div class="value">{{ voucher.total_amount }}</div>
+          <div class="meta">Voucher: {{ voucher.invoice_no }}</div>
+        </div>
+      </div>
 
-  <hr>
-
-  <h5>Items</h5>
-
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>Qty</th>
-        <th>Rate</th>
-        <th>GST</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      {% for item in voucher.items.all %}
-      <tr>
-        <td>{{ item.product.name }}</td>
-        <td>{{ item.qty }}</td>
-        <td>{{ item.rate }}</td>
-        <td>{{ item.gst_rate }}%</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
+      <div class="unified-section mt-2">
+        <h5 class="mb-2">Items</h5>
+        <div class="unified-table-wrap">
+          <table class="table unified-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th class="text-end">Qty</th>
+                <th class="text-end">Rate</th>
+                <th class="text-end">GST%</th>
+                <th>Warehouse</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in voucher.items.all %}
+                <tr>
+                  <td class="fw-semibold">{{ item.product.name|default:"-" }}</td>
+                  <td class="text-end">{{ item.qty }}</td>
+                  <td class="text-end">{{ item.rate }}</td>
+                  <td class="text-end">{{ item.gst_rate }}</td>
+                  <td>{{ item.warehouse.name|default:"-" }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">No items.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 {% endblock %}

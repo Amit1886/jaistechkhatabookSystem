@@ -1,6 +1,11 @@
 import React from "react";
-import LayoutEngine from "./engine/LayoutEngine";
+import EnterpriseUIEngine from "./engine/EnterpriseUIEngine";
+import RuntimeErrorBoundary from "./components/enterprise/RuntimeErrorBoundary";
 
 export default function App() {
-  return <LayoutEngine />;
+  return (
+    <RuntimeErrorBoundary>
+      <EnterpriseUIEngine />
+    </RuntimeErrorBoundary>
+  );
 }

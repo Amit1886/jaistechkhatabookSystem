@@ -1,4 +1,4 @@
-{% extends "allauth/layouts/entrance.html" %}
+﻿{% extends "allauth/layouts/entrance.html" %}
 {% load i18n %}
 {% load static %}
 
@@ -25,7 +25,13 @@
         margin-bottom: 20px;
     }
     .auth-logo img {
-        height: 55px;
+        display: block;
+        margin: 0 auto;
+        height: 84px;
+        width: auto;
+        max-width: 300px;
+        object-fit: contain;
+        object-position: center;
     }
     .auth-title {
         font-size: 26px;
@@ -59,7 +65,7 @@
     <div class="auth-card">
 
         <div class="auth-logo">
-            <img src="{% static 'img/logo.png' %}" alt="Logo">
+            <img src="{% static 'img/billentra-logo.png' %}" alt="Billentra Logo"  alt="Billentra" style="height:100px;width:auto;object-fit:contain;">
         </div>
 
         {# Allauth error/messages support #}
@@ -81,3 +87,4 @@
     </div>
 </div>
 {% endblock body %}
+

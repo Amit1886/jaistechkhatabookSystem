@@ -1,0 +1,96 @@
+{% extends "portal/base_portal.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">Pay Invoice</h3>
+        <div class="unified-subtitle">{{ invoice.number }} &middot; {{ party.name }}</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn unified-btn-outline btn-sm" href="{% url 'portal:pay_invoice_pdf' token=link.token %}">Download Invoice PDF</a>
+        <span class="badge bg-light text-dark">Status: {{ link.status }}</span>
+      </div>
+    </div>
+
+    <div class="unified-body">
+      <div class="report-summary-grid mb-3">
+        <div class="report-summary-card">
+          <div class="label">Invoice Amount</div>
+          <div class="value">{{ invoice.amount }}</div>
+          <div class="meta">Paid: {{ paid_total }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Balance</div>
+          <div class="value">{{ balance }}</div>
+          <div class="meta">Due</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Payment Link</div>
+          <div class="value">{{ link.amount }}</div>
+          <div class="meta">Expires: {{ link.expires_at|date:"d M Y"|default:"-" }}</div>
+        </div>
+      </div>
+
+      {% if upi_link %}
+        <div class="alert alert-info small">
+          <strong>UPI Link:</strong>
+          <a href="{{ upi_link }}" target="_blank" rel="noopener">Open Payment</a>
+        </div>
+      {% else %}
+        <div class="alert alert-warning small">Online payment link is not configured for this invoice.</div>
+      {% endif %}
+      {% if link.status == 'expired' %}
+        <div class="alert alert-danger small">This payment link has expired. Please request a new link from the business.</div>
+      {% endif %}
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="mb-2">Confirm Payment</h5>
+          <p class="text-muted small mb-3">
+            After you complete payment, you can submit a reference number here.
+            (In production, this can be automated via payment gateway webhook.)
+          </p>
+          <form method="post">
+            {% csrf_token %}
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="unified-label">Amount</label>
+                <input type="number" step="0.01" name="amount" class="form-control" value="{{ balance|default:link.amount }}">
+              </div>
+              <div class="col-md-8">
+                <label class="unified-label">Reference (UTR/Txn ID)</label>
+                <input type="text" name="reference" class="form-control" placeholder="Optional reference">
+              </div>
+            </div>
+            <button type="submit" class="btn unified-btn-primary w-100 mt-3" {% if balance <= 0 or link.status == 'expired' or link.status == 'paid' %}disabled{% endif %}>
+              Mark as Paid
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="unified-section mt-3">
+        <h5 class="mb-2">Invoice Items</h5>
+        <div class="unified-table-wrap">
+          <table class="table unified-table">
+            <thead><tr><th>Product</th><th class="text-end">Qty</th><th class="text-end">Rate</th><th class="text-end">Total</th></tr></thead>
+            <tbody>
+              {% for it in items %}
+                <tr>
+                  <td>{% if it.product %}{{ it.product.name }}{% else %}{{ it.raw_name }}{% endif %}</td>
+                  <td class="text-end fw-bold">{{ it.qty }}</td>
+                  <td class="text-end">{{ it.price }}</td>
+                  <td class="text-end fw-bold">{{ it.line_total }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

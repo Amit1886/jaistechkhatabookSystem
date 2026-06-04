@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}SMS Center{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+    <div>
+      <h3 class="mb-1">Google SMS System</h3>
+      <div class="text-muted">Templates, toggle, and logs</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" href="/superadmin/sms_center/smstemplate/">Manage Templates (Admin)</a>
+      <a class="btn btn-outline-secondary" href="/superadmin/sms_center/smsprovidersettings/">Provider Settings (Admin)</a>
+      <a class="btn btn-outline-secondary" href="/superadmin/sms_center/smslog/">SMS Logs (Admin)</a>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="alert alert-{{ m.tags }} mb-2">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card mb-4">
+    <div class="card-header">
+      <strong>Company Settings</strong>
+    </div>
+    <div class="card-body">
+      <form method="post" class="d-flex align-items-center gap-3 flex-wrap">
+        {% csrf_token %}
+        <div class="form-check form-switch">
+          {{ form.auto_sms_send }}
+          <label class="form-check-label" for="{{ form.auto_sms_send.id_for_label }}">Auto SMS Send</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header">
+      <strong>SMS Templates</strong>
+    </div>
+    <div class="card-body table-responsive">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Enabled</th>
+            <th>Image URL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in templates %}
+            <tr>
+              <td>{{ t.title }}</td>
+              <td><span class="badge bg-secondary">{{ t.template_type }}</span></td>
+              <td>
+                {% if t.enabled %}
+                  <span class="badge bg-success">Yes</span>
+                {% else %}
+                  <span class="badge bg-danger">No</span>
+                {% endif %}
+              </td>
+              <td class="text-truncate" style="max-width:320px;">{{ t.image_url|default:"-" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="text-muted">No templates yet. Add from Admin.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <strong>SMS Logs</strong>
+      <div class="text-muted">Showing latest (page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }})</div>
+    </div>
+    <div class="card-body table-responsive">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Mobile</th>
+            <th>Status</th>
+            <th>Template</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in page_obj.object_list %}
+            <tr>
+              <td class="text-nowrap">{{ l.timestamp }}</td>
+              <td class="text-nowrap">{{ l.mobile }}</td>
+              <td>
+                {% if l.status == "sent" %}
+                  <span class="badge bg-success">sent</span>
+                {% elif l.status == "failed" %}
+                  <span class="badge bg-danger">failed</span>
+                {% else %}
+                  <span class="badge bg-secondary">skipped</span>
+                {% endif %}
+              </td>
+              <td>{{ l.template.title|default:"-" }}</td>
+              <td class="text-truncate" style="max-width:520px;">{{ l.message }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-muted">No logs yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <nav class="d-flex justify-content-between align-items-center">
+        <div class="text-muted">Total: {{ page_obj.paginator.count }}</div>
+        <ul class="pagination mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+          {% endif %}
+
+          <li class="page-item disabled"><span class="page-link">{{ page_obj.number }}</span></li>
+
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  </div>
+{% endblock %}

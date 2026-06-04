@@ -1,100 +1,203 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block content %}
-
-<div class="container mt-4 unified-screen busy-unified-add">
-
-  <h3>Create Sales Voucher</h3>
-  <form method="post">
-    {% csrf_token %}
-
-    <div class="card p-4 mb-3">
-      <h5>Voucher Details</h5>
-
-      <div class="form-group mb-3">
-        <label>Party</label>
-        <select name="party" class="form-control" required>
-          <option value="">-- Select Party --</option>
-          {% for p in parties %}
-            <option value="{{ p.id }}">{{ p.name }} ({{ p.mobile }})</option>
-          {% endfor %}
-        </select>
+<div class="container-fluid py-2 unified-screen busy-unified-add">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">Create Voucher</h3>
+        <div class="unified-subtitle">
+          {% if order %}
+            Reference Order: <span class="badge bg-info text-dark">#{{ order.id }}</span>
+            <span class="ms-2 badge bg-secondary">{{ order.conversion_status|default:"pending"|title }}</span>
+          {% else %}
+            Blank voucher entry (no reference order)
+          {% endif %}
+        </div>
       </div>
-
-      <div class="form-check mb-3">
-        <input type="checkbox" name="is_gst" class="form-check-input" checked>
-        <label class="form-check-label">Apply GST</label>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'commerce:order_list' %}" class="btn unified-btn-outline">Back</a>
+        {% if order %}
+          <a href="{% url 'commerce:order_detail' order.id %}" class="btn unified-btn-outline">Order Details</a>
+        {% endif %}
       </div>
     </div>
 
-    <div class="card p-4 mb-3">
-      <h5>Items</h5>
+    <div class="unified-body">
+      {% if messages %}
+        {% for m in messages %}
+          <div class="alert alert-{{ m.tags }} mb-2">{{ m }}</div>
+        {% endfor %}
+      {% endif %}
 
-      <table class="table" id="itemTable">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Qty</th>
-            <th>Rate</th>
-            <th>GST</th>
-            <th></th>
-          </tr>
-        </thead>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if order %}
+          <input type="hidden" name="order_id" value="{{ order.id }}">
+        {% endif %}
 
-        <tbody>
-          <tr>
-            <td>
-              <select name="product[]" class="form-control">
-                <option value="">Select</option>
-                {% for pr in products %}
-                  <option value="{{ pr.id }}">{{ pr.name }}</option>
+        <div class="card p-3 mb-3">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Party</label>
+              {{ voucher_form.party }}
+              {% if voucher_form.party.errors %}<div class="text-danger small">{{ voucher_form.party.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Date</label>
+              {{ voucher_form.date }}
+              {% if voucher_form.date.errors %}<div class="text-danger small">{{ voucher_form.date.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-3">
+              <div class="form-check mt-4">
+                {{ voucher_form.is_gst }}
+                <label class="form-check-label" for="{{ voucher_form.is_gst.id_for_label }}">Apply GST</label>
+              </div>
+              {% if voucher_form.is_gst.errors %}<div class="text-danger small">{{ voucher_form.is_gst.errors }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+            <div>
+              <h5 class="mb-0">Items</h5>
+              {% if order %}
+                <div class="text-muted small">Enter quantities up to remaining. Partial conversion supported.</div>
+              {% endif %}
+            </div>
+            {% if not order %}
+              <button type="button" id="addRow" class="btn btn-secondary btn-sm">Add Item</button>
+            {% endif %}
+          </div>
+
+          {{ formset.management_form }}
+          {% if formset.non_form_errors %}
+            <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+          {% endif %}
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle" id="itemTable">
+              <thead>
+                <tr>
+                  <th style="min-width:260px;">Product</th>
+                  {% if order %}<th class="text-end" style="min-width:120px;">Remaining</th>{% endif %}
+                  <th class="text-end" style="min-width:120px;">Qty</th>
+                  <th class="text-end" style="min-width:140px;">Rate</th>
+                  <th class="text-end" style="min-width:120px;">Tax %</th>
+                  <th style="min-width:200px;">Warehouse</th>
+                  <th style="width:60px;">Del</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for f in formset.forms %}
+                  <tr class="voucher-row">
+                    <td>
+                      {{ f.source_order_item }}
+                      {{ f.product }}
+                      {% if f.product.errors %}<div class="text-danger small">{{ f.product.errors }}</div>{% endif %}
+                      {% if f.non_field_errors %}<div class="text-danger small">{{ f.non_field_errors }}</div>{% endif %}
+                    </td>
+                    {% if order %}
+                      <td class="text-end text-muted">
+                        {{ f.remaining_qty|default:"-" }}
+                      </td>
+                    {% endif %}
+                    <td class="text-end">
+                      {{ f.qty }}
+                      {% if f.qty.errors %}<div class="text-danger small">{{ f.qty.errors }}</div>{% endif %}
+                    </td>
+                    <td class="text-end">
+                      {{ f.rate }}
+                      {% if f.rate.errors %}<div class="text-danger small">{{ f.rate.errors }}</div>{% endif %}
+                    </td>
+                    <td class="text-end">
+                      {{ f.gst_rate }}
+                      {% if f.gst_rate.errors %}<div class="text-danger small">{{ f.gst_rate.errors }}</div>{% endif %}
+                    </td>
+                    <td>
+                      {{ f.warehouse }}
+                      {% if f.warehouse.errors %}<div class="text-danger small">{{ f.warehouse.errors }}</div>{% endif %}
+                    </td>
+                    <td class="text-center">
+                      <div style="display:none;">{{ f.DELETE }}</div>
+                      <button type="button" class="btn btn-outline-danger btn-sm remove-row">X</button>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="7" class="text-center text-muted py-3">No items.</td></tr>
                 {% endfor %}
-              </select>
-            </td>
+              </tbody>
+            </table>
+          </div>
 
-            <td><input type="number" name="qty[]" class="form-control" min="1" value="1"></td>
-            <td><input type="number" name="rate[]" class="form-control" min="1"></td>
+          <div id="empty-form-template" class="d-none">
+            <tr class="voucher-row">
+              <td>
+                {{ formset.empty_form.source_order_item }}
+                {{ formset.empty_form.product }}
+              </td>
+              <td class="text-end">
+                {{ formset.empty_form.qty }}
+              </td>
+              <td class="text-end">
+                {{ formset.empty_form.rate }}
+              </td>
+              <td class="text-end">
+                {{ formset.empty_form.gst_rate }}
+              </td>
+              <td>
+                {{ formset.empty_form.warehouse }}
+              </td>
+              <td class="text-center">
+                <div style="display:none;">{{ formset.empty_form.DELETE }}</div>
+                <button type="button" class="btn btn-outline-danger btn-sm remove-row">X</button>
+              </td>
+            </tr>
+          </div>
+        </div>
 
-            <td>
-              <select name="gst_rate[]" class="form-control">
-                <option value="0">0%</option>
-                <option value="5">5%</option>
-                <option value="12">12%</option>
-                <option value="18">18%</option>
-                <option value="28">28%</option>
-              </select>
-            </td>
-
-            <td><button type="button" class="btn btn-danger remove-row">X</button></td>
-          </tr>
-        </tbody>
-      </table>
-
-      <button type="button" id="addRow" class="btn btn-secondary">Add Item</button>
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn unified-btn-primary">Save Voucher</button>
+        </div>
+      </form>
     </div>
-
-    <button type="submit" class="btn btn-primary">Create Voucher</button>
-
-  </form>
+  </div>
 </div>
 
 <script>
-document.getElementById("addRow").onclick = function() {
-  let table = document.querySelector("#itemTable tbody");
-  let newRow = table.rows[0].cloneNode(true);
+(function() {
+  function markDeleted(row) {
+    const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+    if (del) {
+      del.checked = true;
+    }
+    row.style.display = 'none';
+  }
 
-  newRow.querySelectorAll("input").forEach(i => i.value = "");
-  table.appendChild(newRow);
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.remove-row');
+    if (!btn) return;
+    const row = btn.closest('tr');
+    if (!row) return;
+    markDeleted(row);
+  });
 
-  newRow.querySelector(".remove-row").onclick = function() {
-    newRow.remove();
-  };
-};
+  const addBtn = document.getElementById('addRow');
+  if (!addBtn) return;
 
-document.querySelectorAll(".remove-row").forEach(btn => {
-  btn.onclick = function() {
-    btn.closest("tr").remove();
-  };
-});
+  const totalInput = document.getElementById('id_items-TOTAL_FORMS');
+  const tbody = document.querySelector('#itemTable tbody');
+  const templateHolder = document.getElementById('empty-form-template');
+  if (!totalInput || !tbody || !templateHolder) return;
+
+  addBtn.addEventListener('click', function() {
+    const idx = parseInt(totalInput.value || '0', 10);
+    const html = templateHolder.innerHTML.replaceAll('__prefix__', String(idx));
+    tbody.insertAdjacentHTML('beforeend', html);
+    totalInput.value = String(idx + 1);
+  });
+})();
 </script>
-
 {% endblock %}

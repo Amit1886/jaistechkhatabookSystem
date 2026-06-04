@@ -1,0 +1,35 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block content %}
+  <div class="be-page">
+    {% if be_user_metrics %}
+      <div class="be-stats">
+        <div class="be-stat">
+          <div class="be-stat-label">{% trans "Users" %}</div>
+          <div class="be-stat-value">{{ be_user_metrics.total }}</div>
+        </div>
+        <div class="be-stat">
+          <div class="be-stat-label">{% trans "Active" %}</div>
+          <div class="be-stat-value be-ok">{{ be_user_metrics.active }}</div>
+        </div>
+        <div class="be-stat">
+          <div class="be-stat-label">{% trans "Inactive" %}</div>
+          <div class="be-stat-value be-bad">{{ be_user_metrics.inactive }}</div>
+        </div>
+        <div class="be-stat">
+          <div class="be-stat-label">{% trans "Staff" %}</div>
+          <div class="be-stat-value">{{ be_user_metrics.staff }}</div>
+        </div>
+        <div class="be-stat">
+          <div class="be-stat-label">{% trans "Owners" %}</div>
+          <div class="be-stat-value">{{ be_user_metrics.owners }}</div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="be-card">
+      {{ block.super }}
+    </div>
+  </div>
+{% endblock %}

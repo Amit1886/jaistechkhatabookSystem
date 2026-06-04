@@ -1,0 +1,136 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Billentra</title>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: rgba(255, 255, 255, 0.06);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.65);
+        --accent: #60a5fa;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(1200px 800px at 20% 10%, rgba(96, 165, 250, 0.25), transparent 60%),
+          radial-gradient(900px 700px at 80% 90%, rgba(34, 197, 94, 0.12), transparent 60%),
+          var(--bg);
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        color: var(--text);
+      }
+
+      .card {
+        width: min(720px, calc(100vw - 36px));
+        padding: 36px 28px;
+        border-radius: 18px;
+        background: var(--card);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 22px 55px rgba(0, 0, 0, 0.45);
+        text-align: center;
+      }
+
+      .logo {
+        width: min(520px, 86vw);
+        height: auto;
+        display: block;
+        margin: 0 auto 18px;
+        animation: glow 1.1s ease-in-out infinite alternate;
+      }
+
+      @keyframes glow {
+        from {
+          transform: scale(0.985);
+          filter: drop-shadow(0 0 0 rgba(96, 165, 250, 0.0));
+        }
+        to {
+          transform: scale(1.015);
+          filter: drop-shadow(0 0 22px rgba(96, 165, 250, 0.75));
+        }
+      }
+
+      .title {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        margin: 2px 0 10px;
+      }
+
+      .sub {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .spinner {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        border-top-color: var(--accent);
+        animation: spin 0.9s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .hint {
+        margin-top: 18px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.55);
+      }
+
+      .hint a {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <img class="logo" src="{% static 'img/billentra-logo.png' %}" alt="Billentra" />
+      <div class="title">Starting Billentraâ€¦</div>
+      <div class="sub">Desktop App Version: {{ desktop_app_version|default:"0.0.0" }}</div>
+      <div class="row">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Opening login page</span>
+      </div>
+      <div class="hint">
+        If it doesnâ€™t open automatically, <a href="/accounts/login/">click here</a>.
+      </div>
+    </main>
+
+    {% if desktop_auto_redirect %}
+    <script>
+      setTimeout(function () {
+        var next = "/accounts/login/?t=" + Date.now();
+        window.location.replace(next);
+      }, 1400);
+    </script>
+    {% endif %}
+  </body>
+</html>
+

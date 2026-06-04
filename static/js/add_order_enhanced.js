@@ -1,3 +1,14 @@
+// Global keyboard help functions - accessible even in PC Busy mode
+window.showKeyboardHelp = function() {
+    const modal = document.getElementById('keyboardHelp');
+    if (modal) modal.style.display = 'flex';
+};
+
+window.hideKeyboardHelp = function() {
+    const modal = document.getElementById('keyboardHelp');
+    if (modal) modal.style.display = 'none';
+};
+
 (() => {
 // Enhanced Order System JavaScript
 // Supports keyboard shortcuts, step navigation, themes, and accountant-friendly features
@@ -30,6 +41,9 @@ function loadProducts() {
 }
 
 let products = loadProducts();
+
+// Additional sundry value applied at order-level (added via keyboard popup)
+let extraSundry = 0;
 
 // Step management
 let currentStep = 1;
@@ -92,9 +106,9 @@ function handleKeyboardShortcut(e) {
         return true;
     }
 
-    // F8 - Scan Barcode
+    // F8 - Bill Sundry (opens popup)
     if (e.key === 'F8') {
-        document.getElementById('startScan')?.click();
+        openSundryPopup();
         return true;
     }
 
@@ -106,6 +120,9 @@ function handleKeyboardShortcut(e) {
 
     // Tab navigation with Enter
     if (e.key === 'Enter' && !e.shiftKey) {
+        // Let row-level handlers manage Enter inside order table
+        if (activeElement && activeElement.closest && activeElement.closest('#orderBody')) return false;
+
         const focusableElements = getFocusableElements();
         const currentIndex = focusableElements.indexOf(activeElement);
         if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
@@ -116,6 +133,7 @@ function handleKeyboardShortcut(e) {
 
     // Shift+Tab navigation
     if (e.key === 'Enter' && e.shiftKey) {
+        if (activeElement && activeElement.closest && activeElement.closest('#orderBody')) return false;
         const focusableElements = getFocusableElements();
         const currentIndex = focusableElements.indexOf(activeElement);
         if (currentIndex > 0) {
@@ -193,7 +211,7 @@ function getFirstFieldInStep(step) {
         case 1: return document.getElementById('orderType');
         case 2: return document.querySelector('.product-search');
         case 3: return document.querySelector('textarea[name="notes"]');
-        case 4: return document.querySelector('input[type="submit"]');
+        case 4: return document.querySelector('button[type="submit"]');
         default: return null;
     }
 }
@@ -213,14 +231,7 @@ document.getElementById('prevStep').addEventListener('click', () => {
     }
 });
 
-// Keyboard help functions
-function showKeyboardHelp() {
-    document.getElementById('keyboardHelp').style.display = 'flex';
-}
-
-function hideKeyboardHelp() {
-    document.getElementById('keyboardHelp').style.display = 'none';
-}
+// Keyboard help functions (already defined globally above)
 
 // Enhanced row addition with keyboard support
 function addRow(product=null){
@@ -292,6 +303,9 @@ function recalc(){
         tr.querySelector(".amount").value = t.toFixed(2);
         sub+=t;
     });
+
+    // Include sundry amounts in subtotal
+    sub += (parseFloat(extraSundry) || 0);
 
     // Animate number changes
     animateNumberChange('subTotal', sub);
@@ -371,6 +385,9 @@ function showAISuggestion(message) {
     `;
 
     const scanSection = document.querySelector('.scan-section');
+    // Prevent duplicate messages
+    const existing = Array.from(scanSection.querySelectorAll('.suggestion-item')).map(si => si.textContent.trim());
+    if (existing.includes(message.trim())) return;
     scanSection.appendChild(suggestionDiv);
 
     setTimeout(() => {
@@ -426,8 +443,18 @@ function setupProductRow(row) {
 
     priceInput.addEventListener("keydown", (e) => {
         if (e.key === 'Enter') {
-            // Add new row and focus first field
-            addRow();
+            // If this is last row and user already added >=2 rows, treat Enter as finish
+            const rows = document.querySelectorAll('#orderBody .item-row');
+            const isLast = rows.length && rows[rows.length - 1] === row;
+            if (isLast && rows.length >= 2) {
+                // Open sundry popup for final adjustments instead of auto-adding rows
+                openSundryPopup();
+            } else {
+                // Add new row and focus first field
+                addRow();
+            }
+            e.preventDefault();
+            return;
         }
     });
 }
@@ -552,6 +579,73 @@ function selectParty(value, text) {
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.card-body')) {
         document.getElementById('partyDropdown').style.display = 'none';
+    }
+});
+
+// Sundry popup and keyboard-only flow helpers
+function openSundryPopup() {
+    const popup = document.getElementById('sundryPopup');
+    if (!popup) return;
+    popup.style.display = 'block';
+    // focus name field
+    setTimeout(() => document.getElementById('sundryName')?.focus(), 50);
+}
+
+function closeSundryPopup() {
+    const popup = document.getElementById('sundryPopup');
+    if (!popup) return;
+    popup.style.display = 'none';
+    // move focus back to a sensible place: addRow button
+    document.getElementById('addRow')?.focus();
+}
+
+// When trigger receives focus (keyboard tab reaches bottom), open popup
+document.addEventListener('focusin', (e) => {
+    if (e.target && e.target.id === 'sundryTrigger') {
+        openSundryPopup();
+    }
+});
+
+// Apply sundry: add hidden inputs and update totals, then go to save step
+document.getElementById('applySundry')?.addEventListener('click', () => {
+    const name = document.getElementById('sundryName')?.value || 'Sundry';
+    const amt = parseFloat(document.getElementById('sundryAmount')?.value || '0') || 0;
+    extraSundry = (parseFloat(extraSundry) || 0) + amt;
+
+    // add hidden inputs to form so server receives sundry info
+    const form = document.getElementById('orderForm');
+    if (form) {
+        const hn = document.createElement('input');
+        hn.type = 'hidden'; hn.name = 'sundry_name[]'; hn.value = name; form.appendChild(hn);
+        const ha = document.createElement('input');
+        ha.type = 'hidden'; ha.name = 'sundry_amount[]'; ha.value = amt; form.appendChild(ha);
+    }
+
+    recalc();
+    closeSundryPopup();
+
+    // Move to final Save step (Step 4) and focus Save
+    currentStep = 4;
+    updateStepIndicator();
+    setTimeout(() => document.querySelector('form button[type="submit"], #saveDraftStep4')?.focus(), 200);
+});
+
+document.getElementById('closeSundry')?.addEventListener('click', () => closeSundryPopup());
+
+// Keyboard handling when sundry popup is open
+document.addEventListener('keydown', (e) => {
+    const popup = document.getElementById('sundryPopup');
+    if (!popup || popup.style.display === 'none') return;
+    if (e.key === 'Escape') {
+        closeSundryPopup();
+        e.preventDefault();
+        return;
+    }
+    if (e.key === 'Enter') {
+        // Treat Enter as apply
+        document.getElementById('applySundry')?.click();
+        e.preventDefault();
+        return;
     }
 });
 

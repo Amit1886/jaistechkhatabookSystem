@@ -1,0 +1,52 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Customers</div>
+        <div class="va-section-title">Segments</div>
+        <div class="va-help mt-1">Rules-based segments (Phase A): pincode, min orders, min spend, has company.</div>
+      </div>
+      <a class="btn btn-sm btn-primary" href="{% url 'vendor-customer-segment-create' vendor.subdomain %}">
+        <i class="bi bi-plus-lg me-1"></i>New segment
+      </a>
+    </div>
+  </div>
+
+  <div class="va-panel p-3">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Rules</th>
+            <th>Updated</th>
+            <th style="width: 120px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in segments %}
+            <tr>
+              <td class="fw-semibold">{{ s.title }}</td>
+              <td><span class="badge {% if s.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %}">{% if s.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+              <td class="va-help">
+                {% if s.rules_json.pincode %}pincode={{ s.rules_json.pincode }}{% endif %}
+                {% if s.rules_json.min_orders %} · min_orders={{ s.rules_json.min_orders }}{% endif %}
+                {% if s.rules_json.min_spent %} · min_spent={{ s.rules_json.min_spent }}{% endif %}
+                {% if s.rules_json.has_company == True %} · has_company=true{% elif s.rules_json.has_company == False %} · has_company=false{% endif %}
+              </td>
+              <td class="va-help">{{ s.updated_at }}</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-customer-segment-view' vendor.subdomain s.id %}">Open</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="va-help">No segments yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

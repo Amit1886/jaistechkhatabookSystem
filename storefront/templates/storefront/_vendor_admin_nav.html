@@ -1,0 +1,98 @@
+<div class="va-nav">
+  <div class="va-nav-search mb-2">
+    <div class="input-group input-group-sm">
+      <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+      <input class="form-control" placeholder="Search settings..."
+             oninput="(function(v){var q=(v.value||'').toLowerCase();document.querySelectorAll('.va-nav a[data-label]').forEach(function(a){a.style.display=a.getAttribute('data-label').indexOf(q)>-1?'flex':'none';});})(this)">
+    </div>
+  </div>
+
+  <div class="d-grid gap-1">
+    <a data-label="overview dashboard" href="{% url 'vendor-dashboard-ui' vendor.subdomain %}" class="{% if vendor_admin_page == 'dashboard' %}active{% endif %}">
+      <div class="left"><i class="bi bi-grid-1x2"></i><span>Overview</span></div>
+    </a>
+    <a data-label="orders" href="{% url 'vendor-orders' vendor.subdomain %}" class="{% if vendor_admin_page == 'orders' %}active{% endif %}">
+      <div class="left"><i class="bi bi-receipt-cutoff"></i><span>Orders</span></div>
+    </a>
+    <a data-label="products catalog" href="{% url 'vendor-products' vendor.subdomain %}" class="{% if vendor_admin_page == 'products' %}active{% endif %}">
+      <div class="left"><i class="bi bi-box-seam"></i><span>Products</span></div>
+    </a>
+    <a data-label="catalogs pricing markets include exclude" href="{% url 'vendor-catalogs' vendor.subdomain %}" class="{% if vendor_admin_page == 'catalogs' %}active{% endif %}">
+      <div class="left"><i class="bi bi-collection"></i><span>Catalogs</span></div>
+    </a>
+    <a data-label="rollouts schedules catalog rollout" href="{% url 'vendor-catalog-rollouts' vendor.subdomain %}" class="{% if vendor_admin_page == 'catalog_rollouts' %}active{% endif %}">
+      <div class="left"><i class="bi bi-rocket-takeoff"></i><span>Rollouts</span></div>
+    </a>
+    <a data-label="discounts coupons offers" href="{% url 'vendor-coupons' vendor.subdomain %}" class="{% if vendor_admin_page == 'coupons' %}active{% endif %}">
+      <div class="left"><i class="bi bi-tag"></i><span>Discounts</span></div>
+    </a>
+    <a data-label="marketing campaigns creatives leads ads whatsapp sms email" href="{% url 'vendor-marketing-campaigns' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_marketing' %}active{% endif %}">
+      <div class="left"><i class="bi bi-megaphone"></i><span>Marketing</span></div>
+    </a>
+  </div>
+
+  <div class="mt-3 mb-1 va-help px-2">Settings</div>
+  <div class="d-grid gap-1">
+    <a data-label="general store profile" href="{% url 'vendor-settings-general' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_general' %}active{% endif %}">
+      <div class="left"><i class="bi bi-gear"></i><span>General</span></div>
+    </a>
+    <a data-label="plan subscription" href="{% url 'vendor-settings-plan' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_plan' %}active{% endif %}">
+      <div class="left"><i class="bi bi-award"></i><span>Plan</span></div>
+    </a>
+    <a data-label="billing invoices" href="{% url 'vendor-settings-billing' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_billing' %}active{% endif %}">
+      <div class="left"><i class="bi bi-receipt"></i><span>Billing</span></div>
+    </a>
+    <a data-label="users permissions staff" href="{% url 'vendor-settings-users' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_users' %}active{% endif %}">
+      <div class="left"><i class="bi bi-people"></i><span>Users & permissions</span></div>
+    </a>
+    <a data-label="payments gateway" href="{% url 'vendor-settings-payments' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_payments' %}active{% endif %}">
+      <div class="left"><i class="bi bi-credit-card"></i><span>Payments</span></div>
+    </a>
+    <a data-label="checkout" href="{% url 'vendor-settings-checkout' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_checkout' %}active{% endif %}">
+      <div class="left"><i class="bi bi-bag-check"></i><span>Checkout</span></div>
+    </a>
+    <a data-label="customer accounts login" href="{% url 'vendor-settings-customer-accounts' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_customer_accounts' %}active{% endif %}">
+      <div class="left"><i class="bi bi-person-badge"></i><span>Customer accounts</span></div>
+    </a>
+    <a data-label="shipping delivery" href="{% url 'vendor-settings-shipping' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_shipping' %}active{% endif %}">
+      <div class="left"><i class="bi bi-truck"></i><span>Shipping & delivery</span></div>
+    </a>
+    <a data-label="taxes duties" href="{% url 'vendor-settings-taxes' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_taxes' %}active{% endif %}">
+      <div class="left"><i class="bi bi-percent"></i><span>Taxes & duties</span></div>
+    </a>
+    <a data-label="locations warehouses" href="{% url 'vendor-settings-locations' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_locations' %}active{% endif %}">
+      <div class="left"><i class="bi bi-geo-alt"></i><span>Locations</span></div>
+    </a>
+    <a data-label="markets" href="{% url 'vendor-settings-markets' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_markets' %}active{% endif %}">
+      <div class="left"><i class="bi bi-globe"></i><span>Markets</span></div>
+    </a>
+    <a data-label="apps integrations" href="{% url 'vendor-settings-apps' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_apps' %}active{% endif %}">
+      <div class="left"><i class="bi bi-grid"></i><span>Apps</span></div>
+    </a>
+    <a data-label="sales channels" href="{% url 'vendor-settings-sales-channels' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_sales_channels' %}active{% endif %}">
+      <div class="left"><i class="bi bi-diagram-3"></i><span>Sales channels</span></div>
+    </a>
+    <a data-label="domains" href="{% url 'vendor-settings-domains' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_domains' %}active{% endif %}">
+      <div class="left"><i class="bi bi-globe2"></i><span>Domains</span></div>
+    </a>
+    <a data-label="customer events" href="{% url 'vendor-settings-customer-events' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_customer_events' %}active{% endif %}">
+      <div class="left"><i class="bi bi-activity"></i><span>Customer events</span></div>
+    </a>
+    <a data-label="notifications whatsapp sms email" href="{% url 'vendor-settings-notifications' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_notifications' %}active{% endif %}">
+      <div class="left"><i class="bi bi-bell"></i><span>Notifications</span></div>
+    </a>
+    <a data-label="metafields metaobjects" href="{% url 'vendor-settings-metafields' vendor.subdomain %}" class="{% if vendor_admin_page == 'settings_metafields' %}active{% endif %}">
+      <div class="left"><i class="bi bi-braces-asterisk"></i><span>Metafields</span></div>
+    </a>
+  </div>
+
+  <div class="mt-3 mb-1 va-help px-2">Customers</div>
+  <div class="d-grid gap-1">
+    <a data-label="customers segments" href="{% url 'vendor-customer-segments' vendor.subdomain %}" class="{% if vendor_admin_page == 'customer_segments' %}active{% endif %}">
+      <div class="left"><i class="bi bi-funnel"></i><span>Segments</span></div>
+    </a>
+    <a data-label="customers companies b2b" href="{% url 'vendor-customer-companies' vendor.subdomain %}" class="{% if vendor_admin_page == 'customer_companies' %}active{% endif %}">
+      <div class="left"><i class="bi bi-building"></i><span>Companies</span></div>
+    </a>
+  </div>
+</div>

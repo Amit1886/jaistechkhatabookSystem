@@ -1,0 +1,91 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Users & permissions</div>
+        <div class="va-help">Add staff to manage this store. Owner always has full access.</div>
+      </div>
+    </div>
+  </div>
+
+  <form method="post" class="va-panel p-3 mb-3">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add_member">
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-lg-5">
+        <label class="form-label va-form-label">User email / mobile</label>
+        <input class="form-control" name="identifier" placeholder="user@example.com or 9555xxxxxx">
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Role</label>
+        <select class="form-select" name="role">
+          <option value="staff">Staff</option>
+          <option value="owner">Owner</option>
+        </select>
+      </div>
+      <div class="col-12 col-lg-4 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit">
+          <i class="bi bi-person-plus me-1"></i>Add user
+        </button>
+      </div>
+      <div class="col-12">
+        <div class="va-help">Tip: User must already exist in the system. Create from Superadmin if needed.</div>
+      </div>
+    </div>
+  </form>
+
+  <div class="va-panel p-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <div class="va-section-title">Members</div>
+      <a class="btn btn-sm btn-outline-secondary" href="/superadmin/vendors/vendormembership/?vendor__id__exact={{ vendor.id }}" target="_blank">
+        <i class="bi bi-box-arrow-up-right me-1"></i>Open in Superadmin
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th style="width: 180px;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in memberships %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ m.user.email|default:m.user.username }}</div>
+                <div class="va-help small">{{ m.user.mobile|default:"" }}</div>
+              </td>
+              <td><span class="badge text-bg-light border">{{ m.role }}</span></td>
+              <td>
+                {% if m.is_active %}
+                  <span class="badge text-bg-success">Active</span>
+                {% else %}
+                  <span class="badge text-bg-secondary">Disabled</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="post" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="toggle_member">
+                  <input type="hidden" name="member_id" value="{{ m.id }}">
+                  <button class="btn btn-sm btn-outline-secondary" type="submit">
+                    {% if m.is_active %}Disable{% else %}Enable{% endif %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="va-help">No members yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

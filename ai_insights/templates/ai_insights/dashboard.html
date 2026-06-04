@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI Business Insights{% endblock %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+
+  <div class="container-fluid py-2 unified-screen">
+    <div class="unified-card">
+      <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <h3 class="mb-0">AI Business Insights</h3>
+          <div class="unified-subtitle">Snapshot of sales, stock, customers and profit.</div>
+        </div>
+      </div>
+
+      <div class="unified-body">
+        <div class="row g-3">
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <div class="small text-muted">Today's Sales</div>
+                <div class="display-6 fw-bold">{{ today.total_amount|default:"0" }}</div>
+                <div class="small text-muted">Invoices: {{ today.invoice_count|default:"0" }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <div class="small text-muted">Profit Summary ({{ profit.days|default:"30" }} days)</div>
+                <div class="display-6 fw-bold">{{ profit.profit|default:"0" }}</div>
+                <div class="small text-muted">
+                  Sales: {{ profit.sales|default:"0" }} |
+                  Purchases: {{ profit.purchases|default:"0" }} |
+                  Expenses: {{ profit.expenses|default:"0" }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <div class="small text-muted mb-2">Low Stock Alerts</div>
+                {% if low_stock %}
+                  <div class="unified-table-wrap">
+                    <table class="table unified-table">
+                      <thead>
+                        <tr><th>Product</th><th class="text-end">Stock</th><th class="text-end">Min</th></tr>
+                      </thead>
+                      <tbody>
+                        {% for p in low_stock %}
+                          <tr>
+                            <td>{{ p.name }}</td>
+                            <td class="text-end fw-bold">{{ p.stock }}</td>
+                            <td class="text-end">{{ p.min_stock }}</td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                {% else %}
+                  <div class="text-muted">No low stock items.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <div class="small text-muted mb-2">Top Selling Products</div>
+                {% if top_products %}
+                  <div class="unified-table-wrap">
+                    <table class="table unified-table">
+                      <thead><tr><th>Product</th><th class="text-end">Qty</th></tr></thead>
+                      <tbody>
+                        {% for it in top_products %}
+                          <tr><td>{{ it.name }}</td><td class="text-end fw-bold">{{ it.qty }}</td></tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                {% else %}
+                  <div class="text-muted">No sales data yet.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <div class="small text-muted mb-2">Customer Outstanding</div>
+                {% if outstanding %}
+                  <div class="unified-table-wrap">
+                    <table class="table unified-table">
+                      <thead><tr><th>Party</th><th class="text-end">Outstanding</th></tr></thead>
+                      <tbody>
+                        {% for o in outstanding %}
+                          <tr><td>{{ o.party }}</td><td class="text-end fw-bold">{{ o.outstanding }}</td></tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                {% else %}
+                  <div class="text-muted">No outstanding balances.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <div class="small text-muted mb-2">Reorder Suggestions (30 days)</div>
+                {% if reorder %}
+                  <div class="unified-table-wrap">
+                    <table class="table unified-table">
+                      <thead><tr><th>Product</th><th class="text-end">Days Left</th><th class="text-end">Buy</th></tr></thead>
+                      <tbody>
+                        {% for r in reorder %}
+                          <tr>
+                            <td>{{ r.name }}</td>
+                            <td class="text-end fw-bold">{{ r.days_left }}</td>
+                            <td class="text-end">{{ r.suggest_reorder_qty }}</td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="small text-muted mt-1">Tip: Based on last 30-day sales and current stock.</div>
+                {% else %}
+                  <div class="text-muted">No suggestions yet (need sales history).</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-12">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <div class="small text-muted mb-2">Sales Trend (14 days)</div>
+                {% if trend %}
+                  <div class="unified-table-wrap">
+                    <table class="table unified-table">
+                      <thead><tr><th>Date</th><th class="text-end">Total</th></tr></thead>
+                      <tbody>
+                        {% for t in trend %}
+                          <tr><td>{{ t.date }}</td><td class="text-end fw-bold">{{ t.total }}</td></tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                {% else %}
+                  <div class="text-muted">No trend data.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -38,3 +38,20 @@ class CreditRiskScore(models.Model):
     score = models.PositiveIntegerField(default=0)
     reason = models.CharField(max_length=255, blank=True)
     generated_at = models.DateTimeField(auto_now_add=True)
+
+
+class EngagementMetric(models.Model):
+    class Metric(models.TextChoices):
+        VOICE_SUCCESS = "voice_success", "Voice call success %"
+        QR_TO_SIGNUP = "qr_to_signup", "QR scan to signup ratio"
+        WHATSAPP_CONVERSION = "wa_conversion", "WhatsApp conversion rate"
+        AGENT_HEATMAP = "agent_heatmap", "Agent performance heatmap"
+
+    metric = models.CharField(max_length=40, choices=Metric.choices, db_index=True)
+    period_start = models.DateField(db_index=True)
+    period_end = models.DateField(db_index=True)
+    payload = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["metric", "period_start", "period_end"], name="eng_metric_idx")]

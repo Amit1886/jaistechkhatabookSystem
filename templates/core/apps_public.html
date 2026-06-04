@@ -1,0 +1,296 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Apps - Shopify Integrations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Curated Shopify apps for shipping, marketing, reviews, and support.">
+  <link rel="icon" href="{% static 'img/billentra-favicon.ico' %}?v=20260405">
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#475569;
+      --border:#dbe4f0;
+      --brand:#2563eb;
+      --brand2:#1d4ed8;
+      --brandSoft:#eff6ff;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui,-apple-system}
+    body{background:var(--bg);color:var(--ink)}
+    a{text-decoration:none;color:inherit}
+    .container{max-width:1200px;margin:auto;padding:0 20px}
+
+    /* HEADER */
+    header{background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:999}
+    .nav{display:flex;align-items:center;justify-content:space-between;height:72px}
+    .nav img{height:42px}
+    .nav-links{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+    .nav-links a{color:#334155;font-weight:600;font-size:14px;padding:8px 10px;border-radius:10px}
+    .nav-links a:hover{background:#f1f5f9}
+
+    /* BUTTONS */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:10px 16px;border-radius:12px;font-weight:800;letter-spacing:-0.01em}
+    .btn-primary{background:linear-gradient(180deg,#2b7cff 0%, var(--brand2) 100%);color:#fff;box-shadow:0 16px 34px rgba(37,99,235,.22)}
+    .btn-primary:hover{filter:saturate(1.05) brightness(1.01)}
+    .btn-outline{background:rgba(255,255,255,.96);color:var(--ink);border:1px solid rgba(15,23,42,.14);box-shadow:0 10px 26px rgba(15,23,42,.10)}
+    .btn-outline:hover{background:#f8fafc}
+
+    /* HERO */
+    .hero{
+      padding:54px 0 18px;
+      background:
+        radial-gradient(circle at 12% 12%, rgba(37,99,235,.14), transparent 36%),
+        radial-gradient(circle at 88% 18%, rgba(59,130,246,.12), transparent 30%),
+        linear-gradient(180deg,#ffffff 0%, #f6faff 100%);
+      border-bottom:1px solid #edf2f7;
+    }
+    .kicker{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 12px;border-radius:999px;
+      background:var(--brandSoft);color:var(--brand2);
+      font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;
+    }
+    .hero h1{margin-top:14px;font-size:clamp(2rem, 3.4vw, 3rem);font-weight:950;letter-spacing:-0.045em;line-height:1.05}
+    .hero p{margin-top:14px;max-width:70ch;color:var(--muted);line-height:1.7;font-size:15px}
+    .hero-actions{margin-top:18px;display:flex;flex-wrap:wrap;gap:12px}
+
+    /* CARDS */
+    .card{background:#fff;border-radius:18px;padding:22px;box-shadow:0 16px 38px rgba(15,23,42,.06);border:1px solid #dbe4f0;transition:transform .2s ease, box-shadow .2s ease}
+    .card:hover{transform:translateY(-3px);box-shadow:0 22px 46px rgba(15,23,42,.1)}
+
+    /* APPS */
+    .apps-wrap{padding:56px 0 78px}
+    .apps-title{margin-top:10px;font-size:34px;font-weight:950;letter-spacing:-0.03em;text-align:center}
+    .apps-sub{margin:12px auto 0;max-width:840px;color:#475569;font-size:14px;line-height:1.7;text-align:center}
+
+    .integrations-toolbar{
+      margin:26px auto 14px;
+      max-width:980px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:center;
+      justify-content:center;
+    }
+    .integration-search-wrap{position:relative;flex:1 1 360px;max-width:520px}
+    .integration-search{
+      width:100%;height:44px;padding:0 14px 0 44px;border-radius:14px;
+      border:1px solid rgba(15,23,42,.14);background:rgba(255,255,255,.96);
+      color:#0f172a;outline:none;box-shadow:0 10px 26px rgba(15,23,42,.06);font-weight:700;
+    }
+    .integration-search:focus{border-color:rgba(37,99,235,.35);box-shadow:0 14px 34px rgba(37,99,235,.14)}
+    .integration-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;opacity:.7}
+    .integration-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+    .chip{
+      appearance:none;border:1px solid rgba(15,23,42,.12);background:rgba(255,255,255,.92);
+      padding:8px 12px;border-radius:999px;font-size:12px;font-weight:900;color:#0f172a;cursor:pointer;
+      transition:transform .14s ease, box-shadow .14s ease, background .14s ease, border-color .14s ease;
+    }
+    .chip:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(15,23,42,.08)}
+    .chip.active{background:var(--brandSoft);color:var(--brand2);border-color:rgba(37,99,235,.22)}
+    .integration-note{text-align:center;color:#64748b;font-size:12px;font-weight:800;margin:0 auto 20px}
+
+    .category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:18px 0 26px}
+    .cat-card{display:flex;flex-direction:column;gap:10px}
+    .cat-top{display:flex;align-items:center;gap:12px}
+    .cat-ico{width:42px;height:42px;border-radius:14px;background:var(--brandSoft);border:1px solid rgba(37,99,235,.20);color:var(--brand2);display:flex;align-items:center;justify-content:center;font-weight:950}
+    .cat-title{font-size:15px;font-weight:950;letter-spacing:-0.01em}
+    .cat-sub{font-size:12px;color:#64748b;font-weight:800}
+
+    .apps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:10px}
+    .app-head{display:flex;gap:12px;align-items:center}
+    .app-badge{
+      width:46px;height:46px;border-radius:16px;background:var(--brandSoft);
+      border:1px solid rgba(37,99,235,.20);color:var(--brand2);
+      display:flex;align-items:center;justify-content:center;font-weight:950;letter-spacing:-0.02em;flex:0 0 46px;
+    }
+    .app-name{margin:0;font-size:16px;font-weight:950;letter-spacing:-0.01em}
+    .app-meta{margin-top:4px;font-size:12px;font-weight:800;color:#64748b}
+    .app-desc{margin:0;color:#475569;font-size:14px;line-height:1.7}
+    .app-tags{display:flex;flex-wrap:wrap;gap:8px}
+    .tag{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(15,23,42,.12);background:rgba(248,250,252,.9);color:#334155;font-size:12px;font-weight:800}
+    .app-actions{margin-top:auto;display:flex;flex-wrap:wrap;gap:10px}
+
+    .apps-footer{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+    .apps-disclaimer{margin-top:14px;text-align:center;color:#64748b;font-size:12px;line-height:1.6;font-weight:750}
+
+    @media(max-width:900px){
+      .apps-wrap{padding:44px 0 66px}
+      .apps-title{font-size:28px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <a href="/" aria-label="Home">
+        <img src="{% static 'img/billentra-logo.png' %}?v=20260405" alt="Billentra">
+      </a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/apps/" style="background:rgba(37,99,235,.10);color:#1d4ed8;font-weight:900;">Apps</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/#support">Support</a>
+        {% if desktop_download_url %}
+          <a href="{{ desktop_download_url }}" class="btn btn-outline">{{ desktop_download_label|default:"Download Desktop" }}</a>
+        {% endif %}
+        {% if android_download_url %}
+          <a href="{{ android_download_url }}" class="btn btn-outline">{{ android_download_label|default:"Download Android APK" }}</a>
+        {% endif %}
+        <a href="/accounts/login/" class="btn btn-outline">Login</a>
+        <a href="/accounts/signup/" class="btn btn-primary">Sign Up</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Curated Apps</div>
+      <h1>Shopify Apps (Useful 3rd-Party Tools)</h1>
+      <p>
+        Ye page Shopify App Store ke best &amp; useful apps ka curated list hai — shipping, marketing, reviews, tracking aur customer support ke liye.
+        External links new tab me open honge.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://apps.shopify.com/" target="_blank" rel="nofollow noopener">Open Shopify App Store</a>
+        <a class="btn btn-outline" href="https://apps.shopify.com/categories" target="_blank" rel="nofollow noopener">Browse Categories</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="apps-wrap">
+    <div class="container">
+      <div class="apps-title">Categories</div>
+      <div class="apps-sub">Fast access: apni need select karo (shipping, marketing, reviews, support, CRO).</div>
+
+      <div class="category-grid" aria-label="App categories">
+        {% for c in categories %}
+          <a class="card cat-card" href="{{ c.url }}" target="_blank" rel="nofollow noopener" data-tags="category {{ c.tag|default:'' }}">
+            <div class="cat-top">
+              <div class="cat-ico">{{ c.title|slice:":2"|upper }}</div>
+              <div>
+                <div class="cat-title">{{ c.title }}</div>
+                <div class="cat-sub">{{ c.subtitle }}</div>
+              </div>
+            </div>
+            <div class="app-actions">
+              <span class="btn btn-outline" style="pointer-events:none">Open</span>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+
+      <div class="apps-title" style="margin-top:34px;">Recommended Apps</div>
+      <div class="apps-sub">Search + filter use karke best option choose karo.</div>
+
+      <div class="integrations-toolbar" aria-label="Search and filter apps">
+        <div class="integration-search-wrap">
+          <svg class="integration-search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2"/>
+            <path d="M16.2 16.2 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input id="integrationSearch" class="integration-search" type="search" placeholder="Search: shiprocket, reviews, chat, tracking..." aria-label="Search apps">
+        </div>
+        <div class="integration-chips" aria-label="Filter apps">
+          <button type="button" class="chip active" data-filter="all">All</button>
+          <button type="button" class="chip" data-filter="shipping">Shipping</button>
+          <button type="button" class="chip" data-filter="marketing">Marketing</button>
+          <button type="button" class="chip" data-filter="reviews">Reviews</button>
+          <button type="button" class="chip" data-filter="support">Support</button>
+          <button type="button" class="chip" data-filter="cro">CRO</button>
+          <button type="button" class="chip" data-filter="category">Categories</button>
+        </div>
+      </div>
+      <div class="integration-note">Tip: chip pe click karke filter karo, ya search box me type karo.</div>
+
+      <div class="apps-grid" id="appsGrid" aria-label="Recommended apps">
+        {% for a in apps %}
+          <article class="card app-card" data-name="{{ a.name }}" data-tags="{{ a.tags|join:' ' }}">
+            <div class="app-head">
+              <div class="app-badge">{{ a.badge|default:"AP" }}</div>
+              <div>
+                <h3 class="app-name">{{ a.name }}</h3>
+                <div class="app-meta">{{ a.meta }}</div>
+              </div>
+            </div>
+            <p class="app-desc">{{ a.desc }}</p>
+            <div class="app-tags" aria-label="Tags">
+              {% for t in a.tags %}
+                <span class="tag">{{ t|capfirst }}</span>
+              {% endfor %}
+            </div>
+            <div class="app-actions">
+              <a class="btn btn-outline" href="{{ a.url }}" target="_blank" rel="nofollow noopener">Open on Shopify</a>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+
+      <div class="apps-footer" aria-label="More apps">
+        <a class="btn btn-primary" href="https://apps.shopify.com/" target="_blank" rel="nofollow noopener">Explore More Apps</a>
+        <a class="btn btn-outline" href="/#support">Need Help?</a>
+      </div>
+      <div class="apps-disclaimer">
+        Note: Ye external Shopify apps hain. Install karne se pehle pricing, permissions, and data access zaroor check kar lo.
+      </div>
+    </div>
+  </section>
+
+  <script>
+  (function(){
+    const searchInput = document.getElementById("integrationSearch");
+    const chips = Array.from(document.querySelectorAll(".chip[data-filter]"));
+    const cards = Array.from(document.querySelectorAll(".app-card"));
+    const categoryCards = Array.from(document.querySelectorAll(".cat-card"));
+
+    let activeFilter = "all";
+
+    function normalize(value){
+      return (value || "").toString().toLowerCase();
+    }
+
+    function hasFilter(tags, filter){
+      if(filter === "all") return true;
+      const list = normalize(tags).split(/\s+/).filter(Boolean);
+      return list.indexOf(filter) !== -1;
+    }
+
+    function applyFilters(){
+      const q = normalize(searchInput ? searchInput.value : "").trim();
+
+      const update = (el, getTags, getName) => {
+        const tags = getTags(el);
+        const name = getName(el);
+        const text = el.textContent || "";
+        const matchFilter = hasFilter(tags, activeFilter);
+        const matchQuery = !q || normalize(name).indexOf(q) !== -1 || normalize(tags).indexOf(q) !== -1 || normalize(text).indexOf(q) !== -1;
+        const show = matchFilter && matchQuery;
+        el.style.display = show ? "" : "none";
+      };
+
+      cards.forEach((card) => update(card, (x) => x.getAttribute("data-tags") || "", (x) => x.getAttribute("data-name") || ""));
+      categoryCards.forEach((card) => update(card, (x) => x.getAttribute("data-tags") || "", (x) => (x.querySelector(".cat-title") || {}).textContent || ""));
+    }
+
+    chips.forEach((btn) => {
+      btn.addEventListener("click", function(){
+        chips.forEach((b) => b.classList.remove("active"));
+        this.classList.add("active");
+        activeFilter = this.getAttribute("data-filter") || "all";
+        applyFilters();
+      });
+    });
+
+    if(searchInput){
+      searchInput.addEventListener("input", applyFilters);
+    }
+
+    applyFilters();
+  })();
+  </script>
+</body>
+</html>
+

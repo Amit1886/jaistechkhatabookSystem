@@ -1,502 +1,119 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
+
+{% block title %}Add Transaction{% endblock %}
+
+{% block pc_badges %}
+  <span class="badge bg-warning text-dark fw-bold">Ledger</span>
+{% endblock %}
+
+{% block pc_actions %}
+  <a class="btn btn-outline-light btn-lg fw-bold" href="{% url 'khataapp:transaction_list' %}" accesskey="l" title="Alt+L">Transactions</a>
+  <a class="btn btn-outline-light btn-lg fw-bold" href="{% url 'khataapp:add_party' %}" accesskey="p" title="Alt+P">Add Party</a>
+  <button type="button" class="btn btn-warning btn-lg fw-bold" onclick="showKeyboardHelp()" title="F1">Shortcuts</button>
+{% endblock %}
+
 {% block content %}
+  {% include "core/includes/messages.html" %}
+  {% include "core/includes/keyboard_help_common.html" %}
 
-<link rel="stylesheet" href="{% static 'css/add_transaction.css' %}">
-<script src="{% static 'libs/html5-qrcode.min.js' %}"></script>
-<script src="{% static 'js/add_transaction_enhanced.js' %}" defer></script>
+  <form method="post" enctype="multipart/form-data" class="row g-3" action="{% url 'khataapp:add_transaction' %}">
+    {% csrf_token %}
 
-<!-- KEYBOARD SHORTCUTS HELP MODAL -->
-<div id="keyboardHelp" class="keyboard-help-modal">
-  <div class="keyboard-help-content">
-
-    <h3 class="fw-bold text-primary mb-4"> Keyboard Shortcuts (PC Mode)</h3>
-
-    <h3 class="fw-bold text-primary mb-4">⌨️ Keyboard Shortcuts (PC Mode)</h3>
-
-    <div class="shortcuts-grid">
-      <div class="shortcut-item"><kbd class="fw-bold">F1</kbd> <span>Show Help</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F2</kbd> <span>Party Search</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F3</kbd> <span>Scan Receipt</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F4</kbd> <span>Save Transaction</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F5</kbd> <span>Save Draft</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F6</kbd> <span>Print</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F7</kbd> <span>Download PDF</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F8</kbd> <span>Share WhatsApp</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Tab</kbd> <span>Next Field</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Shift+Tab</kbd> <span>Previous Field</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Ctrl+S</kbd> <span>Quick Save</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Esc</kbd> <span>Cancel/Close</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Ctrl+Z</kbd> <span>Undo Last Action</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Ctrl+Y</kbd> <span>Redo Last Action</span></div>
-    </div>
-    <div class="text-center mt-4">
-      <button class="btn btn-danger btn-lg fw-bold px-4" onclick="hideKeyboardHelp()">Close (Esc)</button>
-    </div>
-  </div>
-</div>
-
-<div class="container-fluid py-4 unified-screen busy-unified-add">
-  <div class="card shadow-sm border-0 rounded-4 mx-auto transaction-card">
-    
-    <!-- HEADER WITH MODE SWITCHER -->
-    <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center flex-wrap">
-      <div class="d-flex align-items-center gap-3">
-
-        <h2 class="mb-0 fw-bold text-shadow"> Smart Transaction System</h2>
-        <span class="badge bg-warning text-dark fw-bold pulse-badge">AI Ready</span>
-        <button type="button" class="btn btn-warning btn-lg fw-bold shadow-lg" onclick="showKeyboardHelp()" title="F1">
-           Shortcuts
-
-        <h2 class="mb-0 fw-bold text-shadow">💰 Smart Transaction System</h2>
-        <span class="badge bg-warning text-dark fw-bold pulse-badge">AI Ready</span>
-        <button type="button" class="btn btn-warning btn-lg fw-bold shadow-lg" onclick="showKeyboardHelp()" title="F1">
-          ⌨️ Shortcuts
-
-        </button>
-      </div>
-
-      <!-- MODE SWITCHER -->
-      <div class="mode-switcher d-flex gap-3">
-        <button type="button" class="btn btn-xl btn-outline-light active fw-bold shadow-lg pulse-button" data-mode="pc" id="pcMode">
-
-           PC Mode
-        </button>
-        <button type="button" class="btn btn-xl btn-outline-light fw-bold shadow-lg" data-mode="pos" id="posMode">
-           POS Mode
-        </button>
-        <button type="button" class="btn btn-xl btn-outline-light fw-bold shadow-lg" data-mode="mobile" id="mobileMode">
-           Mobile Mode
-
-          💻 PC Mode
-        </button>
-        <button type="button" class="btn btn-xl btn-outline-light fw-bold shadow-lg" data-mode="pos" id="posMode">
-          🏪 POS Mode
-        </button>
-        <button type="button" class="btn btn-xl btn-outline-light fw-bold shadow-lg" data-mode="mobile" id="mobileMode">
-          📱 Mobile Mode
-
-        </button>
-      </div>
-
-      <!-- THEME SELECTOR -->
-      <div class="theme-selector">
-        <select id="themeSelect" class="form-select form-select-lg fw-bold rainbow-border" aria-label="Theme Selector">
-
-          <option value="default"> Default Theme</option>
-          <option value="dark"> Dark Theme</option>
-          <option value="blue"> Blue Theme</option>
-          <option value="green"> Green Theme</option>
-          <option value="red"> Red Theme</option>
-          <option value="rainbow"> Rainbow Theme</option>
-          <option value="neon"> Neon Theme</option>
-
-          <option value="default">🎨 Default Theme</option>
-          <option value="dark">🌙 Dark Theme</option>
-          <option value="blue">🔵 Blue Theme</option>
-          <option value="green">🟢 Green Theme</option>
-          <option value="red">🔴 Red Theme</option>
-          <option value="rainbow">🌈 Rainbow Theme</option>
-          <option value="neon">⚡ Neon Theme</option>
-
-        </select>
+    <div class="col-lg-6">
+      <div class="card border-primary">
+        <div class="card-body">
+          <label for="party" class="form-label fw-bold">Party</label>
+          <select id="party" name="party" class="form-select form-select-lg fw-bold" required data-kb-primary="1" autofocus>
+            <option value="">-- Select Party --</option>
+            {% for p in parties %}
+              <option value="{{ p.id }}">{{ p.name }} ({{ p.party_type|title }})</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
     </div>
 
-    <form method="POST" enctype="multipart/form-data" id="txnForm">
-      {% csrf_token %}
-
-      <!-- STEP WIZARD INDICATOR -->
-      <div class="wizard-steps bg-gradient-light p-3 border-bottom border-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <div class="step-indicator d-flex align-items-center gap-2">
-            <span class="step step-circle active fw-bold" data-step="1">
-              <span class="step-number">1</span>
-              <span class="step-text">Details</span>
-            </span>
-
-            <span class="step-arrow fw-bold text-primary"></span>
-
-            <span class="step-arrow fw-bold text-primary">→</span>
-
-            <span class="step step-circle fw-bold" data-step="2">
-              <span class="step-number">2</span>
-              <span class="step-text">Receipt</span>
-            </span>
-
-            <span class="step-arrow fw-bold text-primary"></span>
-
-            <span class="step-arrow fw-bold text-primary">→</span>
-
-            <span class="step step-circle fw-bold" data-step="3">
-              <span class="step-number">3</span>
-              <span class="step-text">Save</span>
-            </span>
-          </div>
-          <div class="step-navigation">
-            <button type="button" class="btn btn-outline-primary btn-lg fw-bold shadow" id="prevStep" disabled>
-
-               Previous
-            </button>
-            <button type="button" class="btn btn-primary btn-lg fw-bold shadow pulse-button" id="nextStep">
-              Next 
-
-              ⬅️ Previous
-            </button>
-            <button type="button" class="btn btn-primary btn-lg fw-bold shadow pulse-button" id="nextStep">
-              Next ➡️
-
-            </button>
-          </div>
+    <div class="col-lg-3">
+      <div class="card border-success">
+        <div class="card-body">
+          <label for="txn_type" class="form-label fw-bold">Type</label>
+          <select id="txn_type" name="txn_type" class="form-select form-select-lg fw-bold" required>
+            <option value="">-- Select --</option>
+            <option value="credit">Credit (+)</option>
+            <option value="debit">Debit (-)</option>
+          </select>
         </div>
       </div>
+    </div>
 
-      <!-- STEP 1: Transaction Details -->
-      <div class="card-body step-content" id="step-1">
-        <div class="step-header text-center mb-4">
-
-          <h4 class="fw-bold text-primary"> Step 1: Transaction Details</h4>
-
-          <h4 class="fw-bold text-primary">💳 Step 1: Transaction Details</h4>
-
-          <p class="text-muted">Enter the basic transaction information</p>
-        </div>
-
-        <!-- Transaction Basic Info -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <div class="card border-primary">
-              <div class="card-body">
-
-                <label for="partySelect" class="form-label fw-bold"> Party Selection (F2)</label>
-                <input type="text" id="partySearch" class="form-control form-control-lg mb-2 fw-bold" placeholder=" Search Party (Type to search...)" autocomplete="off">
-
-                <label for="partySelect" class="form-label fw-bold">🏢 Party Selection (F2)</label>
-                <input type="text" id="partySearch" class="form-control form-control-lg mb-2 fw-bold" placeholder="🔍 Search Party (Type to search...)" autocomplete="off">
-
-                <div id="partyDropdown" class="dropdown-menu w-100"></div>
-                <select id="partySelect" name="party" class="form-select form-select-lg d-none fw-bold" required title="Select Party" aria-label="Select Party">
-                  <option value="">Select Party</option>
-                  {% for p in parties %}
-                  <option value="{{ p.id }}">{{ p.name }} ({{ p.party_type|title }})</option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="card border-success">
-              <div class="card-body">
-
-                <label for="txnType" class="form-label fw-bold"> Transaction Type *</label>
-                <select id="txnType" name="txn_type" class="form-select form-select-lg fw-bold" required aria-label="Transaction Type">
-                  <option value="">Select Type</option>
-                  <option value="credit"> Credit (+)</option>
-                  <option value="debit"> Debit (-)</option>
-
-                <label for="txnType" class="form-label fw-bold">📋 Transaction Type *</label>
-                <select id="txnType" name="txn_type" class="form-select form-select-lg fw-bold" required aria-label="Transaction Type">
-                  <option value="">Select Type</option>
-                  <option value="credit">💰 Credit (+)</option>
-                  <option value="debit">💸 Debit (-)</option>
-
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <div class="card border-info">
-              <div class="card-body">
-
-                <label for="txnMode" class="form-label fw-bold"> Transaction Mode *</label>
-                <select id="txnMode" name="txn_mode" class="form-select form-select-lg fw-bold" required aria-label="Transaction Mode">
-                  <option value="">Select Mode</option>
-                  <option value="cash"> Cash</option>
-                  <option value="upi"> UPI</option>
-                  <option value="wallet"> Wallet</option>
-                  <option value="bank_transfer"> Bank Transfer</option>
-                  <option value="cheque"> Cheque</option>
-                  <option value="card"> Credit/Debit Card</option>
-                  <option value="other"> Other</option>
-
-                <label for="txnMode" class="form-label fw-bold">💳 Transaction Mode *</label>
-                <select id="txnMode" name="txn_mode" class="form-select form-select-lg fw-bold" required aria-label="Transaction Mode">
-                  <option value="">Select Mode</option>
-                  <option value="cash">💵 Cash</option>
-                  <option value="upi">📱 UPI</option>
-                  <option value="wallet">👛 Wallet</option>
-                  <option value="bank_transfer">🏦 Bank Transfer</option>
-                  <option value="cheque">📄 Cheque</option>
-                  <option value="card">💳 Credit/Debit Card</option>
-                  <option value="other">🔄 Other</option>
-
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="card border-warning">
-              <div class="card-body">
-
-                <label for="amount" class="form-label fw-bold"> Amount *</label>
-
-                <label for="amount" class="form-label fw-bold">💰 Amount *</label>
-
-                <input type="number" id="amount" step="0.01" name="amount" class="form-control form-control-lg fw-bold" required placeholder="Enter amount" aria-label="Amount">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Additional Fields -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <div class="card border-secondary">
-              <div class="card-body">
-
-                <label for="date" class="form-label fw-bold"> Date (Optional)</label>
-
-                <label for="date" class="form-label fw-bold">📅 Date (Optional)</label>
-
-                <input type="date" id="date" name="date" class="form-control form-control-lg fw-bold" aria-label="Transaction Date">
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="card border-info">
-              <div class="card-body">
-
-                <label for="gstType" class="form-label fw-bold"> GST Type (Optional)</label>
-                <select id="gstType" name="gst_type" class="form-select form-select-lg fw-bold" aria-label="GST Type Selection">
-                  <option value="">Select GST Option</option>
-                  <option value="gst"> GST (With Tax)</option>
-                  <option value="non_gst"> Non-GST (No Tax)</option>
-
-                <label for="gstType" class="form-label fw-bold">🧾 GST Type (Optional)</label>
-                <select id="gstType" name="gst_type" class="form-select form-select-lg fw-bold" aria-label="GST Type Selection">
-                  <option value="">Select GST Option</option>
-                  <option value="gst">✅ GST (With Tax)</option>
-                  <option value="non_gst">❌ Non-GST (No Tax)</option>
-
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- AI SUGGESTIONS -->
-        <div class="ai-suggestions-section mb-4">
-          <div class="ai-suggestions">
-            <div class="suggestion-item fw-bold">
-
-               <strong>AI Assistant:</strong> Based on the party and amount, I suggest checking for similar transactions. Use F3 to scan receipt for auto-fill!
-
-              🤖 <strong>AI Assistant:</strong> Based on the party and amount, I suggest checking for similar transactions. Use F3 to scan receipt for auto-fill!
-
-            </div>
-          </div>
+    <div class="col-lg-3">
+      <div class="card">
+        <div class="card-body">
+          <label for="txn_mode" class="form-label fw-bold">Mode</label>
+          <select id="txn_mode" name="txn_mode" class="form-select form-select-lg fw-bold">
+            <option value="cash">Cash</option>
+            <option value="online">Online</option>
+            <option value="upi">UPI</option>
+            <option value="bank">Bank Transfer</option>
+            <option value="cheque">Cheque</option>
+          </select>
         </div>
       </div>
+    </div>
 
-      <!-- STEP 2: Receipt & Additional Info -->
-      <div class="card-body step-content" id="step-2">
-        <div class="step-header text-center mb-4">
-
-          <h4 class="fw-bold text-success"> Step 2: Receipt & Additional Info</h4>
-
-          <h4 class="fw-bold text-success">📄 Step 2: Receipt & Additional Info</h4>
-
-          <p class="text-muted">Add receipt, notes, and link to vouchers/invoices</p>
-        </div>
-
-        <!-- Receipt Upload/Scan -->
-        <div class="scan-section mb-4 text-center">
-          <button type="button" id="startScan" class="btn btn-primary btn-xl fw-bold px-5 py-3 shadow-lg">
-
-             Scan Receipt / QR (F3)
-
-            📷 Scan Receipt / QR (F3)
-
-          </button>
-          <div id="scanner" class="mt-3"></div>
-        </div>
-
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <div class="card border-primary">
-              <div class="card-body">
-
-                <label for="voucher" class="form-label fw-bold"> Voucher (Optional)</label>
-
-                <label for="voucher" class="form-label fw-bold">🎫 Voucher (Optional)</label>
-
-                <select id="voucher" name="voucher" class="form-select form-select-lg fw-bold" aria-label="Voucher Selection">
-                  <option value="">No Voucher</option>
-                  {% for v in vouchers %}
-                  <option value="{{ v.id }}">{{ v.voucher_no }} - {{ v.voucher_type }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="card border-success">
-              <div class="card-body">
-
-                <label for="invoice" class="form-label fw-bold"> Invoice (Optional)</label>
-
-                <label for="invoice" class="form-label fw-bold">📋 Invoice (Optional)</label>
-
-                <select id="invoice" name="invoice" class="form-select form-select-lg fw-bold" aria-label="Invoice Selection">
-                  <option value="">No Invoice</option>
-                  {% for inv in invoices %}
-                  <option value="{{ inv.id }}">Invoice #{{ inv.invoice_no }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Notes -->
-        <div class="card border-warning mb-3">
-
-          <div class="card-header bg-warning text-dark fw-bold"> Notes</div>
-
-          <div class="card-header bg-warning text-dark fw-bold">📝 Notes</div>
-
-          <div class="card-body">
-            <textarea name="notes" class="form-control fw-bold" rows="3" placeholder="Add any additional notes for this transaction..." aria-label="Transaction Notes"></textarea>
-          </div>
-        </div>
-
-        <!-- File Upload -->
-        <div class="card border-info">
-
-          <div class="card-header bg-info text-white fw-bold"> Upload Receipt (Optional)</div>
-
-          <div class="card-header bg-info text-white fw-bold">📎 Upload Receipt (Optional)</div>
-
-          <div class="card-body">
-            <input type="file" name="receipt" class="form-control fw-bold" accept="image/*,.pdf" aria-label="Upload Receipt">
-            <small class="text-muted">Supported formats: JPG, PNG, PDF</small>
-          </div>
+    <div class="col-md-4">
+      <div class="card border-warning">
+        <div class="card-body">
+          <label for="amount" class="form-label fw-bold">Amount (&#8377;)</label>
+          <input type="number" id="amount" name="amount" step="0.01" min="0" class="form-control form-control-lg fw-bold" placeholder="0.00" required>
         </div>
       </div>
+    </div>
 
-      <!-- STEP 3: Save Transaction -->
-      <div class="card-body step-content" id="step-3">
-        <div class="step-header text-center mb-4">
-
-          <h4 class="fw-bold text-warning"> Step 3: Save Transaction</h4>
-
-          <h4 class="fw-bold text-warning">💾 Step 3: Save Transaction</h4>
-
-          <p class="text-muted">Review and save your transaction</p>
-        </div>
-
-        <!-- Transaction Summary -->
-        <div class="row mb-4">
-          <div class="col-md-6">
-            <div class="card border-info">
-
-              <div class="card-header bg-info text-white fw-bold"> Transaction Summary</div>
-
-              <div class="card-header bg-info text-white fw-bold">📋 Transaction Summary</div>
-
-              <div class="card-body">
-                <p><strong>Party:</strong> <span id="reviewParty" class="fw-bold text-primary">-</span></p>
-                <p><strong>Type:</strong> <span id="reviewTxnType" class="fw-bold text-success">-</span></p>
-                <p><strong>Mode:</strong> <span id="reviewTxnMode" class="fw-bold text-warning">-</span></p>
-
-                <p><strong>Amount:</strong> <span id="reviewAmount" class="fw-bold text-danger">-</span></p>
-
-                <p><strong>Amount:</strong> ₹<span id="reviewAmount" class="fw-bold text-danger">-</span></p>
-
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card border-success">
-
-              <div class="card-header bg-success text-white fw-bold"> Additional Details</div>
-
-              <div class="card-header bg-success text-white fw-bold">🔍 Additional Details</div>
-
-              <div class="card-body">
-                <p><strong>Date:</strong> <span id="reviewDate" class="fw-bold">-</span></p>
-                <p><strong>GST:</strong> <span id="reviewGST" class="fw-bold">-</span></p>
-                <p><strong>Voucher:</strong> <span id="reviewVoucher" class="fw-bold">-</span></p>
-                <p><strong>Invoice:</strong> <span id="reviewInvoice" class="fw-bold">-</span></p>
-              </div>
-            </div>
-          </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <label for="date" class="form-label fw-bold">Date</label>
+          <input type="date" id="date" name="date" class="form-control form-control-lg fw-bold">
         </div>
       </div>
+    </div>
 
-      <!-- ENHANCED FOOTER ACTIONS -->
-      <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-between align-items-center">
-
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-success px-4 fw-bold">
-
-             Save Transaction (F4)
-          </button>
-          <button type="button" id="saveDraft" class="btn btn-outline-secondary fw-bold">
-             Save Draft (F5)
-
-            💾 Save Transaction (F4)
-          </button>
-          <button type="button" id="saveDraft" class="btn btn-outline-secondary fw-bold">
-            📝 Save Draft (F5)
-
-          </button>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <label for="gst_type" class="form-label fw-bold">GST Type (Optional)</label>
+          <select id="gst_type" name="gst_type" class="form-select form-select-lg fw-bold">
+            <option value="">-- Select --</option>
+            <option value="gst">GST</option>
+            <option value="nongst">Non GST</option>
+          </select>
         </div>
-
-        <div class="d-flex flex-wrap gap-2">
-
-          <button type="button" onclick="window.print()" class="btn btn-secondary fw-bold"> Print (F6)</button>
-          <button type="button" id="downloadPDF" class="btn btn-danger fw-bold"> PDF (F7)</button>
-          <button type="button" id="downloadExcel" class="btn btn-success fw-bold"> Excel</button>
-          <button type="button" id="shareWhatsApp" class="btn btn-success fw-bold"> WhatsApp (F8)</button>
-          <button type="button" id="shareEmail" class="btn btn-warning fw-bold"> Email</button>
-          <button type="button" id="shareSMS" class="btn btn-info fw-bold"> SMS</button>
-          <a href="{% url 'khataapp:transaction_list' %}" class="btn btn-outline-primary fw-bold"> View All</a>
-
-          <button type="button" onclick="window.print()" class="btn btn-secondary fw-bold">🖨 Print (F6)</button>
-          <button type="button" id="downloadPDF" class="btn btn-danger fw-bold">⬇ PDF (F7)</button>
-          <button type="button" id="downloadExcel" class="btn btn-success fw-bold">📊 Excel</button>
-          <button type="button" id="shareWhatsApp" class="btn btn-success fw-bold">📤 WhatsApp (F8)</button>
-          <button type="button" id="shareEmail" class="btn btn-warning fw-bold">📧 Email</button>
-          <button type="button" id="shareSMS" class="btn btn-info fw-bold">💬 SMS</button>
-          <a href="{% url 'khataapp:transaction_list' %}" class="btn btn-outline-primary fw-bold">📋 View All</a>
-
-        </div>
-
       </div>
-  </div>
-</div>
+    </div>
 
-<!-- Keyboard Shortcuts -->
-<script>
-document.addEventListener("keydown", function(e){
-    if(e.key === "Enter"){
-        if(!e.target.closest("textarea")){
-            e.preventDefault();
-            document.getElementById("txnForm").submit();
-        }
-    }
-    if(e.key === "Escape"){
-        window.location.href = "{% url 'khataapp:transaction_list' %}";
-    }
-});
-</script>
+    <div class="col-12">
+      <div class="card border-secondary">
+        <div class="card-body">
+          <label for="notes" class="form-label fw-bold">Notes (Optional)</label>
+          <textarea id="notes" name="notes" rows="3" class="form-control fw-bold" placeholder="Narration / remark"></textarea>
+        </div>
+      </div>
+    </div>
 
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <label for="receipt" class="form-label fw-bold">Receipt (Optional)</label>
+          <input type="file" id="receipt" name="receipt" class="form-control form-control-lg fw-bold" accept="image/*">
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end gap-2">
+      <a id="kbCancel" data-kb-cancel href="{% url 'khataapp:transaction_list' %}" class="btn btn-outline-secondary btn-lg fw-bold">Back</a>
+      <button type="submit" class="btn btn-success btn-lg fw-bold" data-kb-submit>Save</button>
+    </div>
+  </form>
 {% endblock %}

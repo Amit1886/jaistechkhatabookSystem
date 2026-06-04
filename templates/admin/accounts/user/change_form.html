@@ -1,0 +1,27 @@
+{% extends "admin/change_form.html" %}
+
+{% block content %}
+  <div class="be-page">
+    <div class="be-top-cards">
+      <div class="be-top-card be-top-card-wide">
+        <div class="be-top-label">User</div>
+        <div class="be-top-title">{{ original.email|default:original.username }}</div>
+        <div class="be-top-sub">{{ original.mobile|default:"" }}</div>
+      </div>
+      <div class="be-top-card">
+        <div class="be-top-label">Plan</div>
+        <div class="be-top-title">{% if plan %}{{ plan.name }}{% else %}No plan{% endif %}</div>
+        <div class="be-top-sub">Features: {{ enabled_features|length }}</div>
+      </div>
+      <div class="be-top-card">
+        <div class="be-top-label">Access</div>
+        <div class="be-top-sub">Vendors: <span class="be-strong">{{ vendor_memberships|length }}</span></div>
+        <div class="be-top-sub">Sub-users: <span class="be-strong">{{ sub_users|length }}</span></div>
+        <div class="be-top-sub">APGS graphs: <span class="be-strong">{{ permission_graphs|length }}</span></div>
+      </div>
+    </div>
+    <div class="be-card">
+      {{ block.super }}
+    </div>
+  </div>
+{% endblock %}

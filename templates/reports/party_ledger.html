@@ -2,29 +2,81 @@
 {% block title %}Party Ledger{% endblock %}
 
 {% block content %}
-<h2>Party Ledger</h2>
+<div class="container-fluid py-2 unified-report-screen" data-master-list-wrap>
+  <div class="unified-report-card">
+    <div class="unified-report-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Party Ledger</h3>
+        <div class="unified-subtitle">Party-wise transaction statement</div>
+      </div>
+    </div>
 
-<form method="get">
-    <select name="party">
-        {% for p in parties %}
-        <option value="{{ p.id }}">{{ p.name }}</option>
-        {% endfor %}
-    </select>
-    <button type="submit">View</button>
-</form>
+    <div class="unified-report-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" method="get">
+        <div style="min-width:240px;">
+          <label class="unified-label" for="partySelect">Party</label>
+          <select id="partySelect" name="party" class="form-select" required>
+            <option value="">Select Party</option>
+            {% for p in parties %}
+            <option value="{{ p.id }}" {% if selected_party|stringformat:'s' == p.id|stringformat:'s' %}selected{% endif %}>
+              {{ p.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="fromDate">From</label>
+          <input id="fromDate" name="from" type="date" class="form-control" value="{{ date_from|date:'Y-m-d' }}">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="toDate">To</label>
+          <input id="toDate" name="to" type="date" class="form-control" value="{{ date_to|date:'Y-m-d' }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <a class="btn unified-btn-outline" href="{% url 'reports:party_ledger' %}">Reset</a>
+        </div>
+      </form>
 
-<table>
-    <tr>
-        <th>Date</th>
-        <th>Narration</th>
-        <th>Amount</th>
-    </tr>
-    {% for t in transactions %}
-    <tr>
-        <td>{{ t.date }}</td>
-        <td>{{ t.narration }}</td>
-        <td>{{ t.amount }}</td>
-    </tr>
-    {% endfor %}
-</table>
+      <div class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2">
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="ledgerSearch">Search</label>
+          <input id="ledgerSearch" data-master-search type="text" class="form-control" placeholder="Search notes/mode/type">
+        </div>
+      </div>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" data-master-list data-page-size="15">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Mode</th>
+              <th class="text-end">Debit</th>
+              <th class="text-end">Credit</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in transactions %}
+            <tr>
+              <td>{{ t.date|date:"d M Y" }}</td>
+              <td>{{ t.txn_type }}</td>
+              <td>{{ t.txn_mode }}</td>
+              <td class="text-end">{% if t.txn_type == 'debit' %}{{ t.amount }}{% else %}-{% endif %}</td>
+              <td class="text-end">{% if t.txn_type == 'credit' %}{{ t.amount }}{% else %}-{% endif %}</td>
+              <td>{{ t.notes|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center">Select a party to view ledger.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-2" data-master-pagination></div>
+      {% include 'core/includes/document_action_bar.html' %}
+    </div>
+  </div>
+</div>
 {% endblock %}

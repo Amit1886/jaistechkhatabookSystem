@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WhatsApp Mini | {{ account.label|default:account.phone_number }}</title>
+  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+  <style>
+    body { background:#0b1220; color:#e2e8f0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .card { background:#111827; border:1px solid rgba(255,255,255,0.06); border-radius:16px; }
+    .pill { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700; text-transform:uppercase; }
+    .pill-green { background:#22c55e33; color:#22c55e; }
+    .pill-blue { background:#3b82f633; color:#60a5fa; }
+    .btn-primary { background:#2563eb; border-color:#2563eb; }
+  </style>
+</head>
+<body class="p-3">
+  <div class="mb-3 text-center">
+    <div class="pill pill-green mb-2">WhatsApp Mini App</div>
+    <h3 class="fw-bold mb-1">{{ account.label|default:"Billing Assistant" }}</h3>
+    <div class="text-muted small">No install needed · Works inside chat</div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <div class="pill pill-blue mb-2">Quick Actions</div>
+    <div class="row g-2">
+      {% for action in actions %}
+        <div class="col-6">
+          <button class="btn btn-primary w-100" onclick="window.location.hash='{{ action.slug }}'">{{ action.label }}</button>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="pill pill-green">Products</div>
+      <small class="text-muted">Tap to order via chat</small>
+    </div>
+    {% if products %}
+      <ul class="list-group list-group-flush">
+        {% for p in products %}
+          <li class="list-group-item d-flex justify-content-between align-items-center" style="background:transparent;color:#e5e7eb;border-color:rgba(255,255,255,0.08);">
+            <div>
+              <div class="fw-semibold">{{ p.name }}</div>
+              <div class="small text-muted">SKU: {{ p.sku }}</div>
+            </div>
+            <div class="fw-bold">₹{{ p.price }}</div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="text-muted">Catalog will appear here once added.</div>
+    {% endif %}
+  </div>
+
+  <div class="text-center text-muted small mt-3">
+    Powered by your Billing + WhatsApp Assistant
+  </div>
+</body>
+</html>

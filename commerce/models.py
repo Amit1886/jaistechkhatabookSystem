@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.db.models import Q
 from django.utils import timezone
 from decimal import Decimal
 import uuid
@@ -47,11 +48,14 @@ class Product(models.Model):
     )
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.PositiveIntegerField(default=0)
+    min_stock = models.PositiveIntegerField(default=0)
     sku = models.CharField(max_length=50, unique=True)
+    image = models.ImageField(upload_to="product_images/", blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     unit = models.CharField(max_length=50, default="pcs")
     hsn_code = models.CharField(max_length=20, blank=True, null=True)
     gst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -139,8 +143,10 @@ class Order(models.Model):
     STATUS = (
         ("pending", "Pending"),
         ("accepted", "Accepted"),
+        ("partial", "Partial"),
         ("rejected", "Rejected"),
         ("cancelled", "Cancelled"),
+        ("completed", "Completed"),
         ("fulfilled", "Fulfilled"),
     )
 
@@ -158,6 +164,14 @@ class Order(models.Model):
     )
 
     party = models.ForeignKey(Party, on_delete=models.CASCADE, related_name="orders")
+
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders",
+    )
 
     placed_by = models.CharField(
         max_length=10,
@@ -183,6 +197,16 @@ class Order(models.Model):
         max_length=30,
         default="Manual",
         help_text="Origin of the order (e.g. Manual, WhatsApp, API).",
+    )
+
+    quotation = models.ForeignKey(
+        "commerce.Quotation",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders",
+        db_index=True,
+        help_text="Source quotation (if this order was converted from a quotation).",
     )
 
     assigned_to = models.ForeignKey(
@@ -212,6 +236,60 @@ class Order(models.Model):
     tax_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
+    # Smart BI: Festival Sale Mode (auto discounts)
+    festival_campaign = models.ForeignKey(
+        "smart_bi.FestivalCampaign",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders",
+        db_index=True,
+    )
+    festival_discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+
+    class ConversionStatus(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PARTIAL = "partial", "Partial"
+        COMPLETED = "completed", "Completed"
+
+    conversion_status = models.CharField(
+        max_length=12,
+        choices=ConversionStatus.choices,
+        default=ConversionStatus.PENDING,
+        db_index=True,
+        help_text="Order-to-voucher conversion status.",
+    )
+    total_qty = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    invoiced_qty = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+
+    def refresh_conversion_totals(self, *, save: bool = True) -> None:
+        """
+        Recompute total_qty/invoiced_qty and conversion_status from OrderItems.
+        """
+        total = Decimal("0.00")
+        invoiced = Decimal("0.00")
+        for it in self.items.all():
+            try:
+                total += Decimal(str(it.qty or 0))
+            except Exception:
+                pass
+            try:
+                invoiced += Decimal(str(getattr(it, "invoiced_qty", 0) or 0))
+            except Exception:
+                pass
+
+        self.total_qty = total
+        self.invoiced_qty = invoiced
+        if invoiced <= Decimal("0.00"):
+            self.conversion_status = Order.ConversionStatus.PENDING
+        elif invoiced < total:
+            self.conversion_status = Order.ConversionStatus.PARTIAL
+        else:
+            self.conversion_status = Order.ConversionStatus.COMPLETED
+
+        if save:
+            self.save(update_fields=["total_qty", "invoiced_qty", "conversion_status"])
+
     def total_amount(self):
         """Sum all order item totals with discount and tax applied."""
         agg = self.items.aggregate(
@@ -222,8 +300,9 @@ class Order(models.Model):
         )
         subtotal = agg["t"] or Decimal("0.00")
         discount_amount = self.discount_amount or Decimal("0.00")
+        festival_discount = self.festival_discount_amount or Decimal("0.00")
         tax_amount = self.tax_amount or Decimal("0.00")
-        return subtotal - discount_amount + tax_amount + self.bill_sundry_total()
+        return subtotal - discount_amount - festival_discount + tax_amount + self.bill_sundry_total()
 
     def subtotal_amount(self):
         agg = self.items.aggregate(
@@ -262,7 +341,17 @@ class Order(models.Model):
         if discount_amount > subtotal:
             discount_amount = subtotal
 
-        taxable = subtotal - discount_amount
+        festival_discount = self.festival_discount_amount or Decimal("0.00")
+        if festival_discount < 0:
+            festival_discount = Decimal("0.00")
+        max_festival = subtotal - discount_amount
+        if festival_discount > max_festival:
+            festival_discount = max_festival if max_festival > 0 else Decimal("0.00")
+            self.festival_discount_amount = festival_discount
+
+        taxable = subtotal - discount_amount - festival_discount
+        if taxable < 0:
+            taxable = Decimal("0.00")
         tax_amount = (taxable * (self.tax_percent or Decimal("0.00"))) / Decimal("100")
 
         self.discount_amount = discount_amount
@@ -270,8 +359,13 @@ class Order(models.Model):
         return subtotal
 
     def save(self, *args, **kwargs):
+        # On first insert, the related manager `self.items` is not usable until we have a PK.
+        # Totals are computed after items are created (see views) by calling `order.save()` again.
+        if self.pk is None:
+            return super().save(*args, **kwargs)
+
         self.compute_totals()
-        super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Order #{self.pk} - {self.party.name if self.party else 'Unknown'} ({self.order_type} - {self.status})"
@@ -283,6 +377,15 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
     qty = models.PositiveIntegerField(default=1)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    tax_percent = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal("0.00"))
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="order_items",
+    )
+    invoiced_qty = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
     raw_name = models.CharField(
         max_length=200,
         blank=True,
@@ -294,6 +397,143 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product.name if self.product else 'Unknown'} x {self.qty}"
+
+
+# ---------------- Quotations ----------------
+class Quotation(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        SENT = "sent", "Sent"
+        VERIFIED = "verified", "Verified"
+        APPROVED = "approved", "Approved"
+        REJECTED = "rejected", "Rejected"
+        CONVERTED = "converted", "Converted"
+
+    quotation_number = models.CharField(max_length=30, unique=True, null=True, blank=True, db_index=True)
+    party = models.ForeignKey(Party, on_delete=models.CASCADE, related_name="quotations", db_index=True)
+    date = models.DateField(default=timezone.localdate, db_index=True)
+    valid_till = models.DateField(null=True, blank=True, db_index=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.DRAFT, db_index=True)
+
+    total_amount = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    remarks = models.TextField(blank=True)
+
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="quotations",
+        db_index=True,
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_quotations",
+        db_index=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    converted_order = models.ForeignKey(
+        "commerce.Order",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="converted_from_quotations",
+        db_index=True,
+    )
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["status", "date"], name="quote_status_date_idx"),
+            models.Index(fields=["party", "status"], name="quote_party_status_idx"),
+        ]
+
+    def __str__(self):
+        return self.quotation_number or f"Quotation #{self.pk}"
+
+    @property
+    def is_expired(self) -> bool:
+        if not self.valid_till:
+            return False
+        try:
+            return self.valid_till < timezone.localdate()
+        except Exception:
+            return False
+
+    def _assign_number_if_missing(self):
+        if self.quotation_number:
+            return
+        if not self.pk:
+            return
+        # Stable, unique and sortable-ish number (based on PK).
+        # Example: QTN-202603-000012
+        stamp = timezone.localdate().strftime("%Y%m")
+        self.quotation_number = f"QTN-{stamp}-{int(self.pk):06d}"
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not self.quotation_number:
+            self.quotation_number = None
+        super().save(*args, **kwargs)
+        if is_new and not self.quotation_number:
+            self._assign_number_if_missing()
+            if self.quotation_number:
+                super().save(update_fields=["quotation_number"])
+
+
+class QuotationItem(models.Model):
+    quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE, related_name="items", db_index=True)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name="quotation_items", db_index=True)
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="quotation_items",
+        db_index=True,
+    )
+
+    qty = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    rate = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    tax = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal("0.00"))
+    discount = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    total = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+
+    class Meta:
+        ordering = ["id"]
+        indexes = [
+            models.Index(fields=["quotation", "product"], name="quote_item_q_p_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.product} x {self.qty}"
+
+
+class QuotationAuditLog(models.Model):
+    quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE, related_name="audit_logs", db_index=True)
+    action = models.CharField(max_length=40, db_index=True)
+    from_status = models.CharField(max_length=16, blank=True, db_index=True)
+    to_status = models.CharField(max_length=16, blank=True, db_index=True)
+    note = models.CharField(max_length=255, blank=True)
+    performed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="quotation_audit_logs",
+        db_index=True,
+    )
+    performed_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-performed_at", "-id"]
+        indexes = [
+            models.Index(fields=["quotation", "performed_at"], name="quote_audit_q_dt_idx"),
+        ]
 
 
 # ---------------- WhatsApp Order Inbox ----------------
@@ -309,6 +549,14 @@ class WhatsAppOrderInbox(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="whatsapp_orders",
+    )
+    whatsapp_account = models.ForeignKey(
+        "whatsapp.WhatsAppAccount",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="commerce_order_inbox",
+        db_index=True,
     )
     party = models.ForeignKey(
         Party,
@@ -350,6 +598,14 @@ class WhatsAppSession(models.Model):
         on_delete=models.CASCADE,
         related_name="whatsapp_sessions",
     )
+    whatsapp_account = models.ForeignKey(
+        "whatsapp.WhatsAppAccount",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="commerce_sessions",
+        db_index=True,
+    )
     party = models.ForeignKey(
         Party,
         on_delete=models.SET_NULL,
@@ -365,8 +621,22 @@ class WhatsAppSession(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("owner", "mobile_number")
         ordering = ["-last_message_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["owner", "mobile_number"],
+                condition=Q(whatsapp_account__isnull=True),
+                name="uniq_wa_sess_owner_mobile_noacc",
+            ),
+            models.UniqueConstraint(
+                fields=["owner", "whatsapp_account", "mobile_number"],
+                condition=Q(whatsapp_account__isnull=False),
+                name="uniq_wa_sess_owner_acc_mobile",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["owner", "whatsapp_account", "last_message_at"], name="wa_sess_owner_acc_dt_idx"),
+        ]
 
     def __str__(self):
         return f"WhatsApp Session {self.mobile_number}"
@@ -444,7 +714,7 @@ class SalesVoucher(models.Model):
     )
 
     party = models.ForeignKey('khataapp.Party', on_delete=models.CASCADE)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=timezone.localdate)
 
     is_gst = models.BooleanField(default=True)
 
@@ -454,6 +724,20 @@ class SalesVoucher(models.Model):
 class SalesVoucherItem(models.Model):
     voucher = models.ForeignKey(SalesVoucher, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey('commerce.Product', on_delete=models.CASCADE)
+    source_order_item = models.ForeignKey(
+        OrderItem,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sales_voucher_items",
+    )
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sales_voucher_items",
+    )
 
     qty = models.DecimalField(max_digits=10, decimal_places=2)
     rate = models.DecimalField(max_digits=10, decimal_places=2)
@@ -480,9 +764,182 @@ class Payment(models.Model):
     reference = models.CharField(max_length=100, blank=True, null=True)
     note = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.invoice.number}: ₹{self.amount} via {self.method or 'N/A'}"
+
+
+# ---------------- Payment Events (Event Bus) ----------------
+from django.db.models.signals import post_save  # noqa: E402
+from django.dispatch import receiver  # noqa: E402
+
+
+@receiver(post_save, sender=Payment)
+def _payment_event(sender, instance: "Payment", created: bool, **kwargs):
+    if not created:
+        return
+    try:
+        try:
+            from smart_bi.services.fraud_detection import detect_payment_anomaly
+
+            detect_payment_anomaly(payment=instance)
+        except Exception:
+            pass
+
+        from event_bus.publish import publish_event
+        try:
+            from realtime.services.publisher import publish_event as publish_realtime
+        except Exception:
+            publish_realtime = None
+
+        owner = None
+        try:
+            owner = instance.invoice.order.owner  # type: ignore[union-attr]
+        except Exception:
+            owner = None
+        try:
+            if publish_realtime and owner:
+                publish_realtime(f"owner_{owner.id}", "payment.received", {"payment_id": instance.id, "amount": str(instance.amount)})
+        except Exception:
+            pass
+
+        publish_event(
+            topic="billing.events",
+            event_type="payment.received",
+            owner=owner,
+            key=str(getattr(instance, "reference", "") or getattr(instance, "id", "")),
+            payload={
+                "payment_id": getattr(instance, "id", None),
+                "invoice_id": getattr(getattr(instance, "invoice", None), "id", None),
+                "amount": str(getattr(instance, "amount", "")),
+                "method": getattr(instance, "method", ""),
+                "reference": getattr(instance, "reference", ""),
+            },
+        )
+    except Exception:
+        return
+
+
+# ---------------- Hybrid Sync Queue ----------------
+class SyncQueue(models.Model):
+    """
+    Local-first sync queue for hybrid desktop + cloud mode.
+
+    The desktop app writes to local SQLite first, then a background sync worker
+    pushes queued actions to the configured cloud API when internet is available.
+    """
+
+    class Action(models.TextChoices):
+        CREATE = "create", "Create"
+        UPDATE = "update", "Update"
+        DELETE = "delete", "Delete"
+
+    device_id = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        db_index=True,
+        help_text="Desktop device ID (used to avoid ID collisions across devices).",
+    )
+    model_name = models.CharField(
+        max_length=100,
+        help_text="Django model label (recommended: app_label.ModelName).",
+        db_index=True,
+    )
+    object_id = models.CharField(
+        max_length=64,
+        help_text="Local primary key value (stored as string for flexibility).",
+        db_index=True,
+    )
+    action = models.CharField(max_length=10, choices=Action.choices, db_index=True)
+    payload = models.JSONField(default=dict, blank=True)
+    synced = models.BooleanField(default=False, db_index=True)
+    attempts = models.PositiveIntegerField(default=0)
+    last_error = models.TextField(blank=True, default="")
+    last_attempt_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["synced", "-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.model_name}#{self.object_id} {self.action} (synced={self.synced})"
+
+
+class SyncMapping(models.Model):
+    """
+    Cloud-side mapping from desktop-local IDs to cloud DB IDs.
+
+    This enables idempotent upserts and safe foreign-key reconstruction without
+    relying on matching integer primary keys between SQLite (desktop) and
+    Postgres/SQLite (cloud).
+    """
+
+    device_id = models.CharField(max_length=64, db_index=True)
+    model_name = models.CharField(max_length=100, db_index=True)
+    local_id = models.CharField(max_length=64, db_index=True)
+    cloud_id = models.CharField(max_length=64, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["device_id", "model_name", "local_id"],
+                name="uniq_sync_mapping_device_model_local",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.device_id}:{self.model_name}#{self.local_id} -> {self.cloud_id}"
+
+
+class SyncedObject(models.Model):
+    """
+    Cloud-side inbox for generic desktop sync payloads (any model/action).
+    """
+
+    device_id = models.CharField(max_length=64, db_index=True)
+    model_name = models.CharField(max_length=100, db_index=True)
+    local_id = models.CharField(max_length=64, db_index=True)
+    action = models.CharField(max_length=10, choices=SyncQueue.Action.choices, db_index=True)
+    payload = models.JSONField(default=dict, blank=True)
+    received_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["device_id", "model_name", "local_id"],
+                name="uniq_synced_object_device_model_local",
+            )
+        ]
+        ordering = ["-updated_at"]
+
+    def __str__(self) -> str:
+        return f"{self.model_name}#{self.local_id} ({self.device_id})"
+
+
+class SyncedInvoice(models.Model):
+    """
+    Cloud-side inbox for desktop invoice sync payloads.
+
+    This avoids hard-coupling sync to the full Order/Invoice relational graph.
+    A cloud worker (or admin) can later map these payloads into the cloud schema.
+    """
+
+    number = models.CharField(max_length=32, unique=True, db_index=True)
+    payload = models.JSONField(default=dict, blank=True)
+    received_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-received_at"]
+
+    def __str__(self) -> str:
+        return self.number
 
 
 # ---------------- Notification ----------------

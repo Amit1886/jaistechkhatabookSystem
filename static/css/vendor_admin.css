@@ -1,0 +1,135 @@
+:root{
+  --va-bg: #f6f6f7;
+  --va-card: #ffffff;
+  --va-border: rgba(0,0,0,.08);
+  --va-ink: #202223;
+  --va-muted: rgba(32,34,35,.7);
+}
+
+.vendor-admin{
+  background: var(--va-bg);
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.va-topbar{
+  background: var(--va-card);
+  border: 1px solid var(--va-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  position: sticky;
+  top: 12px;
+  z-index: 20;
+}
+
+.va-title{
+  font-weight: 800;
+  letter-spacing: .2px;
+  color: var(--va-ink);
+}
+.va-breadcrumb{
+  color: var(--va-muted);
+  font-size: .86rem;
+}
+
+.va-sidenav{
+  background: var(--va-card);
+  border: 1px solid var(--va-border);
+  border-radius: 16px;
+  padding: 10px;
+  position: sticky;
+  top: 96px;
+  max-height: calc(100vh - 112px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.va-nav a{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--va-ink);
+  border: 1px solid transparent;
+}
+.va-nav a .left{
+  display:flex; align-items:center; gap:10px;
+}
+.va-nav a:hover{
+  background: rgba(0,0,0,.03);
+}
+.va-nav a.active{
+  background: rgba(46,91,255,.08);
+  border-color: rgba(46,91,255,.18);
+}
+.va-nav a.active .left i{ color: rgb(46,91,255); }
+
+.va-panel{
+  background: var(--va-card);
+  border: 1px solid var(--va-border);
+  border-radius: 16px;
+}
+
+.va-section-title{
+  font-weight: 800;
+  color: var(--va-ink);
+}
+.va-help{
+  color: var(--va-muted);
+  font-size: .88rem;
+}
+
+.va-form-label{
+  font-weight: 700;
+  color: var(--va-ink);
+}
+
+.va-kpi{
+  border: 1px solid var(--va-border);
+  border-radius: 14px;
+  padding: 12px;
+  background: linear-gradient(180deg, #fff, #fafafa);
+}
+.va-kpi .label{ color: var(--va-muted); font-size: .82rem; }
+.va-kpi .value{ font-weight: 900; font-size: 1.4rem; }
+
+/* Tables & forms (Shopify-ish) */
+.vendor-admin .table > :not(caption) > * > *{
+  border-color: rgba(0,0,0,.08);
+}
+.vendor-admin .table thead th{
+  color: rgba(32,34,35,.72);
+  font-weight: 800;
+  font-size: .82rem;
+  text-transform: none;
+}
+.vendor-admin .form-control:focus, .vendor-admin .form-select:focus{
+  border-color: rgba(46,91,255,.45);
+  box-shadow: 0 0 0 .18rem rgba(46,91,255,.12);
+}
+
+.va-offcanvas .offcanvas-header{
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+
+.va-nav-search .form-control:focus{
+  border-color: rgba(46,91,255,.45);
+  box-shadow: 0 0 0 .18rem rgba(46,91,255,.12);
+}
+
+/* Sidebar scrollbar */
+.va-sidenav::-webkit-scrollbar{ width: 10px; }
+.va-sidenav::-webkit-scrollbar-thumb{
+  background: rgba(46,91,255,.18);
+  border-radius: 999px;
+  border: 3px solid rgba(255,255,255,.92);
+}
+
+@media (max-width: 991.98px){
+  .va-topbar{ position: static; }
+  .va-sidenav{ position: static; max-height: none; overflow: visible; top: auto; }
+}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+
+  <div class="container-fluid py-2 unified-screen">
+    <div class="unified-card">
+      <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <h3 class="mb-0">{{ page_title }}</h3>
+          {% if page_subtitle %}<div class="unified-subtitle">{{ page_subtitle }}</div>{% endif %}
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          {% if sample_url %}
+            <a class="btn unified-btn-outline" href="{{ sample_url }}">Download Sample CSV</a>
+          {% endif %}
+          {% if back_url %}
+            <a class="btn unified-btn-outline" href="{{ back_url }}">Back</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="unified-body">
+        {% if errors %}
+          <div class="alert alert-danger shadow-sm" role="alert" style="border-left: 6px solid #dc3545;">
+            <div class="fw-bold mb-1">Please fix these issues</div>
+            <ul class="mb-0 small">
+              {% for e in errors %}
+                <li>{{ e }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="row g-3">
+          {% csrf_token %}
+          {% if bulk_token %}
+            <input type="hidden" name="bulk_token" value="{{ bulk_token }}">
+          {% endif %}
+
+          {% if not preview_rows %}
+            <div class="col-12">
+              <div class="card border-primary">
+                <div class="card-body">
+                  <label class="form-label fw-bold">CSV File</label>
+                  {{ form.file }}
+                  {% if form.file.errors %}<div class="text-danger small mt-1">{{ form.file.errors }}</div>{% endif %}
+                  <div class="small text-muted mt-2">
+                    Tip: Upload CSV, preview errors, then confirm import.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 d-flex justify-content-end gap-2">
+              <button type="submit" class="btn unified-btn-primary">Preview Import</button>
+            </div>
+          {% else %}
+            <div class="col-12">
+              <div class="card border-info">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                      <div class="fw-bold">Preview</div>
+                      <div class="small text-muted">Rows: {{ preview_rows|length }}{% if preview_total %} / {{ preview_total }}{% endif %}</div>
+                    </div>
+                    <div class="d-flex gap-2">
+                      <a class="btn unified-btn-outline" href="{{ request.path }}">Upload another file</a>
+                      {% if not errors %}
+                        <input type="hidden" name="confirm" value="1">
+                        <button type="submit" class="btn unified-btn-primary">Import Now</button>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <div class="unified-table-wrap mt-3">
+                    <table class="table unified-table">
+                      <thead>
+                        <tr>
+                          {% for h in preview_headers %}
+                            <th>{{ h }}</th>
+                          {% endfor %}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for row in preview_rows %}
+                          <tr>
+                            {% for cell in row %}
+                              <td>{{ cell }}</td>
+                            {% endfor %}
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {% if preview_note %}
+                    <div class="small text-muted mt-2">{{ preview_note }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,105 +1,88 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/modern-app.css' %}">
-{% endblock %}
-
 {% block content %}
-
-<div class="container-fluid product-container">
-
-    <div class="card">
-        <div class="card-header">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <h3 class="mb-0"> Product Inventory</h3>
-                <a href="{% url 'commerce:add_product' %}" class="btn btn-primary-small">
-                     Add New Product
-                </a>
-            </div>
-        </div>
-
-        <!-- FILTER BAR -->
-        <div class="filter-row">
-            <input type="text" id="filterName" class="form-control form-control-sm" placeholder=" Search by Product Name..." style="flex: 1;">
-            <input type="text" id="filterCategory" class="form-control form-control-sm" placeholder=" Category..." style="flex: 1;">
-            <input type="text" id="filterSKU" class="form-control form-control-sm" placeholder=" SKU..." style="flex: 0.5;">
-            <button id="resetFilters" class="btn btn-dark-small"> Reset</button>
-        </div>
-
-        <!-- TABLE -->
-        <div class="card-body" style="padding: 0;">
-            <div class="table-responsive">
-                <table id="productTable" class="table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th> Category</th>
-                            <th> Product Name</th>
-                            <th class="text-right"> Price</th>
-                            <th class="text-center"> Stock</th>
-                            <th> SKU</th>
-                            <th> Unit</th>
-                        <th>HSN</th>
-                        <th>GST %</th>
-                        <th>Description</th>
-                        <th class="text-center">Action</th>
-                    </tr>
-                </thead>
-
-               <tbody>
-{% for product in products %}
-<tr>
-    <td>{{ forloop.counter }}</td>
-    <td>{{ product.category.name|default:"" }}</td>
-    <td><strong>{{ product.name }}</strong></td>
-    <td> {{ product.price }}</td>
-
-    <td>
-        {% if product.stock <= 5 %}
-            <span class="badge bg-danger">{{ product.stock }}</span>
-        {% else %}
-            <span class="badge bg-success">{{ product.stock }}</span>
+<div class="container-fluid py-2 unified-list-screen" data-ajax-list-wrap data-ajax-url="{% url 'commerce:product_list' %}" data-export-scope>
+  <div class="unified-list-card">
+    <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Product List</h3>
+        <div class="unified-subtitle">Inventory with low-stock status</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if erp_can_edit %}
+          <a href="{% url 'commerce:add_product' %}" class="btn unified-btn-primary">Add Product</a>
+          <a href="{% url 'commerce:product_bulk_upload' %}" class="btn unified-btn-outline">Bulk Upload</a>
         {% endif %}
-    </td>
-
-    <td>{{ product.sku }}</td>
-    <td>{{ product.unit }}</td>
-    <td>{{ product.hsn_code|default:"" }}</td>
-    <td>{{ product.gst_rate }}%</td>
-    <td>{{ product.description|truncatewords:8 }}</td>
-
-    <td class="text-center text-nowrap">
-        <a href="{% url 'commerce:product_detail' product.id %}" class="btn btn-sm btn-view">View</a>
-        <a href="{% url 'commerce:product_edit' product.id %}" class="btn btn-sm btn-edit">Edit</a>
-        <a href="{% url 'commerce:product_delete' product.id %}"
-           onclick="return confirm('Delete product?')"
-           class="btn btn-sm btn-delete">
-           Delete
-        </a>
-    </td>
-</tr>
-{% endfor %}
-</tbody>
-            </table>
-        </div>
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#productTable" data-export-name="products">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#productTable" data-export-name="products">CSV</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#productTable">PDF</button>
+      </div>
     </div>
+
+    <div class="unified-list-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" data-ajax-form>
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="prodQ">Search</label>
+          <input id="prodQ" name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search name/description">
+        </div>
+        <div style="min-width:180px;">
+          <label class="unified-label" for="prodCategory">Category</label>
+          <input id="prodCategory" name="category" value="{{ category }}" type="text" class="form-control" placeholder="Category">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="prodSku">SKU</label>
+          <input id="prodSku" name="sku" value="{{ sku }}" type="text" class="form-control" placeholder="SKU">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="prodStatus">Status</label>
+          <select id="prodStatus" name="status" class="form-select">
+            <option value="">All</option>
+            <option value="ok" {% if status == 'ok' %}selected{% endif %}>Accepted</option>
+            <option value="low" {% if status == 'low' %}selected{% endif %}>Pending</option>
+            <option value="out" {% if status == 'out' %}selected{% endif %}>Rejected</option>
+          </select>
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="fromDate">From</label>
+          <input id="fromDate" name="from" type="date" class="form-control" value="{{ date_from|date:'Y-m-d' }}">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="toDate">To</label>
+          <input id="toDate" name="to" type="date" class="form-control" value="{{ date_to|date:'Y-m-d' }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <button type="button" class="btn unified-btn-outline" data-ajax-reset>Reset</button>
+        </div>
+      </form>
+
+      <div class="small text-muted mb-2" data-ajax-loading style="display:none;">Loading…</div>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" id="productTable">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Category</th>
+              <th>SKU</th>
+              <th class="text-end">Price</th>
+              <th class="text-end">Stock</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody data-ajax-tbody>
+            {% include "commerce/partials/product_list_rows.html" %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-2" data-ajax-pagination>
+        {% include "core/includes/ajax_pagination.html" with page_obj=page_obj %}
+      </div>
+    </div>
+  </div>
 </div>
-
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
-
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-
-<script src="{% static 'js/product_list.js' %}"></script>
 {% endblock %}

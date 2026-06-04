@@ -1,17 +1,49 @@
-{% extends 'base.html' %}
-{% block content %}
-<h2>Add Chat Message</h2>
-<form method="POST">
-    {% csrf_token %}
-    <label for="thread">Select Chat Thread:</label>
-    <select name="thread_id" id="thread">
-        {% for thread in threads %}
-            <option value="{{ thread.id }}">{{ thread.name }}</option>
-        {% endfor %}
-    </select>
-    <br><br>
-    <textarea name="message" placeholder="Type your message here..."></textarea>
-    <br><br>
-    <button type="submit">Send Message</button>
-</form>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Add Chat Message{% endblock %}
+
+{% block pc_badges %}
+  <span class="badge bg-warning text-dark fw-bold">Chat</span>
 {% endblock %}
+
+{% block pc_actions %}
+  <button type="button" class="btn btn-warning btn-lg fw-bold" onclick="showKeyboardHelp()" title="F1">Shortcuts</button>
+{% endblock %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+
+  <form method="post" class="row g-3" action="{% url 'commerce:add_chat_message' %}">
+    {% csrf_token %}
+
+    <div class="col-lg-6">
+      <div class="card border-primary">
+        <div class="card-body">
+          <label for="thread" class="form-label fw-bold">Chat Thread</label>
+          <select id="thread" name="thread" class="form-select form-select-lg fw-bold" required data-kb-primary="1" autofocus>
+            <option value="">-- Select Thread --</option>
+            {% for t in threads %}
+              <option value="{{ t.id }}">#{{ t.id }} - {{ t.party.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card border-secondary">
+        <div class="card-body">
+          <label for="text" class="form-label fw-bold">Message</label>
+          <textarea id="text" name="text" rows="4" class="form-control fw-bold" placeholder="Type message..." required></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end gap-2">
+      <a id="kbCancel" data-kb-cancel href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary btn-lg fw-bold">Back</a>
+      <button type="submit" class="btn btn-success btn-lg fw-bold" data-kb-submit>Send</button>
+    </div>
+  </form>
+{% endblock %}
+

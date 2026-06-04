@@ -1,0 +1,138 @@
+{# Storefront apps injection (Marketplace) #}
+
+{% if storefront_apps.announcement_bar and storefront_apps.announcement_bar.text %}
+  <div class="container mt-2">
+    <div class="alert {% if storefront_apps.announcement_bar.style == 'dark' %}text-bg-dark{% else %}alert-info{% endif %} border-0 shadow-soft mb-2" role="alert" style="border-radius: 14px;">
+      <div class="d-flex justify-content-between align-items-center gap-2">
+        <div class="fw-semibold">{{ storefront_apps.announcement_bar.text }}</div>
+        <button type="button" class="btn-close btn-close-white" aria-label="Close"
+                onclick="this.closest('.alert').style.display='none';"></button>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% if storefront_apps.whatsapp_chat %}
+  <a id="waFloatBtn" href="#" class="btn btn-success shadow-soft"
+     style="position:fixed; right:16px; bottom:16px; z-index:1060; border-radius:999px; padding:10px 14px;">
+    <i class="bi bi-whatsapp me-1"></i>WhatsApp
+  </a>
+  <script>
+    (function(){
+      try{
+        var phone = "{{ storefront_apps.whatsapp_chat.phone|default:''|escapejs }}";
+        if(!phone){
+          // Fallback to vendor support phone if configured via settings
+          phone = "{{ vendor.store_settings.support_phone|default:''|escapejs }}";
+        }
+        phone = (phone||"").replace(/[^0-9]/g,"");
+        var msg = "{{ storefront_apps.whatsapp_chat.message|default:'Hi'|escapejs }}";
+        var a = document.getElementById("waFloatBtn");
+        if(!a) return;
+        if(!phone){ a.style.display = "none"; return; }
+        a.href = "https://wa.me/" + phone + "?text=" + encodeURIComponent(msg);
+      }catch(e){}
+    })();
+  </script>
+{% endif %}
+
+{% if storefront_apps.lead_capture_popup %}
+  <div class="modal fade" id="leadCaptureModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ storefront_apps.lead_capture_popup.title|default:"Get updates" }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="muted small mb-2">Share your details to receive offers and order updates.</div>
+          <div class="row g-2">
+            <div class="col-12">
+              <input class="form-control" id="lcName" placeholder="Name (optional)">
+            </div>
+            <div class="col-12">
+              <input class="form-control" id="lcMobile" placeholder="Mobile (required)">
+            </div>
+          </div>
+          <div id="lcMsg" class="muted small mt-2"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-brand" id="lcSubmit">{{ storefront_apps.lead_capture_popup.cta|default:"Submit" }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      try{
+        var delay = parseInt("{{ storefront_apps.lead_capture_popup.delay_seconds|default:7 }}", 10) || 7;
+        setTimeout(function(){
+          try{
+            var el = document.getElementById("leadCaptureModal");
+            if(!el || !window.bootstrap) return;
+            var m = bootstrap.Modal.getOrCreateInstance(el);
+            m.show();
+          }catch(e){}
+        }, Math.max(2, delay) * 1000);
+
+        function getCookie(name){
+          try{
+            var m = document.cookie.match(new RegExp('(^|; )' + name + '=([^;]*)'));
+            return m ? decodeURIComponent(m[2]) : '';
+          }catch(e){ return ''; }
+        }
+        var btn = document.getElementById("lcSubmit");
+        if(btn){
+          btn.addEventListener("click", async function(){
+            var mobile = (document.getElementById("lcMobile").value || "").trim();
+            var name = (document.getElementById("lcName").value || "").trim();
+            var msg = document.getElementById("lcMsg");
+            if(!mobile){ if(msg) msg.textContent = "Mobile required"; return; }
+            try{
+              btn.disabled = true;
+              var res = await fetch("{% url 'store-app-lead-capture' vendor.subdomain %}", {
+                method: "POST",
+                headers: {"Content-Type":"application/json","X-CSRFToken": getCookie("csrftoken")},
+                body: JSON.stringify({mobile: mobile, name: name})
+              });
+              var data = await res.json().catch(function(){ return {}; });
+              if(data && data.ok){
+                if(msg) msg.textContent = "Saved. Thank you!";
+                setTimeout(function(){ try{ bootstrap.Modal.getInstance(document.getElementById("leadCaptureModal")).hide(); }catch(e){} }, 900);
+              }else{
+                if(msg) msg.textContent = (data && data.error) ? data.error : "Failed";
+              }
+            }catch(e){
+              if(msg) msg.textContent = "Network error";
+            }finally{
+              btn.disabled = false;
+            }
+          });
+        }
+      }catch(e){}
+    })();
+  </script>
+{% endif %}
+
+{% if storefront_apps.social_proof_popup %}
+  <div id="spToast" class="toast align-items-center text-bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true"
+       style="position:fixed; left:16px; bottom:16px; z-index:1060; border-radius:14px;">
+    <div class="d-flex">
+      <div class="toast-body">
+        Someone just purchased from {{ vendor.name }}.
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+  <script>
+    (function(){
+      try{
+        var every = parseInt("{{ storefront_apps.social_proof_popup.interval_seconds|default:12 }}", 10) || 12;
+        var el = document.getElementById("spToast");
+        if(!el || !window.bootstrap) return;
+        var t = bootstrap.Toast.getOrCreateInstance(el, {delay: 3500});
+        setInterval(function(){ try{ t.show(); }catch(e){} }, Math.max(8, every) * 1000);
+      }catch(e){}
+    })();
+  </script>
+{% endif %}

@@ -1,68 +1,54 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/add_order.css' %}">
+{% block title %}Add Warehouse{% endblock %}
+
+{% block pc_badges %}
+  <span class="badge bg-warning text-dark fw-bold">Inventory</span>
+{% endblock %}
+
+{% block pc_actions %}
+  <a class="btn btn-outline-light btn-lg fw-bold" href="{% url 'commerce:warehouse_list' %}" accesskey="l" title="Alt+L">Warehouses</a>
+  <button type="button" class="btn btn-warning btn-lg fw-bold" onclick="showKeyboardHelp()" title="F1">Shortcuts</button>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 unified-screen busy-unified-add">
-  <div class="card shadow-lg border-0 order-card" id="mainWarehouseCard">
-    <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center flex-wrap">
-      <div class="d-flex align-items-center gap-3">
-        <h2 class="mb-0 fw-bold text-shadow">Add Warehouse</h2>
-        <span class="badge bg-warning text-dark fw-bold pulse-badge">Inventory</span>
+  {% include "core/includes/messages.html" %}
+  {% include "core/includes/keyboard_help_common.html" %}
+
+  <form method="post" class="row g-3" action="{% url 'commerce:add_warehouse' %}">
+    {% csrf_token %}
+
+    <div class="col-md-6">
+      <div class="card border-primary">
+        <div class="card-body">
+          <label for="name" class="form-label fw-bold">Warehouse Name</label>
+          <input type="text" class="form-control form-control-lg fw-bold" name="name" id="name" placeholder="e.g. Main Store" required data-kb-primary="1" autofocus>
+        </div>
       </div>
     </div>
 
-    <div class="card-body">
-      {% if messages %}
-      <div class="mb-4">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="col-md-6">
+      <div class="card border-info">
+        <div class="card-body">
+          <label for="location" class="form-label fw-bold">Location (Optional)</label>
+          <input type="text" class="form-control form-control-lg fw-bold" name="location" id="location" placeholder="City / Area">
         </div>
-        {% endfor %}
       </div>
-      {% endif %}
-
-      <form method="post" class="row g-3">
-        {% csrf_token %}
-
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <label class="form-label">Warehouse Name</label>
-              <input type="text" class="form-control" name="name" placeholder="Enter warehouse name" required>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <label class="form-label">Location</label>
-              <input type="text" class="form-control" name="location" placeholder="Enter location (optional)">
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-body">
-              <label class="form-label">Capacity (Units)</label>
-              <input type="number" class="form-control" name="capacity" min="0" placeholder="0">
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 d-flex justify-content-end gap-2">
-          <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary btn-lg fw-bold">Back</a>
-          <button type="submit" class="btn btn-success btn-lg fw-bold">Add Warehouse</button>
-        </div>
-      </form>
     </div>
-  </div>
-</div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <label for="capacity" class="form-label fw-bold">Capacity (Units)</label>
+          <input type="number" class="form-control form-control-lg fw-bold" name="capacity" id="capacity" min="0" placeholder="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end gap-2">
+      <a id="kbCancel" data-kb-cancel href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary btn-lg fw-bold">Back</a>
+      <button type="submit" class="btn btn-success btn-lg fw-bold" data-kb-submit>Add Warehouse</button>
+    </div>
+  </form>
 {% endblock %}

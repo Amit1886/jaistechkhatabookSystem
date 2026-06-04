@@ -1,0 +1,31 @@
+{% extends "central_engine/layout.html" %}
+
+{% block ce_title %}Loyalty & Offers{% endblock %}
+
+{% block ce_content %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Party</th>
+          <th class="text-end">Points</th>
+          <th class="text-end">Cashback Total</th>
+          <th class="text-muted small">Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in accounts %}
+          <tr>
+            <td class="fw-semibold">{{ a.party.name }}</td>
+            <td class="text-end">{{ a.points }}</td>
+            <td class="text-end small text-muted">INR {{ a.cashback_total }}</td>
+            <td class="text-muted small">{{ a.updated_at }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-4">No loyalty accounts yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+

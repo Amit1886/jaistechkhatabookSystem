@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/add_order_busy.css' %}?v=20260302a">
+<script src="{% static 'js/add_order_pc_busy.js' %}?v=20260302a" defer></script>
+
+{% if not parties or not products %}
+<div class="container-fluid py-3">
+  <div class="alert alert-warning shadow-sm" style="border-left: 6px solid #f59e0b;">
+    <div class="fw-bold mb-1">Setup required for Add Order</div>
+    <div class="small">
+      {% if not parties %}No parties found for your account. {% endif %}
+      {% if not products %}No products found for your account. {% endif %}
+      Create them first to avoid a blank/empty order screen.
+    </div>
+    <div class="mt-2 d-flex gap-2 flex-wrap">
+      <a class="btn btn-sm btn-primary" href="{% url 'khataapp:add_party' %}">Add Party</a>
+      <a class="btn btn-sm btn-primary" href="{% url 'commerce:add_product' %}">Add Product</a>
+      <a class="btn btn-sm btn-dark" href="{% url 'commerce:order_list' %}">Open Orders</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="container-fluid py-3 unified-screen busy-unified-add busy-order-pc busy-voucher-single">
+  <div class="card shadow-lg border-0 order-card" id="mainOrderCard">
+    <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <h2 class="mb-0 fw-bold text-shadow">Add Order</h2>
+        <span class="badge bg-warning text-dark fw-bold">Busy Grid</span>
+      </div>
+    </div>
+
+    <form method="POST" action="{% url 'commerce:add_order' %}" id="orderForm" autocomplete="off">
+      {% csrf_token %}
+      <input type="hidden" name="submit_action" id="submitAction" value="">
+      {% if quotation_id %}
+        <input type="hidden" name="quotation_id" value="{{ quotation_id }}">
+      {% endif %}
+
+      <div class="card-body" id="step-1">
+        <div class="row g-3 align-items-end">
+          <div class="col">
+            <label class="form-label fw-bold">Party (F2)</label>
+            <select id="partySelect" name="party" class="form-select fw-bold" required>
+              <option value="">Select Party</option>
+              {% for p in parties %}
+              <option value="{{ p.id }}" {% if initial_party_id|stringformat:'s' == p.id|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>
+              {% endfor %}
+            </select>
+            <div id="smartKhataCreditInfo" class="mt-2" style="display:none;">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="badge bg-light text-dark" id="smartKhataCreditBadge">Credit Score: -</span>
+                <span class="small text-muted" id="smartKhataCreditMeta"></span>
+              </div>
+              <div id="smartKhataCreditWarn" class="alert alert-danger mt-2 mb-0 py-2" style="display:none;"></div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="busy-top-grid">
+              <div class="busy-top-row1">
+                <div class="busy-top-kv">
+                  <div class="k">Series</div>
+                  <div class="v">Main</div>
+                </div>
+
+                <div>
+                  <label class="form-label fw-bold">Sale Type</label>
+                  <select id="orderType" name="order_type" class="form-select fw-bold" required>
+                    <option value="sale" {% if initial_order_type == 'sale' %}selected{% endif %}>Sales</option>
+                    <option value="purchase" {% if initial_order_type == 'purchase' %}selected{% endif %}>Purchase</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="form-label fw-bold">Warehouse</label>
+                  <select name="warehouse" class="form-select fw-bold" aria-label="Warehouse">
+                    <option value="">Default</option>
+                    {% for wh in warehouses %}
+                    <option value="{{ wh.id }}" {% if initial_warehouse_id|stringformat:'s' == wh.id|stringformat:'s' %}selected{% endif %}>{{ wh.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div>
+                  <label class="form-label fw-bold">Date</label>
+                  <div class="busy-date-wrap">
+                    <input type="date" id="orderDate" name="order_date" class="form-control fw-bold" value="{% if initial_order_date %}{{ initial_order_date }}{% else %}{% now 'Y-m-d' %}{% endif %}" aria-label="Order date">
+                    <div class="busy-day">(<span id="orderDayLabel" class="fw-bold">-</span>)</div>
+                  </div>
+                </div>
+
+                <div class="busy-top-spacer"></div>
+
+                <div class="busy-top-kv align-end">
+                  <div class="k">Order No.</div>
+                  <div class="v">Auto</div>
+                </div>
+              </div>
+
+              <div class="busy-top-row2">
+                <div>
+                  <label class="form-label fw-bold">GST</label>
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <label class="d-flex align-items-center gap-2" style="margin:0;">
+                      <input type="checkbox" id="pcGstEnabled" {% if initial_gst_enabled %}checked{% endif %}>
+                      <span class="fw-bold">On</span>
+                    </label>
+                    <input type="number" id="pcGstRate" class="form-control fw-bold busy-mini" step="0.01" min="0" max="28" value="{% if initial_gst_rate %}{{ initial_gst_rate }}{% else %}0{% endif %}" aria-label="GST rate">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="form-label fw-bold">Reference</label>
+                  <input type="text" name="reference" class="form-control fw-bold" placeholder="UTR / Ref no." aria-label="Reference">
+                </div>
+
+                <div>
+                  <label class="form-label fw-bold">Narration</label>
+                  <input type="text" id="pcNarration" name="notes" class="form-control fw-bold" placeholder="Notes (optional)" aria-label="Narration" value="{% if initial_notes %}{{ initial_notes }}{% endif %}">
+                </div>
+
+                <div class="d-flex justify-content-end text-end">
+                  <div>
+                    <div class="fw-bold">Sub: &#8377; <span id="subTotal">0.00</span></div>
+                    <div class="fw-bold"><span id="pcGstLabel">GST (0%):</span> &#8377; <span id="tax">0.00</span></div>
+                    <div class="fw-bold">Total: &#8377; <span id="grandTotal">0.00</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {# Save/Print are handled via bottom function-key bar in PC Busy mode #}
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body" id="step-2">
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle shadow-lg" id="orderTable">
+            <thead class="table-primary text-center fw-bold">
+              <tr>
+                <th class="fw-bold">Product (F3)</th>
+                <th width="100" class="fw-bold">Qty</th>
+                <th width="140" class="fw-bold">Price</th>
+                <th width="160" class="fw-bold">Amount</th>
+                <th width="90" class="fw-bold">Action</th>
+              </tr>
+            </thead>
+            <tbody id="orderBody">
+              {% if initial_items %}
+                {% for it in initial_items %}
+                  <tr class="item-row">
+                    <td>
+                      <div class="card border-warning">
+                        <div class="card-body p-2">
+                          <input type="text" class="form-control product-search mb-1 fw-bold" placeholder="Search Product (F3)" autocomplete="off" aria-label="Search product" value="{{ it.product_name }}">
+                          <div class="product-dropdown dropdown-menu dropdown-hidden"></div>
+                          <select name="product[]" class="form-select product d-none fw-bold" aria-label="Select Product">
+                            <option value="">Select Product</option>
+                            {% for prod in products %}
+                              <option value="{{ prod.id }}" data-price="{{ prod.price }}" data-unit="{{ prod.unit|default:'pcs' }}" data-stock="{{ prod.stock|default:0 }}" data-barcode="{{ prod.barcode|default:'' }}"
+                                      {% if prod.id == it.product_id %}selected{% endif %}>
+                                {{ prod.name }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                          <button type="button" class="btn btn-sm btn-outline-secondary w-100 compare-suppliers-btn mt-1" style="display:none;">
+                            Compare Suppliers
+                          </button>
+                          <div class="small text-muted mt-1 supplier-recommendation" style="display:none;"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="card border-info">
+                        <div class="card-body p-2">
+                          <input type="number" name="qty[]" class="form-control qty text-center fw-bold" value="{{ it.qty|default:1 }}" min="1" step="1" aria-label="Quantity">
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="card border-danger">
+                        <div class="card-body p-2">
+                          <input type="number" name="price[]" class="form-control price text-end fw-bold" step="0.01" aria-label="Price" value="{{ it.rate|default_if_none:'' }}">
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="card border-success">
+                        <div class="card-body p-2">
+                          <input type="number" name="amount[]" class="form-control amount text-end fw-bold" step="0.01" min="0" readonly aria-label="Amount">
+                          <input type="hidden" class="discount_percent" name="discount_percent[]" value="0">
+                          <input type="hidden" class="discount_amount" name="discount_amount[]" value="{{ it.discount|default:0 }}">
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-center">
+                      <button type="button" class="btn btn-danger btn-lg remove-btn fw-bold shadow">X</button>
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr class="item-row">
+                  <td>
+                    <div class="card border-warning">
+                      <div class="card-body p-2">
+                        <input type="text" class="form-control product-search mb-1 fw-bold" placeholder="Search Product (F3)" autocomplete="off" aria-label="Search product">
+                        <div class="product-dropdown dropdown-menu dropdown-hidden"></div>
+                        <select name="product[]" class="form-select product d-none fw-bold" aria-label="Select Product">
+                          <option value="">Select Product</option>
+                          {% for prod in products %}
+                          <option value="{{ prod.id }}" data-price="{{ prod.price }}" data-unit="{{ prod.unit|default:'pcs' }}" data-stock="{{ prod.stock|default:0 }}" data-barcode="{{ prod.barcode|default:'' }}">
+                            {{ prod.name }}
+                          </option>
+                          {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-secondary w-100 compare-suppliers-btn mt-1" style="display:none;">
+                          Compare Suppliers
+                        </button>
+                        <div class="small text-muted mt-1 supplier-recommendation" style="display:none;"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="card border-info">
+                      <div class="card-body p-2">
+                        <input type="number" name="qty[]" class="form-control qty text-center fw-bold" value="1" min="1" step="1" aria-label="Quantity">
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="card border-danger">
+                      <div class="card-body p-2">
+                        <input type="number" name="price[]" class="form-control price text-end fw-bold" step="0.01" aria-label="Price">
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="card border-success">
+                      <div class="card-body p-2">
+                        <input type="number" name="amount[]" class="form-control amount text-end fw-bold" step="0.01" min="0" readonly aria-label="Amount">
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <button type="button" class="btn btn-danger btn-lg remove-btn fw-bold shadow">X</button>
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="alert alert-info mt-2 mb-0 small">
+          Tips: F3 item, F4 add row, F9 discount, F8 sundry, F5 save.
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Supplier Compare Modal (Purchase mode helper) -->
+<div class="modal fade" id="supplierCompareModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Supplier Price Comparison</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="small text-muted mb-2">
+          Product: <span class="fw-bold" id="spcProductName">-</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle mb-0" id="supplierCompareTable">
+            <thead class="table-primary text-center fw-bold">
+              <tr>
+                <th>Supplier</th>
+                <th class="text-end">Price</th>
+                <th class="text-center">MOQ</th>
+                <th class="text-center">Delivery</th>
+                <th class="text-center">Rating</th>
+                <th class="text-center">Recommended</th>
+              </tr>
+            </thead>
+            <tbody id="supplierCompareTbody">
+              <tr><td colspan="6" class="text-center text-muted">Select a product to compare suppliers.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success fw-bold" id="spcApplyBtn" disabled>Use Recommended Supplier</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'procurement/js/purchase_supplier_compare.js' %}" defer></script>
+{% endblock %}

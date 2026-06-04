@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-list-screen" data-ajax-list-wrap data-ajax-url="{{ request.path }}" data-export-scope>
+  <div class="unified-list-card">
+    <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Voucher List</h3>
+        <div class="unified-subtitle">Vouchers created from Sales Voucher entry</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'commerce:sales_voucher_quick_create' %}" class="btn unified-btn-primary">Create Voucher</a>
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#voucherTable" data-export-name="vouchers">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#voucherTable" data-export-name="vouchers">Excel</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#voucherTable">PDF</button>
+      </div>
+    </div>
+
+    <div class="unified-list-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" data-ajax-form>
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="voucherQ">Search</label>
+          <input id="voucherQ" name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search invoice/order/party">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="voucherStatus">Status</label>
+          <select id="voucherStatus" name="status" class="form-select">
+            <option value="">All</option>
+            <option value="unpaid" {% if status == 'unpaid' %}selected{% endif %}>Pending</option>
+            <option value="paid" {% if status == 'paid' %}selected{% endif %}>Accepted</option>
+            <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Rejected</option>
+          </select>
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="fromDate">From</label>
+          <input id="fromDate" name="from" type="date" class="form-control" value="{{ date_from|date:'Y-m-d' }}">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="toDate">To</label>
+          <input id="toDate" name="to" type="date" class="form-control" value="{{ date_to|date:'Y-m-d' }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <button type="button" class="btn unified-btn-outline" data-ajax-reset>Reset</button>
+        </div>
+      </form>
+
+      <div class="small text-muted mb-2" data-ajax-loading style="display:none;">Loading...</div>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" id="voucherTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Invoice No</th>
+              <th>Order</th>
+              <th>Party</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th class="text-end">Amount</th>
+              <th>Date</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody data-ajax-tbody>
+            {% include "commerce/partials/voucher_list_rows.html" %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-2" data-ajax-pagination>
+        {% include "core/includes/ajax_pagination.html" with page_obj=page_obj %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

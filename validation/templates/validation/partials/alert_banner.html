@@ -1,0 +1,23 @@
+{% comment %}Reusable banner for Smart Alerts (expects `alerts`).{% endcomment %}
+
+<div class="alert alert-warning shadow-sm" role="alert" style="border-left: 6px solid #f59e0b;">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="fw-bold">Smart Alerts</div>
+    <a class="btn unified-btn-outline btn-sm" href="{% url 'validation:dashboard' %}?status=open">View all</a>
+  </div>
+  <div class="mt-2">
+    <ul class="mb-0 small" style="padding-left: 16px;">
+      {% for a in alerts %}
+        <li>
+          <strong>{{ a.title|default:a.alert_type }}</strong> — {{ a.message|default:"" }}
+          {% if a.payload.negatives %}
+            <div class="text-muted">
+              Negative stock: {% for n in a.payload.negatives %}{{ n.product }} ({{ n.balance }}){% if not forloop.last %}, {% endif %}{% endfor %}
+            </div>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+

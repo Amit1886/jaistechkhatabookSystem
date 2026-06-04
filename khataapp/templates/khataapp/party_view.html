@@ -2,117 +2,290 @@
 {% load static %}
 
 {% block content %}
-<div class="view-card">
-
-    <h2 class="title"> Party Details  {{ party.name }}</h2>
-
-    <div class="grid-2">
-
-        <div class="view-item">
-            <label>Name</label>
-            <p>{{ party.name }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>Party Type</label>
-            <p>{{ party.party_type|title }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>Mobile</label>
-            <p>{{ party.mobile }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>Email</label>
-            <p>{{ party.email }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>Aadhaar No</label>
-            <p>{{ party.aadhaar }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>PAN No</label>
-            <p>{{ party.pan }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>Opening Balance</label>
-            <p>{{ party.opening_balance }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>Opening Balance Type</label>
-            <p>{{ party.opening_type|title }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>PIN Code</label>
-            <p>{{ party.pin_code }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>State</label>
-            <p>{{ party.state }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>District</label>
-            <p>{{ party.district }}</p>
-        </div>
-
+<div class="container-fluid py-2 unified-screen busy-unified-add">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Party View</h3>
+        <div class="unified-subtitle">{{ party.name }} • {{ party.party_type|title }}</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'commerce:sales_voucher_quick_create' %}?party={{ party.id }}" class="btn unified-btn-primary">Create Voucher</a>
+        <a href="{% url 'khataapp:edit_party' party.id %}" class="btn unified-btn-secondary">Edit</a>
+        <a href="{% url 'khataapp:party_list' %}" class="btn unified-btn-outline">Back</a>
+      </div>
     </div>
 
-    <div class="view-item full">
-        <label>Address</label>
-        <p>{{ party.address }}</p>
-    </div>
-
-    <h3 class="subtitle">Payment Details</h3>
-
-    <div class="grid-2">
-
-        <div class="view-item">
-            <label>UPI ID</label>
-            <p>{{ party.upi_id }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>Bank Account Number</label>
-            <p>{{ party.bank_account_number }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>WhatsApp Number</label>
-            <p>{{ party.whatsapp_number }}</p>
-        </div>
-
-        <div class="view-item">
-            <label>SMS Number</label>
-            <p>{{ party.sms_number }}</p>
-        </div>
-
-        <div class="view-item full">
-            <label>QR Code</label>
-            {% if party.qr_code %}
-                <img src="{{ party.qr_code.url }}" alt="QR" width="110" class="qr-preview">
+    <div class="unified-body" data-master-list-wrap>
+      <div class="report-summary-grid">
+        <div class="report-summary-card">
+          <div class="label">Status</div>
+          <div class="value">
+            {% if party.is_active %}
+              <span class="badge bg-success">Accepted</span>
             {% else %}
-                <p>No QR Uploaded</p>
+              <span class="badge bg-danger">Rejected</span>
             {% endif %}
+          </div>
+          <div class="meta">Created: {{ party.created_at|date:"d M Y" }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Mobile</div>
+          <div class="value">{{ party.mobile|default:"-" }}</div>
+          <div class="meta">WhatsApp: {{ party.whatsapp_number|default:"-" }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Email</div>
+          <div class="value">{{ party.email|default:"-" }}</div>
+          <div class="meta">GST: {{ party.gst|default:"-" }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Opening Balance</div>
+          <div class="value">{{ party.opening_balance|default:"0.00" }}</div>
+          <div class="meta">Credit Period: {{ party.credit_period }} days</div>
+        </div>
+      </div>
+
+      {% if smart_khata %}
+      <div class="unified-section mt-2">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5 class="mb-0">Smart Khata</h5>
+            <div class="unified-subtitle">Credit score, dues and reminder history</div>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'smart_khata:credit_score_dashboard' %}" class="btn unified-btn-outline btn-sm">Credit Dashboard</a>
+            <a href="{% url 'smart_khata:reminder_logs' %}?q={{ party.name|urlencode }}" class="btn unified-btn-outline btn-sm">Reminder Logs</a>
+          </div>
         </div>
 
-    </div>
+        <div class="unified-grid cols-2 mt-2">
+          <div class="unified-section">
+            <label class="unified-label">Credit Score</label>
+            {% with s=smart_khata.score %}
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <div class="fw-bold" style="font-size:1.25rem;">{{ s }}</div>
+                {% if s >= 80 %}
+                  <span class="badge bg-success">Excellent</span>
+                {% elif s >= 60 %}
+                  <span class="badge bg-warning text-dark">Good</span>
+                {% elif s >= 40 %}
+                  <span class="badge" style="background:#f97316;color:#111827;">Risky</span>
+                {% else %}
+                  <span class="badge bg-danger">High Risk</span>
+                {% endif %}
+              </div>
+              <div class="progress mt-2" style="height:10px;">
+                <div class="progress-bar {% if s >= 80 %}bg-success{% elif s >= 60 %}bg-warning{% elif s >= 40 %}{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ s }}%;" aria-valuenow="{{ s }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+            {% endwith %}
+          </div>
 
-    <div class="btn-row">
-        <a href="{% url 'khataapp:party_list' %}" class="btn-secondary">Back</a>
-        <a href="{% url 'khataapp:edit_party' party.id %}" class="btn-primary">Edit</a>
-    </div>
+          <div class="unified-section">
+            <label class="unified-label">Summary</label>
+            <div class="small">
+              <div><strong>Total Due:</strong> {{ smart_khata.total_due|default:"0.00" }}</div>
+              <div><strong>Avg Delay:</strong> {{ smart_khata.average_delay|default:"0" }} days</div>
+              <div><strong>Last Payment:</strong> {{ smart_khata.last_payment_date|date:"d M Y"|default:"-" }}</div>
+            </div>
+            {% if smart_khata.score < 40 %}
+              <div class="alert alert-danger mt-2 mb-0 py-2">Warning: This customer has a credit score of {{ smart_khata.score }} (High Risk).</div>
+            {% elif smart_khata.score < 60 %}
+              <div class="alert alert-warning mt-2 mb-0 py-2">Note: This customer may delay payment (score {{ smart_khata.score }}).</div>
+            {% endif %}
+          </div>
+        </div>
 
+        {% if smart_khata.outstanding_invoices and smart_khata.outstanding_invoices|length > 0 %}
+        <div class="unified-section mt-2">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h6 class="mb-0">Outstanding Invoices</h6>
+              <div class="unified-subtitle">Due date is based on credit period</div>
+            </div>
+          </div>
+          <div class="unified-table-wrap mt-2">
+            <table class="table unified-table">
+              <thead>
+                <tr>
+                  <th>Invoice</th>
+                  <th>Due Date</th>
+                  <th class="text-center">Overdue</th>
+                  <th class="text-end">Outstanding</th>
+                  <th class="text-end">Pay</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in smart_khata.outstanding_invoices %}
+                <tr>
+                  <td>{{ row.invoice.number|default:row.invoice.id }}</td>
+                  <td>{{ row.due_date|date:"d M Y" }}</td>
+                  <td class="text-center">
+                    {% if row.days_overdue > 0 %}
+                      <span class="badge bg-danger">{{ row.days_overdue }}d</span>
+                    {% elif row.days_overdue == 0 %}
+                      <span class="badge bg-warning text-dark">Due Today</span>
+                    {% else %}
+                      <span class="badge bg-success">In {{ row.days_overdue|stringformat:"s"|cut:"-" }}d</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end fw-bold">{{ row.outstanding|floatformat:2 }}</td>
+                  <td class="text-end">
+                    {% if row.invoice.payment_link %}
+                      <a href="{{ row.invoice.payment_link }}" class="btn unified-btn-outline btn-sm" target="_blank">Pay Now</a>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="unified-grid cols-2 mt-2">
+          <div class="unified-section">
+            <h6 class="mb-1">Payment Behavior</h6>
+            <div class="unified-subtitle">Last 20 paid invoices</div>
+            <div class="unified-table-wrap mt-2">
+              <table class="table unified-table">
+                <thead>
+                  <tr>
+                    <th>Invoice</th>
+                    <th>Due</th>
+                    <th>Paid</th>
+                    <th class="text-center">Delay</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for b in smart_khata.behaviors %}
+                  <tr>
+                    <td>{{ b.invoice.number|default:b.invoice_id }}</td>
+                    <td>{{ b.due_date|date:"d M Y" }}</td>
+                    <td>{{ b.paid_date|date:"d M Y"|default:"-" }}</td>
+                    <td class="text-center">{% if b.delay_days > 0 %}<span class="badge bg-danger">{{ b.delay_days }}d</span>{% else %}<span class="badge bg-success">On Time</span>{% endif %}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="4" class="text-center text-muted py-3">No behavior history yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="unified-section">
+            <h6 class="mb-1">Reminder History</h6>
+            <div class="unified-subtitle">Last 20 reminders</div>
+            <div class="unified-table-wrap mt-2">
+              <table class="table unified-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Channel</th>
+                    <th>Status</th>
+                    <th>Tone</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in smart_khata.reminders %}
+                  <tr>
+                    <td>{{ r.created_at|date:"d M Y H:i" }}</td>
+                    <td>{{ r.channel }}</td>
+                    <td>{{ r.status }}</td>
+                    <td>{{ r.tone|default:"-" }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="4" class="text-center text-muted py-3">No reminders yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="unified-grid cols-2">
+        <div class="unified-section">
+          <label class="unified-label">Address</label>
+          <div>{{ party.address|default:"-" }}</div>
+        </div>
+        <div class="unified-section">
+          <label class="unified-label">Payment</label>
+          <div class="small">
+            <div><strong>UPI:</strong> {{ party.upi_id|default:"-" }}</div>
+            <div><strong>Bank A/C:</strong> {{ party.bank_account_number|default:"-" }}</div>
+            <div><strong>SMS:</strong> {{ party.sms_number|default:"-" }}</div>
+          </div>
+        </div>
+      </div>
+
+      {% if party.qr_code %}
+      <div class="unified-section">
+        <label class="unified-label">QR Code</label>
+        <img src="{{ party.qr_code.url }}" alt="QR Code" style="max-width:140px;border-radius:12px;border:1px solid rgba(148,163,184,0.4);">
+      </div>
+      {% endif %}
+
+      <div class="unified-section mt-2">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5 class="mb-0">Recent Transactions</h5>
+            <div class="unified-subtitle">Last 50 entries</div>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'khataapp:add_transaction' %}" class="btn unified-btn-outline">Add Transaction</a>
+            <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#partyTxnTable" data-export-name="party_transactions">Print</button>
+            <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#partyTxnTable" data-export-name="party_transactions">Excel</button>
+            <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#partyTxnTable">PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2">
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="partyTxnSearch">Search</label>
+          <input id="partyTxnSearch" data-master-search type="text" class="form-control" placeholder="Search notes/mode/type">
+        </div>
+      </div>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" id="partyTxnTable" data-master-list data-page-size="10">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Mode</th>
+              <th class="text-end">Amount</th>
+              <th>Notes</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in transactions %}
+            <tr>
+              <td>{{ t.date|date:"d M Y" }}</td>
+              <td><span class="badge bg-light text-dark">{{ t.txn_type }}</span></td>
+              <td><span class="badge bg-light text-dark">{{ t.txn_mode }}</span></td>
+              <td class="text-end fw-bold">{{ t.amount|floatformat:2 }}</td>
+              <td>{{ t.notes|default:"-" }}</td>
+              <td class="text-end">
+                <a href="{% url 'khataapp:transaction_view' t.id %}" class="btn unified-btn-outline btn-sm">View</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center">No transactions found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-2" data-master-pagination></div>
+
+      {% include "core/includes/document_action_bar.html" %}
+    </div>
+  </div>
 </div>
-
-<link rel="stylesheet" href="{% static 'css/party_view.css' %}">
-<script src="{% static 'js/party_view.js' %}"></script>
-
 {% endblock %}

@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Sales Voucher - {{ voucher.invoice_no }}</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 16mm 12mm 18mm 12mm;
+        @frame footer_frame {
+          -pdf-frame-content: footer_content;
+          left: 12mm;
+          width: 186mm;
+          top: 276mm;
+          height: 12mm;
+        }
+      }
+
+      body { font-family: Arial, sans-serif; font-size: 10.5pt; color: #111827; }
+      .muted { color: #6b7280; }
+      .title { font-size: 16pt; font-weight: bold; margin: 0; }
+      .sub { font-size: 10pt; margin: 3pt 0 0 0; }
+      .header { border-bottom: 1px solid #e5e7eb; padding-bottom: 8pt; margin-bottom: 10pt; }
+
+      table.row { width: 100%; border-collapse: collapse; }
+      td.col { vertical-align: top; }
+
+      table.meta { width: 100%; border-collapse: collapse; margin-top: 6pt; }
+      table.meta td { padding: 2pt 0; }
+      .k { width: 22%; color: #6b7280; }
+      .v { width: 28%; }
+
+      table.items { width: 100%; border-collapse: collapse; margin-top: 10pt; }
+      table.items th {
+        background: #111827;
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 9pt;
+        padding: 6pt 5pt;
+        text-align: left;
+      }
+      table.items td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 5pt 5pt;
+        font-size: 9.5pt;
+        vertical-align: top;
+      }
+      .num { text-align: right; }
+
+      table.totals { width: 100%; border-collapse: collapse; margin-top: 10pt; }
+      table.totals td { padding: 6pt 8pt; border: 1px solid #e5e7eb; }
+      table.totals .k2 { color: #6b7280; }
+      table.totals .v2 { font-weight: bold; text-align: right; }
+
+      #footer_content { font-size: 9pt; color: #6b7280; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <table class="row">
+        <tr>
+          <td class="col" style="width:65%;">
+            <div class="title">{{ issuer.business_name|default:company.company_name|default:"KhataPro" }}</div>
+            {% if issuer.address %}<div class="sub muted">{{ issuer.address }}</div>{% endif %}
+            {% if issuer.gst_number %}<div class="sub"><span class="muted">GSTIN:</span> <b>{{ issuer.gst_number }}</b></div>{% endif %}
+          </td>
+          <td class="col" style="width:35%; text-align:right;">
+            <div class="title" style="font-size:14pt;">SALES VOUCHER</div>
+            <div class="sub muted">Voucher No: <b style="color:#111827;">{{ voucher.invoice_no }}</b></div>
+            <div class="sub muted">Date: <b style="color:#111827;">{{ voucher.date|date:"d M Y" }}</b></div>
+            <div class="sub muted">GST: <b style="color:#111827;">{% if voucher.is_gst %}Yes{% else %}No{% endif %}</b></div>
+          </td>
+        </tr>
+      </table>
+
+      <table class="meta">
+        <tr>
+          <td class="k">Party</td>
+          <td class="v"><b>{{ party.name }}</b></td>
+          <td class="k">Order</td>
+          <td class="v">
+            {% if voucher.order %}<b>#{{ voucher.order.id }}</b>{% else %}-{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td class="k">Mobile</td>
+          <td class="v">{{ party.mobile|default:"-" }}</td>
+          <td class="k">Party Type</td>
+          <td class="v">{{ party.party_type|default:"-" }}</td>
+        </tr>
+        {% if party.address %}
+        <tr>
+          <td class="k">Address</td>
+          <td colspan="3">{{ party.address }}</td>
+        </tr>
+        {% endif %}
+      </table>
+    </div>
+
+    <table class="items">
+      <thead>
+        <tr>
+          <th style="width:5%;">#</th>
+          <th>Description</th>
+          <th style="width:10%;" class="num">Qty</th>
+          <th style="width:12%;" class="num">Rate</th>
+          <th style="width:10%;" class="num">GST%</th>
+          <th style="width:14%;" class="num">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for it in items %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>
+              <b>{{ it.product_name|default:"-" }}</b>
+              {% if it.warehouse_name %}
+                <div class="muted" style="font-size:9pt;">WH: {{ it.warehouse_name }}</div>
+              {% endif %}
+            </td>
+            <td class="num">{{ it.qty|floatformat:2 }}</td>
+            <td class="num">{{ it.rate|floatformat:2 }}</td>
+            <td class="num">{{ it.gst_rate|floatformat:2 }}</td>
+            <td class="num"><b>{{ it.amount|floatformat:2 }}</b></td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="muted" style="text-align:center; padding:12pt;">No items.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <table class="totals">
+      <tr>
+        <td class="k2">Subtotal</td><td class="v2">{{ subtotal }}</td>
+        <td class="k2">GST</td><td class="v2">{% if voucher.is_gst %}{{ gst_total }}{% else %}0.00{% endif %}</td>
+        <td class="k2"><b>Grand Total</b></td><td class="v2"><b>{{ total }}</b></td>
+      </tr>
+    </table>
+
+    <div id="footer_content">
+      <table style="width:100%; border-collapse:collapse;">
+        <tr>
+          <td>This is a computer-generated voucher.</td>
+          <td style="text-align:right;">Page <pdf:pagenumber /> of <pdf:pagecount /></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

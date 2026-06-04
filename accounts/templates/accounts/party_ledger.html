@@ -21,10 +21,16 @@
          Back
       </a>
 
-      <a href="{% url 'accounts:party_ledger_pdf' party.id %}?from={{ request.GET.from }}&to={{ request.GET.to }}"
+      <a href="{% url 'accounts:party_ledger_pdf' party.id %}?from={{ request.GET.from }}&to={{ request.GET.to }}&invoice={{ request.GET.invoice }}"
          class="btn btn-primary btn-pill">
-          Export PDF
+          Download PDF
       </a>
+      <a href="{% url 'accounts:party_ledger_pdf' party.id %}?from={{ request.GET.from }}&to={{ request.GET.to }}&invoice={{ request.GET.invoice }}&inline=1"
+         class="btn btn-outline-primary btn-pill" target="_blank">
+          Print PDF
+      </a>
+      <button type="button" id="printBtn" class="btn btn-outline-secondary btn-pill">Print Page</button>
+      <button type="button" id="shareBtn" class="btn btn-outline-secondary btn-pill">Share</button>
 
       <a href="{{ whatsapp_url }}" target="_blank"
          class="btn btn-success btn-pill">
@@ -38,6 +44,7 @@
   <form method="get" class="filter-form mt-3 mb-2 d-flex gap-2">
     <input type="date" name="from" value="{{ request.GET.from }}" class="form-control">
     <input type="date" name="to" value="{{ request.GET.to }}" class="form-control">
+    <input type="text" name="invoice" value="{{ request.GET.invoice }}" class="form-control" placeholder="Invoice contains">
     <button type="submit" class="btn btn-primary btn-pill">Filter</button>
 
     <a href="{% url 'accounts:party_ledger' party.id %}" class="btn btn-outline-secondary btn-pill">Reset</a>
@@ -95,7 +102,7 @@
       const nextPage = this.getAttribute('data-next-page');
 
       const url = "{% url 'accounts:party_ledger_load_more' party.id %}?page=" + nextPage +
-                  "&from={{ request.GET.from }}&to={{ request.GET.to }}";
+                  "&from={{ request.GET.from }}&to={{ request.GET.to }}&invoice={{ request.GET.invoice }}";
 
       this.disabled = true;
       this.innerText = "Loading";
@@ -121,6 +128,29 @@
       });
     });
   }
+</script>
+
+<script>
+  document.getElementById("printBtn")?.addEventListener("click", () => window.print());
+
+  document.getElementById("shareBtn")?.addEventListener("click", async () => {
+    const shareUrl = window.location.href;
+    const pdfUrl = "{% url 'accounts:party_ledger_pdf' party.id %}?from={{ request.GET.from }}&to={{ request.GET.to }}&invoice={{ request.GET.invoice }}&inline=1";
+
+    const text = `Ledger: {{ party.name }}\n${shareUrl}\nPDF: ${pdfUrl}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Party Ledger", text, url: shareUrl });
+        return;
+      } catch (e) {}
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Share details copied to clipboard.");
+    } catch (e) {
+      prompt("Copy and share:", text);
+    }
+  });
 </script>
 
 {% endblock %}

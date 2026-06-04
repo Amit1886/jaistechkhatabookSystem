@@ -1,38 +1,60 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid py-2 unified-list-screen" data-master-list-wrap>
+<div class="container-fluid py-2 unified-list-screen" data-ajax-list-wrap data-ajax-url="{{ request.path }}" data-export-scope>
   <div class="unified-list-card">
     <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div>
         <h3>Payment List</h3>
         <div class="unified-subtitle">All recorded payments in one standardized table</div>
       </div>
-      <a href="{% url 'commerce:add_payment' %}" class="btn unified-btn-primary">Add Payment</a>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if erp_can_edit %}
+          <a href="{% url 'commerce:add_payment' %}" class="btn unified-btn-primary">Add Payment</a>
+          <a href="{% url 'commerce:payment_bulk_upload' %}" class="btn unified-btn-outline">Bulk Upload</a>
+        {% endif %}
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#paymentTable" data-export-name="payments">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#paymentTable" data-export-name="payments">CSV</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#paymentTable">PDF</button>
+      </div>
     </div>
 
     <div class="unified-list-body">
-      <div class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" data-ajax-form>
         <div class="flex-grow-1" style="min-width:220px;">
-          <label class="unified-label" for="paymentSearchInput">Search</label>
-          <input id="paymentSearchInput" data-master-search type="text" class="form-control" placeholder="Search invoice/party/method/ref">
+          <label class="unified-label" for="payQ">Search</label>
+          <input id="payQ" name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search invoice/party/ref/notes">
         </div>
         <div style="min-width:160px;">
-          <label class="unified-label" for="paymentMethodFilter">Method</label>
-          <select id="paymentMethodFilter" data-master-filter="4" class="form-select">
-            <option value="">All Methods</option>
-            <option value="cash">Cash</option>
-            <option value="upi">UPI</option>
-            <option value="card">Card</option>
-            <option value="bank_transfer">Bank Transfer</option>
-            <option value="cheque">Cheque</option>
-            <option value="wallet">Wallet</option>
+          <label class="unified-label" for="payMethod">Method</label>
+          <select id="payMethod" name="method" class="form-select">
+            <option value="">All</option>
+            <option value="cash" {% if method == 'cash' %}selected{% endif %}>Cash</option>
+            <option value="upi" {% if method == 'upi' %}selected{% endif %}>UPI</option>
+            <option value="card" {% if method == 'card' %}selected{% endif %}>Card</option>
+            <option value="bank_transfer" {% if method == 'bank_transfer' %}selected{% endif %}>Bank Transfer</option>
+            <option value="cheque" {% if method == 'cheque' %}selected{% endif %}>Cheque</option>
+            <option value="wallet" {% if method == 'wallet' %}selected{% endif %}>Wallet</option>
           </select>
         </div>
-      </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="fromDate">From</label>
+          <input id="fromDate" name="from" type="date" class="form-control" value="{{ date_from|date:'Y-m-d' }}">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="toDate">To</label>
+          <input id="toDate" name="to" type="date" class="form-control" value="{{ date_to|date:'Y-m-d' }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <button type="button" class="btn unified-btn-outline" data-ajax-reset>Reset</button>
+        </div>
+      </form>
+
+      <div class="small text-muted mb-2" data-ajax-loading style="display:none;">Loading…</div>
 
       <div class="unified-table-wrap">
-        <table class="table unified-table" data-master-list data-page-size="10">
+        <table class="table unified-table" id="paymentTable">
           <thead>
             <tr>
               <th>#</th>
@@ -40,37 +62,21 @@
               <th>Order</th>
               <th>Party</th>
               <th>Method</th>
-              <th>Amount</th>
+              <th class="text-end">Amount</th>
               <th>Reference</th>
               <th>Date</th>
-              <th>Actions</th>
+              <th class="text-end">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {% for payment in payments %}
-            <tr>
-              <td>{{ forloop.counter }}</td>
-              <td>{{ payment.invoice.number }}</td>
-              <td>#{{ payment.invoice.order.id }}</td>
-              <td>{{ payment.invoice.order.party.name }}</td>
-              <td>{{ payment.method|default:'-' }}</td>
-              <td>{{ payment.amount }}</td>
-              <td>{{ payment.reference|default:'-' }}</td>
-              <td>{{ payment.created_at|date:"d M Y" }}</td>
-              <td>
-                <div class="unified-row-actions">
-                  <a href="{% url 'commerce:payment_view' payment.id %}" class="btn unified-btn-outline btn-sm">View</a>
-                </div>
-              </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="9" class="text-center">No payments found.</td></tr>
-            {% endfor %}
+          <tbody data-ajax-tbody>
+            {% include "commerce/partials/payment_list_rows.html" %}
           </tbody>
         </table>
       </div>
 
-      <div class="d-flex justify-content-end mt-2" data-master-pagination></div>
+      <div class="d-flex justify-content-end mt-2" data-ajax-pagination>
+        {% include "core/includes/ajax_pagination.html" with page_obj=page_obj %}
+      </div>
     </div>
   </div>
 </div>

@@ -1,0 +1,1072 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}WhatsApp Control Center{% endblock %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+
+  <div class="container-fluid py-2 unified-screen">
+    <div class="unified-card">
+      <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <h3 class="mb-0">WhatsApp Control Center</h3>
+          <div class="unified-subtitle">Connect your own WhatsApp number and run your own bot + commerce automation.</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a class="btn unified-btn-primary" href="{% url 'whatsapp:setup_wizard' %}">Setup Wizard</a>
+          <a class="btn unified-btn-outline" href="{% url 'whatsapp:dashboard' %}">Modern Dashboard</a>
+          <a class="btn unified-btn-outline" href="{% url 'whatsapp:accounting_dashboard' %}">Accounting (Legacy)</a>
+          <a class="btn unified-btn-outline" href="{% url 'commerce:whatsapp_order_inbox' %}">Commerce Inbox</a>
+          {% if selected %}
+            <a class="btn unified-btn-outline" target="_blank" href="{% url 'whatsapp:mini_site' account_id=selected.id %}">Open Mini Site (PWA)</a>
+          {% else %}
+            <button class="btn unified-btn-outline" disabled>Open Mini Site (PWA)</button>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="unified-body">
+        <div class="row g-3">
+          <div class="col-lg-5">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <h6 class="mb-2">Your WhatsApp Accounts</h6>
+                {% if accounts %}
+                  <div class="list-group">
+                    {% for a in accounts %}
+                      <a class="list-group-item list-group-item-action {% if selected and a.id == selected.id %}active{% endif %}"
+                         href="{% url 'whatsapp:control_center' %}?account={{ a.id }}">
+                        <div class="d-flex justify-content-between">
+                          <div>
+                            <div class="fw-semibold">{{ a.label|default:"(No label)" }}</div>
+                            <div class="small opacity-75">{{ a.phone_number }} &middot; {{ a.provider }}</div>
+                          </div>
+                          <div class="small">
+                            {{ a.status }}
+                          </div>
+                        </div>
+                      </a>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <div class="text-muted">No accounts connected yet.</div>
+                {% endif %}
+
+                {% if selected %}
+                  <hr class="my-3">
+                  <h6 class="mb-2">Selected Account</h6>
+                  <div class="small text-muted">Provider: <b>{{ selected.provider }}</b> &middot; Status: <b>{{ selected.status }}</b></div>
+
+                    {% if analytics %}
+                      <div class="mt-2 small">
+                        <div class="row g-2">
+                          <div class="col-6">
+                            <div class="text-muted">7d Received</div>
+                          <div class="fw-semibold">{{ analytics.received }}</div>
+                        </div>
+                        <div class="col-6">
+                          <div class="text-muted">7d Sent</div>
+                          <div class="fw-semibold">{{ analytics.sent }}</div>
+                        </div>
+                        <div class="col-6">
+                          <div class="text-muted">Customers</div>
+                          <div class="fw-semibold">{{ analytics.unique_customers }}</div>
+                        </div>
+                        <div class="col-6">
+                          <div class="text-muted">Orders</div>
+                          <div class="fw-semibold">{{ analytics.orders }}</div>
+                          </div>
+                        </div>
+                      </div>
+                    {% endif %}
+
+                    <div class="card border-0 shadow-sm mt-3" style="background: #0f172a; color:#e2e8f0;">
+                      <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                          <div>
+                            <div class="fw-semibold">WhatsApp Mini Site (PWA)</div>
+                            <div class="small text-muted">Share this link in replies or QR for app-free usage.</div>
+                          </div>
+                          <a class="btn btn-sm btn-light" target="_blank" href="{% url 'whatsapp:mini_site' account_id=selected.id %}">Open Preview</a>
+                        </div>
+                        <div class="input-group input-group-sm">
+                          <span class="input-group-text bg-dark text-light border-0">URL</span>
+                          <input id="miniSiteUrl" type="text" class="form-control bg-dark text-light border-0" readonly
+                                 value="{{ request.scheme }}://{{ request.get_host }}{% url 'whatsapp:mini_site' account_id=selected.id %}">
+                          <button class="btn btn-primary" type="button" id="copyMiniSite">Copy</button>
+                        </div>
+                        <div class="small text-muted mt-2">Tip: add to auto-replies or embed in QR for instant onboarding.</div>
+                      </div>
+                    </div>
+
+                    {% if selected.provider == 'meta_cloud_api' %}
+                      <div class="mt-2 small">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                          <div><b>Meta Verify Token:</b> <code id="waMetaVerifyToken">{{ selected.meta_verify_token }}</code></div>
+                          <button class="btn btn-sm unified-btn-outline" type="button" data-copy-target="waMetaVerifyToken">Copy</button>
+                      </div>
+                      <div class="mt-1 d-flex align-items-start gap-2 flex-wrap">
+                        <div><b>Webhook URL:</b><br><code id="waMetaWebhookUrl" style="word-break:break-all;">{{ meta_webhook_url }}</code></div>
+                        <button class="btn btn-sm unified-btn-outline" type="button" data-copy-target="waMetaWebhookUrl">Copy</button>
+                      </div>
+                      <div class="mt-1 text-muted">Configure this URL + verify token in Meta App Dashboard.</div>
+                    </div>
+                  {% elif selected.provider == 'web_gateway' %}
+                    <div class="mt-2 small">
+                      <div class="d-flex align-items-start gap-2 flex-wrap">
+                        <div><b>Gateway Webhook URL:</b><br><code id="waGatewayWebhookUrl" style="word-break:break-all;">{{ gateway_webhook_url }}</code></div>
+                        <button class="btn btn-sm unified-btn-outline" type="button" data-copy-target="waGatewayWebhookUrl">Copy</button>
+                      </div>
+                      <div class="mt-1 text-muted">Your gateway should POST inbound messages to this URL with <code>X-WA-Secret</code>.</div>
+                      {% if latest_session %}
+                        <div class="mt-2">
+                          <div class="text-muted">Last Session</div>
+                          <div><b>Status:</b> {{ latest_session.status }}</div>
+                          {% if latest_session.qr_payload %}
+                            {% if latest_session.qr_payload|slice:"0:10" == "data:image" %}
+                              <div class="mt-1">
+                                <b>QR Code:</b>
+                                <div class="mt-1">
+                                  <img src="{{ latest_session.qr_payload }}" alt="WhatsApp QR" style="max-width:260px;border:1px solid #e5e7eb;border-radius:8px;">
+                                </div>
+                              </div>
+                            {% else %}
+                              <div class="mt-1 d-flex align-items-start gap-2 flex-wrap">
+                                <div><b>QR Payload:</b><br><code id="waQrPayload" style="word-break:break-all;">{{ latest_session.qr_payload }}</code></div>
+                                <button class="btn btn-sm unified-btn-outline" type="button" data-copy-target="waQrPayload">Copy</button>
+                              </div>
+                            {% endif %}
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+
+                  <div class="mt-3 d-flex gap-2 flex-wrap">
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="toggle_bot">
+                      <button class="btn unified-btn-outline" type="submit">
+                        {% if selected.bot and selected.bot.is_enabled %}Disable Bot{% else %}Enable Bot{% endif %}
+                      </button>
+                    </form>
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="toggle_auto_reply">
+                      <button class="btn unified-btn-outline" type="submit">
+                        {% if selected.bot and selected.bot.auto_reply_enabled %}Disable Auto Reply{% else %}Enable Auto Reply{% endif %}
+                      </button>
+                    </form>
+                    {% if selected.provider == 'web_gateway' %}
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="request_qr">
+                        <button class="btn unified-btn-outline" type="submit">Request QR</button>
+                      </form>
+                    {% endif %}
+                  </div>
+
+                  <hr class="my-3">
+                  <h6 class="mb-2">Quick Commerce (Optional)</h6>
+                  <form method="post" class="row g-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_quick">
+                    <div class="col-12">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="qcEnabled" name="quick_commerce_enabled" {% if selected.quick_commerce_enabled %}checked{% endif %}>
+                        <label class="form-check-label" for="qcEnabled">Enable quick mode (auto-accept orders)</label>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Delivery Radius (km)</label>
+                      <input class="form-control" name="quick_delivery_radius_km" value="{{ selected.quick_delivery_radius_km|default:'0' }}">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Store Lat</label>
+                      <input class="form-control" name="store_latitude" value="{{ selected.store_latitude|default:'' }}" placeholder="e.g. 28.6139">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Store Lng</label>
+                      <input class="form-control" name="store_longitude" value="{{ selected.store_longitude|default:'' }}" placeholder="e.g. 77.2090">
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Assign to Agent (optional)</label>
+                      <select class="form-select" name="quick_assign_agent_id">
+                        <option value="">-- No agent --</option>
+                        {% for ag in field_agents %}
+                          <option value="{{ ag.id }}" {% if selected.quick_assign_agent and ag.id == selected.quick_assign_agent.id %}selected{% endif %}>
+                            {{ ag.user.username }}{% if ag.user.first_name %} ({{ ag.user.first_name }} {{ ag.user.last_name }}){% endif %}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-12 d-flex justify-content-end">
+                      <button class="btn unified-btn-outline" type="submit">Save Quick Settings</button>
+                    </div>
+                    <div class="col-12 small text-muted">
+                      Tip: Set <code>BASE_URL</code> to your public domain so invoice/payment links work from WhatsApp.
+                    </div>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mt-3">
+              <div class="card-body">
+                <h6 class="mb-2">Add WhatsApp Account</h6>
+                <form method="post" class="row g-2">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="create_account">
+
+                  <div class="col-md-6">
+                    <label class="form-label">Label</label>
+                    <input class="form-control" name="label" placeholder="e.g. Main Number">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Phone</label>
+                    <input class="form-control" name="phone_number" placeholder="e.g. 9199xxxxxxx">
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Provider</label>
+                    <select class="form-select" name="provider">
+                      <option value="meta_cloud_api">WhatsApp Cloud API (Official)</option>
+                      <option value="web_gateway">WhatsApp Web / QR Gateway</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Graph Version</label>
+                    <input class="form-control" name="meta_graph_version" value="v20.0">
+                  </div>
+
+                  <div class="col-12">
+                    <div class="small text-muted">Cloud API fields</div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Phone Number ID</label>
+                    <input class="form-control" name="meta_phone_number_id" placeholder="Meta phone_number_id">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">WABA ID</label>
+                    <input class="form-control" name="meta_waba_id" placeholder="WhatsApp Business Account id">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Access Token</label>
+                    <input class="form-control" name="meta_access_token" type="password" placeholder="Meta token">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">App Secret (for signature verify)</label>
+                    <input class="form-control" name="meta_app_secret" type="password" placeholder="Meta app secret">
+                  </div>
+
+                  <div class="col-12">
+                    <div class="small text-muted">Gateway fields (optional)</div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Gateway Base URL</label>
+                    <input class="form-control" name="gateway_base_url" placeholder="https://gateway.example.com">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Gateway Session ID</label>
+                    <input class="form-control" name="gateway_session_id" placeholder="session-id">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Gateway API Key</label>
+                    <input class="form-control" name="gateway_api_key" type="password" placeholder="gateway key">
+                  </div>
+
+                  <div class="col-12 d-flex justify-content-end">
+                    <button class="btn unified-btn-primary" type="submit">Add Account</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="card border-0 shadow-sm mb-3">
+              <div class="card-body">
+                <h6 class="mb-2">Customer Chats{% if selected %} &middot; {{ selected.label|default:selected.phone_number }}{% endif %}</h6>
+                {% if selected %}
+                  {% if selected_customer %}
+                    <div class="small text-muted mb-2">
+                      Viewing: <b>{{ selected_customer.display_name|default:selected_customer.phone_number }}</b>
+                      <a class="ms-2" href="{% url 'whatsapp:control_center' %}?account={{ selected.id }}">Clear</a>
+                    </div>
+                    <div class="small mb-2">
+                      <div class="text-muted mb-1">Tags</div>
+                      <div class="d-flex flex-wrap gap-1 align-items-center">
+                        {% for t in selected_customer.tags %}
+                          <form method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="remove_customer_tag">
+                            <input type="hidden" name="customer_id" value="{{ selected_customer.id }}">
+                            <input type="hidden" name="tag" value="{{ t }}">
+                            <button class="btn btn-sm unified-btn-outline" type="submit">{{ t }} &times;</button>
+                          </form>
+                        {% empty %}
+                          <span class="text-muted">No tags yet.</span>
+                        {% endfor %}
+                      </div>
+                      <form method="post" class="d-flex gap-2 mt-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_customer_tag">
+                        <input type="hidden" name="customer_id" value="{{ selected_customer.id }}">
+                        <input class="form-control form-control-sm" name="tag" placeholder="Add tag (vip, repeat, lead)">
+                        <button class="btn btn-sm unified-btn-outline" type="submit">Add</button>
+                      </form>
+                    </div>
+                  {% endif %}
+                  <div class="unified-table-wrap">
+                    <table class="table unified-table">
+                      <thead>
+                        <tr>
+                          <th>Customer</th>
+                          <th>Phone</th>
+                          <th>Tags</th>
+                          <th>Last Seen</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for c in customers %}
+                          <tr>
+                            <td>{{ c.display_name|default:"-" }}</td>
+                            <td><code>{{ c.phone_number }}</code></td>
+                            <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                              {% for t in c.tags %}<span class="badge bg-secondary me-1">{{ t }}</span>{% endfor %}
+                            </td>
+                            <td>{% if c.last_seen_at %}{{ c.last_seen_at|date:"d M Y, H:i" }}{% else %}-{% endif %}</td>
+                            <td class="text-end">
+                              <a class="btn btn-sm unified-btn-outline" href="{% url 'whatsapp:control_center' %}?account={{ selected.id }}&customer={{ c.id }}">Open</a>
+                            </td>
+                          </tr>
+                        {% empty %}
+                          <tr><td colspan="5" class="text-center text-muted py-3">No customers yet.</td></tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                {% else %}
+                  <div class="text-muted">Select an account to view customers.</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-3">
+              <div class="card-body">
+                <h6 class="mb-2">Send Message{% if selected %} &middot; {{ selected.label|default:selected.phone_number }}{% endif %}</h6>
+                {% if selected %}
+                  <form method="post" class="row g-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="send_manual">
+                    <div class="col-md-4">
+                      <label class="form-label">To</label>
+                      <input class="form-control" name="to_number" placeholder="e.g. 9555xxxxxx or 919555xxxxxx" value="{% if selected_customer %}{{ selected_customer.phone_number }}{% endif %}">
+                      <div class="small text-muted mt-1">Tip: 10-digit numbers auto add country code.</div>
+                    </div>
+                    <div class="col-md-8">
+                      <label class="form-label">Message</label>
+                      <input class="form-control" name="message_text" placeholder="Type your message">
+                    </div>
+                    <div class="col-12 d-flex justify-content-end">
+                      <button class="btn unified-btn-outline" type="submit">Send</button>
+                    </div>
+                  </form>
+                {% else %}
+                  <div class="text-muted">Select an account to send messages.</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-3" id="broadcasts">
+              <div class="card-body">
+                <h6 class="mb-2">Broadcasts{% if selected %} &middot; {{ selected.label|default:selected.phone_number }}{% endif %}</h6>
+                {% if selected %}
+                  <form method="post" class="row g-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_broadcast">
+                    <div class="col-md-4">
+                      <label class="form-label">Name</label>
+                      <input class="form-control" name="broadcast_name" placeholder="Festival Greetings">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Target</label>
+                      <select class="form-select" name="target_type">
+                        <option value="all_customers">All customers</option>
+                        <option value="customer_tag">Customer tag</option>
+                      </select>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Tag (optional)</label>
+                      <input class="form-control" name="target_tag" placeholder="vip">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Schedule (optional)</label>
+                      <input class="form-control" name="scheduled_at" type="datetime-local">
+                      <div class="small text-muted mt-1">If set, campaign will auto-start at this time.</div>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Message</label>
+                      <textarea class="form-control" name="broadcast_text" rows="2" placeholder="Your offer / reminder message"></textarea>
+                    </div>
+                    <div class="col-12 d-flex justify-content-end">
+                      <button class="btn unified-btn-primary" type="submit">Create Broadcast</button>
+                    </div>
+                  </form>
+
+                  <hr class="my-3">
+                  <div class="unified-table-wrap">
+                    <table class="table unified-table">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Status</th>
+                          <th>Scheduled</th>
+                          <th>Updated</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for b in broadcasts %}
+                          <tr>
+                            <td>{{ b.name }}</td>
+                            <td>{{ b.status }}</td>
+                            <td>{% if b.scheduled_at %}{{ b.scheduled_at|date:"d M Y, H:i" }}{% else %}-{% endif %}</td>
+                            <td>{{ b.updated_at|date:"d M Y, H:i" }}</td>
+                            <td class="text-end">
+                              <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="start_broadcast">
+                                <input type="hidden" name="campaign_id" value="{{ b.id }}">
+                                <button class="btn btn-sm unified-btn-outline" type="submit">Start</button>
+                              </form>
+                            </td>
+                          </tr>
+                        {% empty %}
+                          <tr><td colspan="5" class="text-center text-muted py-3">No campaigns yet.</td></tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                {% else %}
+                  <div class="text-muted">Select an account to manage broadcasts.</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-3" id="advisor">
+              <div class="card-body">
+                <h6 class="mb-2">Smart Advisor{% if selected %} &middot; {{ selected.label|default:selected.phone_number }}{% endif %}</h6>
+                {% if selected %}
+                  <div class="small text-muted mb-2">
+                    WhatsApp admin commands: <code>health</code>, <code>reorder</code>, <code>supplier dues</code>.
+                  </div>
+                  <form method="post" class="d-flex flex-wrap gap-2 align-items-center">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="send_supplier_reminders">
+                    <button class="btn btn-sm unified-btn-outline" type="submit">Send Supplier Payment Reminders</button>
+                    <div class="small text-muted">Sends max 1 reminder per supplier/day.</div>
+                  </form>
+                {% else %}
+                  <div class="text-muted">Select an account to use Smart Advisor.</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-3" id="bot">
+              <div class="card-body">
+                <h6 class="mb-2">Bot Builder{% if selected %} &middot; {{ selected.label|default:selected.phone_number }}{% endif %}</h6>
+                {% if selected %}
+                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <div class="small text-muted">
+                      Visual drag &amp; drop builder (like SuperAdmin flow builder) for this WhatsApp number.
+                    </div>
+                    <a class="btn btn-sm unified-btn-primary" href="{% url 'whatsapp:visual_flow_list' account_id=selected.id %}">Open Visual Builder</a>
+                  </div>
+                {% endif %}
+                {% if selected and selected.bot %}
+                  <div class="row g-3">
+                    <div class="col-lg-6">
+                      <div class="border rounded p-2">
+                        <div class="fw-semibold mb-2">Activate Template</div>
+                        <form method="post" class="row g-2">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="apply_template">
+                          <div class="col-8">
+                            <select class="form-select" name="template_id">
+                              <option value="">-- Select template --</option>
+                              {% if global_templates %}
+                                <optgroup label="Global Templates">
+                                  {% for t in global_templates %}
+                                    <option value="{{ t.id }}">{{ t.name }} ({{ t.kind }})</option>
+                                  {% endfor %}
+                                </optgroup>
+                              {% endif %}
+                              {% if my_templates %}
+                                <optgroup label="My Templates">
+                                  {% for t in my_templates %}
+                                    <option value="{{ t.id }}">{{ t.name }} ({{ t.kind }})</option>
+                                  {% endfor %}
+                                </optgroup>
+                              {% endif %}
+                            </select>
+                          </div>
+                          <div class="col-4 d-grid">
+                            <button class="btn unified-btn-primary" type="submit">Apply</button>
+                          </div>
+                          <div class="col-12 small text-muted">
+                            Applying a template creates/updates flows + message keys for this bot.
+                          </div>
+                        </form>
+                      </div>
+
+                      <div class="border rounded p-2 mt-3">
+                        <div class="fw-semibold mb-2">My Template Library</div>
+                        <form method="post" class="row g-2">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="save_template">
+                          <div class="col-md-6">
+                            <label class="form-label">Template Name</label>
+                            <input class="form-control" name="template_name" placeholder="e.g. Festival Sale Bot">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Kind</label>
+                            <select class="form-select" name="template_kind">
+                              <option value="{{ selected.bot.kind }}" selected>Use current bot kind ({{ selected.bot.kind }})</option>
+                              <option value="welcome">welcome</option>
+                              <option value="order">order</option>
+                              <option value="payment">payment</option>
+                              <option value="support">support</option>
+                              <option value="lead">lead</option>
+                              <option value="appointment">appointment</option>
+                              <option value="survey">survey</option>
+                              <option value="custom">custom</option>
+                            </select>
+                          </div>
+                          <div class="col-12">
+                            <label class="form-label">Description (optional)</label>
+                            <input class="form-control" name="template_description" placeholder="Short note for your team">
+                          </div>
+                          <div class="col-12 d-flex justify-content-end">
+                            <button class="btn unified-btn-outline" type="submit">Save Current Bot as Template</button>
+                          </div>
+                          <div class="col-12 small text-muted">
+                            This saves the current bot messages + flows into your reusable library.
+                          </div>
+                        </form>
+
+                        {% if my_templates %}
+                          <hr class="my-3">
+                          <form method="post" class="row g-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_template">
+                            <div class="col-md-6">
+                              <label class="form-label">Overwrite Template</label>
+                              <select class="form-select" name="template_id">
+                                <option value="">-- Select --</option>
+                                {% for t in my_templates %}
+                                  <option value="{{ t.id }}">{{ t.name }} ({{ t.kind }})</option>
+                                {% endfor %}
+                              </select>
+                            </div>
+                            <div class="col-md-6">
+                              <label class="form-label">New Name (optional)</label>
+                              <input class="form-control" name="template_name" placeholder="Leave blank to keep name">
+                            </div>
+                            <div class="col-12 d-flex justify-content-end">
+                              <button class="btn unified-btn-outline" type="submit">Overwrite with Current Bot</button>
+                            </div>
+                          </form>
+
+                          <div class="unified-table-wrap mt-2">
+                            <table class="table unified-table">
+                              <thead>
+                                <tr>
+                                  <th>My Templates</th>
+                                  <th>Kind</th>
+                                  <th></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for t in my_templates %}
+                                  <tr>
+                                    <td>{{ t.name }}</td>
+                                    <td>{{ t.kind }}</td>
+                                    <td class="text-end">
+                                      <form method="post" style="display:inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="delete_template">
+                                        <input type="hidden" name="template_id" value="{{ t.id }}">
+                                        <button class="btn btn-sm unified-btn-outline" type="submit">Delete</button>
+                                      </form>
+                                    </td>
+                                  </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        {% else %}
+                          <div class="small text-muted mt-2">No personal templates yet. Save one from your current bot.</div>
+                        {% endif %}
+                      </div>
+
+                      <div class="border rounded p-2 mt-3">
+                        <div class="fw-semibold mb-2">Bot Messages</div>
+                        <div class="unified-table-wrap">
+                          <table class="table unified-table">
+                            <thead>
+                              <tr>
+                                <th>Key</th>
+                                <th>Type</th>
+                                <th>Preview</th>
+                                <th></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for bm in bot_messages %}
+                                <tr>
+                                  <td><code>{{ bm.key }}</code></td>
+                                  <td>{{ bm.message_type }}</td>
+                                  <td style="max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ bm.text|default:bm.media_url|default:"-" }}</td>
+                                  <td class="text-end">
+                                    <form method="post" style="display:inline;">
+                                      {% csrf_token %}
+                                      <input type="hidden" name="action" value="delete_message">
+                                      <input type="hidden" name="message_id" value="{{ bm.id }}">
+                                      <button class="btn btn-sm unified-btn-outline" type="submit">Delete</button>
+                                    </form>
+                                  </td>
+                                </tr>
+                              {% empty %}
+                                <tr><td colspan="4" class="text-center text-muted py-3">No bot messages yet.</td></tr>
+                              {% endfor %}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <form method="post" class="row g-2 mt-2">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="create_message">
+                          <div class="col-md-4">
+                            <label class="form-label">Key</label>
+                            <input class="form-control" name="message_key" placeholder="e.g. welcome">
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" name="message_type">
+                              <option value="text">Text</option>
+                              <option value="image">Image</option>
+                              <option value="document">Document</option>
+                            </select>
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Filename (optional)</label>
+                            <input class="form-control" name="filename" placeholder="invoice.pdf">
+                          </div>
+                          <div class="col-12">
+                            <label class="form-label">Text / Caption</label>
+                            <input class="form-control" name="message_text" placeholder="Message text (for text/doc caption)">
+                          </div>
+                          <div class="col-12">
+                            <label class="form-label">Media URL (optional)</label>
+                            <input class="form-control" name="media_url" placeholder="https://...">
+                          </div>
+                          <div class="col-12 d-flex justify-content-end">
+                            <button class="btn unified-btn-outline" type="submit">Save Message</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="border rounded p-2">
+                        <div class="fw-semibold mb-2">Bot Flows</div>
+                        <div class="unified-table-wrap">
+                          <table class="table unified-table">
+                            <thead>
+                              <tr>
+                                <th>Name</th>
+                                <th>Trigger</th>
+                                <th>Active</th>
+                                <th>Priority</th>
+                                <th></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for f in bot_flows %}
+                                <tr>
+                                  <td>{{ f.name }}</td>
+                                  <td><span class="text-muted">{{ f.trigger_type }}</span>: <code>{{ f.trigger_value }}</code></td>
+                                  <td>{% if f.is_active %}Yes{% else %}No{% endif %}</td>
+                                  <td>{{ f.priority }}</td>
+                                  <td class="text-end">
+                                    <a class="btn btn-sm unified-btn-outline" href="{% url 'whatsapp:control_center' %}?account={{ selected.id }}&flow={{ f.id }}#bot">Edit</a>
+                                    <form method="post" style="display:inline;">
+                                      {% csrf_token %}
+                                      <input type="hidden" name="action" value="toggle_flow">
+                                      <input type="hidden" name="flow_id" value="{{ f.id }}">
+                                      <button class="btn btn-sm unified-btn-outline" type="submit">{% if f.is_active %}Disable{% else %}Enable{% endif %}</button>
+                                    </form>
+                                    <form method="post" style="display:inline;">
+                                      {% csrf_token %}
+                                      <input type="hidden" name="action" value="delete_flow">
+                                      <input type="hidden" name="flow_id" value="{{ f.id }}">
+                                      <button class="btn btn-sm unified-btn-outline" type="submit">Delete</button>
+                                    </form>
+                                  </td>
+                                </tr>
+                              {% empty %}
+                                <tr><td colspan="5" class="text-center text-muted py-3">No flows yet.</td></tr>
+                              {% endfor %}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {% if edit_flow %}
+                          <div class="small text-muted mb-2">
+                            Editing flow: <b>{{ edit_flow.name }}</b>
+                            <a class="ms-2" href="{% url 'whatsapp:control_center' %}?account={{ selected.id }}#bot">Cancel</a>
+                          </div>
+                        {% endif %}
+                        <form method="post" class="row g-2 mt-2">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="create_flow">
+                          <input type="hidden" name="flow_id" value="{% if edit_flow %}{{ edit_flow.id }}{% endif %}">
+                          <div class="col-md-6">
+                            <label class="form-label">Flow Name</label>
+                            <input class="form-control" name="flow_name" placeholder="e.g. Support Keyword" value="{% if edit_flow %}{{ edit_flow.name }}{% endif %}">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Trigger Type</label>
+                            <select class="form-select" name="trigger_type">
+                              <option value="keyword" {% if edit_flow and edit_flow.trigger_type == 'keyword' %}selected{% endif %}>Keyword</option>
+                              <option value="menu_selection" {% if edit_flow and edit_flow.trigger_type == 'menu_selection' %}selected{% endif %}>Menu Selection</option>
+                              <option value="button_click" {% if edit_flow and edit_flow.trigger_type == 'button_click' %}selected{% endif %}>Button Click</option>
+                              <option value="cart_action" {% if edit_flow and edit_flow.trigger_type == 'cart_action' %}selected{% endif %}>Cart Action</option>
+                              <option value="payment_confirmation" {% if edit_flow and edit_flow.trigger_type == 'payment_confirmation' %}selected{% endif %}>Payment Confirmation</option>
+                              <option value="order_status" {% if edit_flow and edit_flow.trigger_type == 'order_status' %}selected{% endif %}>Order Status</option>
+                              <option value="broadcast_trigger" {% if edit_flow and edit_flow.trigger_type == 'broadcast_trigger' %}selected{% endif %}>Broadcast Trigger</option>
+                            </select>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Trigger Value</label>
+                            <input class="form-control" name="trigger_value" placeholder="e.g. support / 1" value="{% if edit_flow %}{{ edit_flow.trigger_value }}{% endif %}">
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">Priority</label>
+                            <input class="form-control" name="priority" value="{% if edit_flow %}{{ edit_flow.priority }}{% else %}100{% endif %}">
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">Active</label>
+                            <select class="form-select" name="is_active">
+                              <option value="1" {% if not edit_flow or edit_flow.is_active %}selected{% endif %}>Yes</option>
+                              <option value="" {% if edit_flow and not edit_flow.is_active %}selected{% endif %}>No</option>
+                            </select>
+                          </div>
+
+                          <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                              <label class="form-label mb-0">Actions (Drag &amp; Drop)</label>
+                              <button class="btn btn-sm unified-btn-outline" type="button" id="waAddAction">+ Add Action</button>
+                            </div>
+                            <div id="waActionsList" class="mt-2"></div>
+                            <div class="small text-muted mt-1">Tip: Drag action cards to reorder. Multiple actions supported.</div>
+                            <details class="mt-2">
+                              <summary class="small">Advanced: Actions JSON</summary>
+                              <textarea class="form-control mt-2" name="actions_json" id="waActionsJson" rows="3" placeholder='[{"type":"send_text","text":"Hi"}]'></textarea>
+                            </details>
+                            <details class="mt-2">
+                              <summary class="small">Simple (single action)</summary>
+                              <div class="row g-2 mt-1">
+                                <div class="col-md-6">
+                                  <label class="form-label">Action</label>
+                                  <select class="form-select" name="action_type">
+                                    <option value="send_text">Send Text</option>
+                                    <option value="send_message_key">Send Message Key</option>
+                                    <option value="run_order_bot">Run Order Bot</option>
+                                    <option value="connect_human">Connect Human</option>
+                                    <option value="ai_reply">AI Reply</option>
+                                  </select>
+                                </div>
+                                <div class="col-md-6">
+                                  <label class="form-label">Action Text / Key</label>
+                                  <input class="form-control" name="action_text" placeholder="Text for send_text">
+                                  <input class="form-control mt-1" name="action_key" placeholder="Key for send_message_key (e.g. welcome)">
+                                </div>
+                              </div>
+                            </details>
+                          </div>
+                          <div class="col-12 d-flex justify-content-end">
+                            <button class="btn unified-btn-outline" type="submit">Save Flow</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="text-muted">Select an account to configure bot flows.</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <h6 class="mb-2">Message Logs{% if selected %} &middot; {{ selected.label|default:selected.phone_number }}{% endif %}</h6>
+                <div class="unified-table-wrap">
+                  <table class="table unified-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Dir</th>
+                        <th>From</th>
+                        <th>Body</th>
+                        <th>Intent</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for m in logs %}
+                        <tr>
+                          <td>{{ m.id }}</td>
+                          <td>{{ m.direction }}</td>
+                          <td>{{ m.from_number }}</td>
+                          <td style="max-width:420px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ m.body }}</td>
+                          <td>{{ m.parsed_intent|default:"-" }}</td>
+                          <td>{{ m.status }}</td>
+                          <td>{{ m.created_at|date:"d M Y, H:i" }}</td>
+                        </tr>
+                      {% empty %}
+                        <tr><td colspan="7" class="text-center text-muted py-4">No messages yet.</td></tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                <div class="small text-muted mt-2">
+                  Note: message bodies are stored encrypted at rest.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+  {% if edit_flow %}
+    {{ edit_flow.actions|json_script:"waInitialActions" }}
+  {% endif %}
+  <script>
+    (function () {
+      function qs(sel) { return document.querySelector(sel); }
+      function qsa(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+      function safeParse(text) {
+        try {
+          var v = JSON.parse(text || "[]");
+          return Array.isArray(v) ? v : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      // Copy buttons
+      qsa("[data-copy-target]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var id = btn.getAttribute("data-copy-target");
+          var el = document.getElementById(id);
+          if (!el) return;
+          var text = (el.textContent || "").trim();
+          if (!text) return;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () {
+              btn.textContent = "Copied";
+              setTimeout(function () { btn.textContent = "Copy"; }, 1200);
+            }).catch(function () {});
+          }
+        });
+      });
+
+      // Mini-site copy shortcut
+      var miniBtn = document.getElementById("copyMiniSite");
+      if (miniBtn) {
+        miniBtn.addEventListener("click", function () {
+          var input = document.getElementById("miniSiteUrl");
+          if (!input) return;
+          input.select();
+          input.setSelectionRange(0, 99999);
+          var val = input.value;
+          if (!val) return;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(val).then(function () {
+              miniBtn.textContent = "Copied";
+              setTimeout(function () { miniBtn.textContent = "Copy"; }, 1200);
+            }).catch(function () {});
+          }
+        });
+      }
+
+      // Drag & drop flow action builder
+      var listEl = qs("#waActionsList");
+      var addBtn = qs("#waAddAction");
+      var jsonEl = qs("#waActionsJson");
+      if (!listEl || !addBtn || !jsonEl) return;
+
+      var initial = [];
+      try {
+        var s = document.getElementById("waInitialActions");
+        if (s) initial = safeParse(s.textContent || "[]");
+      } catch (e) { initial = []; }
+
+      if (!initial.length) {
+        // fallback: try read existing textarea JSON (if user manually typed)
+        initial = safeParse(jsonEl.value || "[]");
+      }
+
+      var actions = initial.length ? initial : [{ type: "send_text", text: "Hi! How can I help you?" }];
+      var dragIndex = null;
+
+      function normalizeAction(a) {
+        a = a && typeof a === "object" ? a : {};
+        var t = (a.type || "send_text") + "";
+        var out = { type: t };
+        if (t === "send_text") out.text = (a.text || "") + "";
+        if (t === "send_message_key") out.key = (a.key || "") + "";
+        return out;
+      }
+
+      function syncJson() {
+        var normalized = actions.map(normalizeAction);
+        var txt = JSON.stringify(normalized);
+        jsonEl.value = txt;
+      }
+
+      function render() {
+        listEl.innerHTML = "";
+        actions.forEach(function (a, idx) {
+          a = normalizeAction(a);
+          var card = document.createElement("div");
+          card.className = "card border-0 shadow-sm p-2 mb-2";
+          card.setAttribute("draggable", "true");
+          card.setAttribute("data-idx", String(idx));
+
+          card.addEventListener("dragstart", function () {
+            dragIndex = idx;
+            card.style.opacity = "0.7";
+          });
+          card.addEventListener("dragend", function () {
+            dragIndex = null;
+            card.style.opacity = "1";
+          });
+          card.addEventListener("dragover", function (e) { e.preventDefault(); });
+          card.addEventListener("drop", function (e) {
+            e.preventDefault();
+            var targetIdx = parseInt(card.getAttribute("data-idx") || "-1", 10);
+            if (dragIndex === null || isNaN(targetIdx) || dragIndex === targetIdx) return;
+            var moved = actions.splice(dragIndex, 1)[0];
+            actions.splice(targetIdx, 0, moved);
+            render();
+          });
+
+          var header = document.createElement("div");
+          header.className = "d-flex justify-content-between align-items-center";
+          header.innerHTML = "<div class='fw-semibold'>Action " + (idx + 1) + "</div>";
+
+          var del = document.createElement("button");
+          del.type = "button";
+          del.className = "btn btn-sm unified-btn-outline";
+          del.textContent = "Remove";
+          del.addEventListener("click", function () {
+            actions.splice(idx, 1);
+            if (!actions.length) actions.push({ type: "send_text", text: "" });
+            render();
+          });
+          header.appendChild(del);
+
+          var body = document.createElement("div");
+          body.className = "row g-2 mt-1";
+
+          var colType = document.createElement("div");
+          colType.className = "col-md-4";
+          var typeSel = document.createElement("select");
+          typeSel.className = "form-select form-select-sm";
+          [
+            ["send_text", "Send Text"],
+            ["send_message_key", "Send Message Key"],
+            ["run_order_bot", "Run Order Bot"],
+            ["connect_human", "Connect Human"],
+            ["ai_reply", "AI Reply"]
+          ].forEach(function (opt) {
+            var o = document.createElement("option");
+            o.value = opt[0];
+            o.textContent = opt[1];
+            if (a.type === opt[0]) o.selected = true;
+            typeSel.appendChild(o);
+          });
+          typeSel.addEventListener("change", function () {
+            actions[idx] = normalizeAction({ type: typeSel.value, text: a.text, key: a.key });
+            render();
+          });
+          colType.appendChild(typeSel);
+
+          var colParam = document.createElement("div");
+          colParam.className = "col-md-8";
+          if (a.type === "send_text") {
+            var inp = document.createElement("input");
+            inp.className = "form-control form-control-sm";
+            inp.placeholder = "Message text";
+            inp.value = a.text || "";
+            inp.addEventListener("input", function () {
+              actions[idx] = normalizeAction({ type: a.type, text: inp.value });
+              syncJson();
+            });
+            colParam.appendChild(inp);
+          } else if (a.type === "send_message_key") {
+            var key = document.createElement("input");
+            key.className = "form-control form-control-sm";
+            key.placeholder = "Message key (e.g. welcome)";
+            key.value = a.key || "";
+            key.addEventListener("input", function () {
+              actions[idx] = normalizeAction({ type: a.type, key: key.value });
+              syncJson();
+            });
+            colParam.appendChild(key);
+          } else {
+            var hint = document.createElement("div");
+            hint.className = "small text-muted mt-1";
+            hint.textContent = "No parameters";
+            colParam.appendChild(hint);
+          }
+
+          body.appendChild(colType);
+          body.appendChild(colParam);
+
+          card.appendChild(header);
+          card.appendChild(body);
+          listEl.appendChild(card);
+        });
+        syncJson();
+      }
+
+      addBtn.addEventListener("click", function () {
+        actions.push({ type: "send_text", text: "" });
+        render();
+      });
+
+      // If user edits JSON manually, try to re-render
+      jsonEl.addEventListener("input", function () {
+        var parsed = safeParse(jsonEl.value);
+        if (parsed.length) {
+          actions = parsed;
+          render();
+        }
+      });
+
+      render();
+    })();
+  </script>
+{% endblock %}

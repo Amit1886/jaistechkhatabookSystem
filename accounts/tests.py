@@ -25,13 +25,58 @@ class SignupUserLimitTests(TestCase):
                 "email": "u2@example.com",
                 "username": "u2",
                 "mobile": "9000000002",
-                "password1": "pass12345X",
-                "password2": "pass12345X",
+                "password": "pass12345X",
             },
             follow=False,
+            secure=True,
         )
         self.assertEqual(resp.status_code, 302)
         self.assertIn(reverse("accounts:login"), resp["Location"])
+
+    @override_settings(MAX_TEST_USERS=1, DESKTOP_MODE=True, OTP_BYPASS=True)
+    def test_signup_allowed_in_desktop_mode_even_after_limit(self):
+        User = get_user_model()
+        User.objects.create_user(
+            email="u1@example.com",
+            password="pass12345",
+            username="u1",
+            mobile="9000000001",
+        )
+
+        resp = self.client.post(
+            reverse("accounts:signup"),
+            {
+                "email": "u2@example.com",
+                "username": "u2",
+                "mobile": "9000000002",
+                "password": "pass12345X",
+            },
+            follow=False,
+            secure=True,
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp["Location"], reverse("accounts:dashboard"))
+
+
+class PasswordLoginTests(TestCase):
+    def test_password_login_authenticates_by_email_username_field(self):
+        User = get_user_model()
+        User.objects.create_user(
+            email="user@example.com",
+            password="pass12345",
+            username="not-an-email",
+            mobile="9000000099",
+            is_active=True,
+        )
+
+        resp = self.client.post(
+            reverse("accounts:login"),
+            {"identifier": "user@example.com", "password": "pass12345"},
+            follow=False,
+            secure=True,
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp["Location"], reverse("accounts:dashboard"))
 
 
 class LedgerEntryBalanceRecalcTests(TestCase):
@@ -65,4 +110,3 @@ class LedgerEntryBalanceRecalcTests(TestCase):
         # Running = +100 - 40
         self.assertEqual(e1.balance, Decimal("100.00"))
         self.assertEqual(e2.balance, Decimal("60.00"))
-

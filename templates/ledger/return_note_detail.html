@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+{% load mathfilters %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">{% if note.note_type == 'credit' %}Credit Note{% else %}Debit Note{% endif %} #{{ note.id }}</h3>
+        <div class="unified-subtitle">{{ note.invoice.number|default:note.invoice.id }} • {{ note.invoice.order.party.name }} • {{ note.date|date:"d M Y" }}</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'ledger:credit_note_list' %}" class="btn unified-btn-outline">Credit Notes</a>
+        <a href="{% url 'ledger:debit_note_list' %}" class="btn unified-btn-outline">Debit Notes</a>
+        <a href="{% url 'ledger:receipt' %}?reference_type=ledger.ReturnNote&reference_id={{ note.id }}&kind=voucher" class="btn unified-btn-outline" target="_blank" rel="noopener">Receipt</a>
+        {% if note.status == 'draft' and erp_can_edit %}
+          <a href="{% url 'ledger:return_note_edit' note.id %}" class="btn unified-btn-outline">Edit</a>
+          <form method="post" action="{% url 'ledger:return_note_post' note.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn unified-btn-primary">Post</button>
+          </form>
+        {% endif %}
+        {% if note.status != 'cancelled' and erp_can_delete %}
+          <form method="post" action="{% url 'ledger:return_note_cancel' note.id %}" data-confirm data-confirm-title="Cancel Note" data-confirm-message="Cancel this note? Posted stock and accounting will be reversed." data-confirm-ok-text="Cancel" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn unified-btn-outline">Cancel</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="unified-body">
+      <div class="d-flex gap-2 flex-wrap mb-2">
+        {% if note.status == 'posted' %}
+          <span class="badge bg-success">Posted</span>
+        {% elif note.status == 'draft' %}
+          <span class="badge bg-warning text-dark">Draft</span>
+        {% else %}
+          <span class="badge bg-danger">Cancelled</span>
+        {% endif %}
+        {% if note.narration %}<span class="badge bg-light text-dark">{{ note.narration }}</span>{% endif %}
+      </div>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Product</th>
+              <th class="text-end">Qty</th>
+              <th class="text-end">Rate</th>
+              <th class="text-end">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for it in note.items.all %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="fw-semibold">{{ it.product.name }}</td>
+                <td class="text-end">{{ it.quantity }}</td>
+                <td class="text-end">{{ it.rate }}</td>
+                <td class="text-end fw-bold">{{ it.quantity|mul:it.rate|floatformat:2 }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center text-muted py-4">No items.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-2">
+        <div class="card border-secondary shadow-sm" style="min-width:320px;">
+          <div class="card-body">
+            <div class="d-flex justify-content-between"><div class="text-muted">Taxable</div><div class="fw-bold">{{ note.taxable_amount }}</div></div>
+            <div class="d-flex justify-content-between"><div class="text-muted">Tax</div><div class="fw-bold">{{ note.tax_amount }}</div></div>
+            <hr class="my-2">
+            <div class="d-flex justify-content-between"><div class="fw-bold">Total</div><div class="fw-bold">{{ note.total_amount }}</div></div>
+          </div>
+        </div>
+      </div>
+
+      {% include 'core/includes/document_action_bar.html' with receipt_reference_type="ledger.ReturnNote" receipt_reference_id=note.id receipt_kind="voucher" %}
+    </div>
+  </div>
+</div>
+{% endblock %}

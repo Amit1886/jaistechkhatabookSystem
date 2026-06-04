@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 import os
 import sys
 
@@ -8,6 +9,9 @@ class AccountsConfig(AppConfig):
     name = "accounts"
 
     def ready(self):
+        if getattr(settings, "LIGHTWEIGHT_DEPLOYMENT", False):
+            return
+
         import accounts.signals
 
         # ❌ avoid DB work during migrate / collectstatic

@@ -1,0 +1,33 @@
+{% extends "core/pc_universal.html" %}
+
+{% block title %}Interest Calculation{% endblock %}
+
+{% block pc_content %}
+  <div class="unified-section">
+    <div class="unified-muted">Annual interest rate: <strong>{{ annual_rate }}%</strong></div>
+  </div>
+
+  <div class="unified-table-wrap">
+    <table class="table unified-table">
+      <thead>
+        <tr>
+          <th>Party</th>
+          <th class="text-end">Outstanding</th>
+          <th class="text-end">Monthly Interest (approx.)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>{{ r.party }}</td>
+            <td class="text-end">{{ r.outstanding }}</td>
+            <td class="text-end" style="font-weight:900;">{{ r.monthly_interest }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="text-center text-muted py-4">No credit accounts found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+

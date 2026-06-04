@@ -20,6 +20,8 @@
       '/add-',
       '/add/',
       '/create/',
+      '/new/',
+      '/edit/',
       '/expense/create',
       '/sales-voucher/create',
       '/voucher/create',
@@ -53,6 +55,50 @@
       if (!el) return;
       e.preventDefault();
       window.location.href = el.dataset.upgradeUrl;
+    });
+
+    function hasBootstrapDropdown() {
+      return !!(window.bootstrap && window.bootstrap.Dropdown);
+    }
+
+    function closeAllDropdowns(exceptDropdown) {
+      document.querySelectorAll('.dropdown-menu.show').forEach(function (menu) {
+        const dd = menu.closest('.dropdown');
+        if (exceptDropdown && dd === exceptDropdown) return;
+        menu.classList.remove('show');
+        if (dd) dd.classList.remove('show');
+      });
+    }
+
+    // Fallback dropdown behavior for environments where Bootstrap JS isn't available
+    // (e.g. CDN blocked/offline). Works with both `data-bs-toggle="dropdown"` and
+    // legacy `data-toggle="dropdown"` toggles.
+    document.addEventListener('click', function (e) {
+      const toggle = e.target.closest('[data-bs-toggle="dropdown"],[data-toggle="dropdown"],.dropdown-toggle');
+      if (!toggle) {
+        if (!e.target.closest('.dropdown-menu')) closeAllDropdowns(null);
+        return;
+      }
+
+      const dropdown = toggle.closest('.dropdown');
+      const menu = dropdown ? dropdown.querySelector('.dropdown-menu') : null;
+      if (!dropdown || !menu) return;
+
+      if (hasBootstrapDropdown()) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const willOpen = !menu.classList.contains('show');
+      closeAllDropdowns(dropdown);
+      if (willOpen) {
+        dropdown.classList.add('show');
+        menu.classList.add('show');
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeAllDropdowns(null);
     });
   });
 })();

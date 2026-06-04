@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Category{% endblock %}
+
+{% block pc_badges %}
+  <span class="badge bg-warning text-dark fw-bold">Products</span>
+{% endblock %}
+
+{% block pc_actions %}
+  <a class="btn btn-outline-light btn-lg fw-bold" href="{% url 'commerce:add_category' %}" accesskey="b" title="Alt+B">Back</a>
+{% endblock %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+
+  <div class="card border-primary">
+    <div class="card-header bg-light fw-bold">Edit Category</div>
+    <div class="card-body">
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-12 col-lg-6">
+          <label class="form-label fw-bold">Category Name</label>
+          <input class="form-control form-control-lg fw-bold" name="name" value="{{ category.name }}" required autofocus>
+        </div>
+        <div class="col-12 col-lg-6">
+          <label class="form-label fw-bold">Description (Optional)</label>
+          <textarea class="form-control fw-bold" rows="3" name="description">{{ category.description }}</textarea>
+        </div>
+        <div class="col-12 d-flex justify-content-end gap-2">
+          <a class="btn btn-outline-secondary btn-lg fw-bold" href="{% url 'commerce:add_category' %}">Cancel</a>
+          <button type="submit" class="btn btn-success btn-lg fw-bold">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+

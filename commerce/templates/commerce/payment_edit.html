@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">Edit Payment</h3>
+        <div class="unified-subtitle">{{ payment.invoice.number }} • {{ payment.invoice.order.party.name }}</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn unified-btn-outline" href="{% url 'commerce:payment_view' payment.id %}">Back</a>
+      </div>
+    </div>
+
+    <div class="unified-body">
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+
+        <div class="col-md-4">
+          <div class="card border-primary">
+            <div class="card-body">
+              <label class="form-label fw-bold">Amount</label>
+              <input class="form-control form-control-lg fw-bold" name="amount" type="number" step="0.01" min="0" value="{{ payment.amount }}" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card border-info">
+            <div class="card-body">
+              <label class="form-label fw-bold">Method</label>
+              <input class="form-control form-control-lg fw-bold" name="method" type="text" value="{{ payment.method|default:'' }}" placeholder="cash/upi/bank...">
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <label class="form-label fw-bold">Reference</label>
+              <input class="form-control form-control-lg fw-bold" name="reference" type="text" value="{{ payment.reference|default:'' }}" placeholder="UTR / cheque no">
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body">
+              <label class="form-label fw-bold">Notes</label>
+              <textarea class="form-control fw-bold" rows="3" name="note" placeholder="Notes">{{ payment.note|default:'' }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 d-flex justify-content-end gap-2">
+          <a class="btn unified-btn-outline" href="{% url 'commerce:payment_view' payment.id %}">Cancel</a>
+          <button type="submit" class="btn unified-btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

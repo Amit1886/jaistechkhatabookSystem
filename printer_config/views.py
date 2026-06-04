@@ -72,7 +72,13 @@ class PrinterConfigViewSet(viewsets.ModelViewSet):
     @decorators.action(detail=True, methods=["post"])
     def render(self, request, pk=None):
         printer = self.get_object()
-        html = render_invoice_template(printer, request.data.get("payload", {}))
+        incoming = request.data or {}
+        payload = incoming.get("payload") if isinstance(incoming.get("payload"), dict) else {}
+        merged = dict(payload)
+        for key in ("document_type", "template_id", "user_template_id", "print_mode", "source_model", "source_id"):
+            if key in incoming and key not in merged:
+                merged[key] = incoming[key]
+        html = render_invoice_template(printer, merged)
         return response.Response({"html": html})
 
 
@@ -398,5 +404,41 @@ class PrintSettingsAPIView(APIView):
             profile.printer_preferences = current
             profile.save(update_fields=["printer_preferences", "updated_at"])
             return response.Response({"status": "ok", "printer_preferences": current})
-        except Exception as exc:
-            return response.Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            logger.exception("Failed to save printer preferences")
+            return response.Response({"status": "error", "message": "Failed to save printer preferences"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PrintSendAPIView(APIView):
+    """Lightweight endpoint for receiving print jobs from POS clients.
+
+    This accepts a JSON payload like { items: [...], total: 123.45 }
+    and records a PrintRenderLog entry for debugging. It does NOT attempt
+    to contact a physical printer. Intended for quick testing from scanner.js.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        payload = request.data or {}
+        user = request.user
+        try:
+            # record a debug render log if model available
+            PrintRenderLog.objects.create(
+                user=user,
+                template=None,
+                user_template=None,
+                source_model="pos.client",
+                source_id=str(payload.get("id", "")),
+                document_type=PrintDocumentType.INVOICE,
+                print_mode=PrintMode.DESKTOP,
+                paper_size="receipt",
+                status=PrintRenderLog.Status.SUCCESS,
+                payload=payload,
+                rendered_html=(str(payload)[:20000]),
+            )
+        except Exception:
+            # swallow logging errors but continue
+            logger.exception("Failed to create print log")
+
+        return response.Response({"status": "ok", "message": "print job received"})

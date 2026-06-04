@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">{% if transfer and transfer.id %}Edit Stock Transfer{% else %}New Stock Transfer{% endif %}</h3>
+        <div class="unified-subtitle">Create in Draft, then Post to update stock ledger.</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'ledger:stock_transfer_list' %}" class="btn unified-btn-outline">Back</a>
+        {% if transfer and transfer.id %}
+          <a href="{% url 'ledger:stock_transfer_detail' transfer.id %}" class="btn unified-btn-outline">View</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="unified-body">
+      <form method="post" class="row g-3" id="stockTransferForm">
+        {% csrf_token %}
+
+        <div class="col-lg-8">
+          <div class="card border-primary shadow-sm">
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Date</label>
+                  {{ form.date }}
+                  {% if form.date.errors %}<div class="text-danger small">{{ form.date.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">From Warehouse</label>
+                  {{ form.from_warehouse }}
+                  {% if form.from_warehouse.errors %}<div class="text-danger small">{{ form.from_warehouse.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">To Warehouse</label>
+                  {{ form.to_warehouse }}
+                  {% if form.to_warehouse.errors %}<div class="text-danger small">{{ form.to_warehouse.errors }}</div>{% endif %}
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-bold">Notes</label>
+                  {{ form.notes }}
+                  {% if form.notes.errors %}<div class="text-danger small">{{ form.notes.errors }}</div>{% endif %}
+                </div>
+                {% if form.non_field_errors %}
+                  <div class="col-12"><div class="alert alert-danger">{{ form.non_field_errors }}</div></div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="card border-info shadow-sm mt-3">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <div class="fw-bold">Items</div>
+                  <div class="small text-muted">Add products and quantities to move.</div>
+                </div>
+                <button type="button" class="btn unified-btn-outline btn-sm" id="addRowBtn">Add Row</button>
+              </div>
+
+              {{ formset.management_form }}
+              <div class="unified-table-wrap mt-2">
+                <table class="table unified-table align-middle" id="itemsTable">
+                  <thead>
+                    <tr>
+                      <th style="width:55%;">Product</th>
+                      <th class="text-end" style="width:25%;">Qty</th>
+                      <th class="text-end" style="width:20%;">Remove</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for f in formset.forms %}
+                      <tr class="kp-form-row">
+                        <td>
+                          {{ f.id }}
+                          {{ f.product }}
+                          {% if f.product.errors %}<div class="text-danger small">{{ f.product.errors }}</div>{% endif %}
+                        </td>
+                        <td class="text-end">
+                          {{ f.quantity }}
+                          {% if f.quantity.errors %}<div class="text-danger small">{{ f.quantity.errors }}</div>{% endif %}
+                        </td>
+                        <td class="text-end">
+                          {% if formset.can_delete %}
+                            <div class="form-check d-inline-flex align-items-center gap-2">
+                              {{ f.DELETE }}
+                              <span class="small text-muted">Delete</span>
+                            </div>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card shadow-sm border-secondary sticky-top" style="top: 12px;">
+            <div class="card-body">
+              <div class="fw-bold mb-1">Summary</div>
+              <div class="small text-muted mb-3">Draft changes are safe until you post.</div>
+
+              <div class="d-flex justify-content-between">
+                <div class="text-muted">Status</div>
+                <div class="fw-bold">{% if transfer and transfer.status %}{{ transfer.status|title }}{% else %}Draft{% endif %}</div>
+              </div>
+
+              <hr>
+
+              <div class="d-flex gap-2 justify-content-end flex-wrap">
+                <a class="btn unified-btn-outline" href="{% url 'ledger:stock_transfer_list' %}">Cancel</a>
+                <button type="submit" class="btn unified-btn-primary">Save Draft</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const addBtn = document.getElementById("addRowBtn");
+    const tbody = document.querySelector("#itemsTable tbody");
+    const totalForms = document.getElementById("id_stocktransferitem_set-TOTAL_FORMS");
+    if (!addBtn || !tbody || !totalForms) return;
+
+    addBtn.addEventListener("click", function () {
+      const idx = parseInt(totalForms.value || "0", 10);
+      const lastRow = tbody.querySelector("tr.kp-form-row:last-child");
+      if (!lastRow) return;
+      const clone = lastRow.cloneNode(true);
+
+      clone.querySelectorAll("input,select,textarea").forEach(function (el) {
+        const name = el.getAttribute("name") || "";
+        const id = el.getAttribute("id") || "";
+        if (name) el.setAttribute("name", name.replace(/-(\\d+)-/g, "-" + idx + "-"));
+        if (id) el.setAttribute("id", id.replace(/-(\\d+)-/g, "-" + idx + "-"));
+        if (el.type === "checkbox") el.checked = false;
+        else el.value = "";
+      });
+
+      // Remove old errors
+      clone.querySelectorAll(".text-danger").forEach(e => e.remove());
+
+      tbody.appendChild(clone);
+      totalForms.value = String(idx + 1);
+    });
+  })();
+</script>
+{% endblock %}

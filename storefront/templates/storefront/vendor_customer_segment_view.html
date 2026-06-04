@@ -1,0 +1,93 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Segment</div>
+        <div class="va-section-title">{{ segment.title }}</div>
+        <div class="va-help mt-1">Matching customers: <span class="fw-semibold">{{ match_count }}</span></div>
+      </div>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-customer-segments' vendor.subdomain %}">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+    </div>
+  </div>
+
+  <form method="post" class="va-panel p-3 mb-3">
+    {% csrf_token %}
+    <input type="hidden" name="_action" value="save">
+    <div class="row g-3">
+      <div class="col-12 col-lg-8">
+        <label class="form-label va-form-label">Title</label>
+        <input class="form-control" name="title" value="{{ segment.title }}" maxlength="200" required>
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Status</label>
+        <select class="form-select" name="is_active">
+          <option value="1" {% if segment.is_active %}selected{% endif %}>Active</option>
+          <option value="0" {% if not segment.is_active %}selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Pincode</label>
+        <input class="form-control" name="pincode" value="{{ segment.rules_json.pincode|default:'' }}">
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Min orders</label>
+        <input class="form-control" name="min_orders" value="{{ segment.rules_json.min_orders|default:'' }}">
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Min spent (₹)</label>
+        <input class="form-control" name="min_spent" value="{{ segment.rules_json.min_spent|default:'' }}">
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Has company</label>
+        <select class="form-select" name="has_company">
+          <option value="" {% if segment.rules_json.has_company != True and segment.rules_json.has_company != False %}selected{% endif %}>Any</option>
+          <option value="1" {% if segment.rules_json.has_company == True %}selected{% endif %}>Yes</option>
+          <option value="0" {% if segment.rules_json.has_company == False %}selected{% endif %}>No</option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label va-form-label">Notes</label>
+        <textarea class="form-control" rows="3" name="notes">{{ segment.notes }}</textarea>
+      </div>
+
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Save</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="va-panel p-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <div class="va-section-title">Preview (latest {{ preview|length }})</div>
+      <div class="va-help">Customers who match the rules</div>
+    </div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Mobile</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in preview %}
+            <tr>
+              <td class="fw-semibold">{{ u.username|default:u.id }}</td>
+              <td class="va-help">{{ u.mobile|default:"-" }}</td>
+              <td class="va-help">{{ u.email|default:"-" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3" class="va-help">No matches yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

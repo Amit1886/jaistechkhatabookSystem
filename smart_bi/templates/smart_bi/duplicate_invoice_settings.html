@@ -1,0 +1,51 @@
+{% extends "core/pc_universal.html" %}
+{% load static %}
+
+{% block pc_title %}Duplicate Invoice Settings{% endblock %}
+
+{% block pc_actions %}
+  <a class="btn btn-light fw-semibold" href="{% url 'smart_bi:duplicate_invoice_report' %}">View Report</a>
+{% endblock %}
+
+{% block pc_content %}
+  <form method="post" class="card border-0 shadow-sm">
+    {% csrf_token %}
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="form-check">
+            {{ form.enabled }}
+            <label class="form-check-label fw-semibold" for="{{ form.enabled.id_for_label }}">Enable duplicate detection</label>
+          </div>
+          {% if form.enabled.errors %}<div class="text-danger small">{{ form.enabled.errors }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <div class="form-check">
+            {{ form.strict_mode }}
+            <label class="form-check-label fw-semibold" for="{{ form.strict_mode.id_for_label }}">Strict mode</label>
+            <div class="form-text">Strict mode flags only exact matches; soft mode uses similarity threshold.</div>
+          </div>
+          {% if form.strict_mode.errors %}<div class="text-danger small">{{ form.strict_mode.errors }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Duplicate detection window (minutes)</label>
+          {{ form.window_minutes }}
+          {% if form.window_minutes.errors %}<div class="text-danger small">{{ form.window_minutes.errors }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Similarity threshold (%)</label>
+          {{ form.similarity_threshold }}
+          <div class="form-text">Used only when strict mode is OFF.</div>
+          {% if form.similarity_threshold.errors %}<div class="text-danger small">{{ form.similarity_threshold.errors }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="card-footer bg-white d-flex justify-content-end gap-2">
+      <button type="submit" class="btn btn-primary">Save Settings</button>
+    </div>
+  </form>
+{% endblock %}
+

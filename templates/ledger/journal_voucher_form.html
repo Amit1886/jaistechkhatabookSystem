@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">{% if voucher and voucher.id %}Edit Journal Voucher{% else %}New Journal Voucher{% endif %}</h3>
+        <div class="unified-subtitle">Add balanced DR/CR lines then Post to create GL entries.</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'ledger:journal_voucher_list' %}" class="btn unified-btn-outline">Back</a>
+        {% if voucher and voucher.id %}
+          <a href="{% url 'ledger:journal_voucher_detail' voucher.id %}" class="btn unified-btn-outline">View</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="unified-body">
+      <form method="post" class="row g-3" id="journalVoucherForm">
+        {% csrf_token %}
+
+        <div class="col-lg-8">
+          <div class="card border-primary shadow-sm">
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Date</label>
+                  {{ form.date }}
+                  {% if form.date.errors %}<div class="text-danger small">{{ form.date.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label fw-bold">Narration</label>
+                  {{ form.narration }}
+                  {% if form.narration.errors %}<div class="text-danger small">{{ form.narration.errors }}</div>{% endif %}
+                </div>
+                {% if form.non_field_errors %}
+                  <div class="col-12"><div class="alert alert-danger">{{ form.non_field_errors }}</div></div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="card border-info shadow-sm mt-3">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <div class="fw-bold">Lines</div>
+                  <div class="small text-muted">Add debit and credit lines (must balance).</div>
+                </div>
+                <button type="button" class="btn unified-btn-outline btn-sm" id="addJVRowBtn">Add Row</button>
+              </div>
+
+              {{ formset.management_form }}
+              <div class="unified-table-wrap mt-2">
+                <table class="table unified-table align-middle" id="jvLinesTable">
+                  <thead>
+                    <tr>
+                      <th style="width:26%;">Account</th>
+                      <th style="width:20%;">Party</th>
+                      <th>Description</th>
+                      <th class="text-end" style="width:12%;">Debit</th>
+                      <th class="text-end" style="width:12%;">Credit</th>
+                      <th class="text-end" style="width:10%;">Remove</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for f in formset.forms %}
+                      <tr class="kp-jv-row">
+                        <td>
+                          {{ f.id }}
+                          {{ f.account }}
+                          {% if f.account.errors %}<div class="text-danger small">{{ f.account.errors }}</div>{% endif %}
+                        </td>
+                        <td>
+                          {{ f.party }}
+                          {% if f.party.errors %}<div class="text-danger small">{{ f.party.errors }}</div>{% endif %}
+                        </td>
+                        <td>
+                          {{ f.description }}
+                          {% if f.description.errors %}<div class="text-danger small">{{ f.description.errors }}</div>{% endif %}
+                          {% if f.non_field_errors %}<div class="text-danger small">{{ f.non_field_errors }}</div>{% endif %}
+                        </td>
+                        <td class="text-end">
+                          {{ f.debit }}
+                          {% if f.debit.errors %}<div class="text-danger small">{{ f.debit.errors }}</div>{% endif %}
+                        </td>
+                        <td class="text-end">
+                          {{ f.credit }}
+                          {% if f.credit.errors %}<div class="text-danger small">{{ f.credit.errors }}</div>{% endif %}
+                        </td>
+                        <td class="text-end">
+                          {% if formset.can_delete %}
+                            <div class="form-check d-inline-flex align-items-center gap-2">
+                              {{ f.DELETE }}
+                              <span class="small text-muted">Delete</span>
+                            </div>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card shadow-sm border-secondary sticky-top" style="top: 12px;">
+            <div class="card-body">
+              <div class="fw-bold mb-1">Summary</div>
+              <div class="small text-muted mb-3">Save Draft first, then Post.</div>
+
+              <div class="d-flex gap-2 justify-content-end flex-wrap">
+                <a class="btn unified-btn-outline" href="{% url 'ledger:journal_voucher_list' %}">Cancel</a>
+                <button type="submit" class="btn unified-btn-primary">Save Draft</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const addBtn = document.getElementById("addJVRowBtn");
+    const tbody = document.querySelector("#jvLinesTable tbody");
+    const totalForms = document.getElementById("id_journalvoucherline_set-TOTAL_FORMS");
+    if (!addBtn || !tbody || !totalForms) return;
+
+    addBtn.addEventListener("click", function () {
+      const idx = parseInt(totalForms.value || "0", 10);
+      const lastRow = tbody.querySelector("tr.kp-jv-row:last-child");
+      if (!lastRow) return;
+      const clone = lastRow.cloneNode(true);
+
+      clone.querySelectorAll("input,select,textarea").forEach(function (el) {
+        const name = el.getAttribute("name") || "";
+        const id = el.getAttribute("id") || "";
+        if (name) el.setAttribute("name", name.replace(/-(\\d+)-/g, "-" + idx + "-"));
+        if (id) el.setAttribute("id", id.replace(/-(\\d+)-/g, "-" + idx + "-"));
+        if (el.type === "checkbox") el.checked = false;
+        else el.value = "";
+      });
+      clone.querySelectorAll(".text-danger").forEach(e => e.remove());
+
+      tbody.appendChild(clone);
+      totalForms.value = String(idx + 1);
+    });
+  })();
+</script>
+{% endblock %}

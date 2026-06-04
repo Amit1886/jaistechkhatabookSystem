@@ -1,0 +1,89 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Products</div>
+        <div class="va-section-title">Catalogs</div>
+        <div class="va-help mt-1">Create catalogs to control products + pricing adjustments (Shopify-style).</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm btn-primary" href="{% url 'vendor-catalog-create' vendor.subdomain %}">
+          <i class="bi bi-plus-lg me-1"></i>New catalog
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="va-panel p-3">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Markets</th>
+            <th>Pricing</th>
+            <th>Products</th>
+            <th style="width: 220px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in catalogs %}
+            <tr>
+              <td class="fw-semibold">{{ c.title }}</td>
+              <td>
+                <span class="badge {% if c.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %}">
+                  {% if c.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+                {% if default_catalog_id and default_catalog_id == c.id %}
+                  <span class="badge text-bg-light border">Default</span>
+                {% endif %}
+              </td>
+              <td class="va-help">
+                {% if c.markets_json %}{{ c.markets_json|join:", " }}{% else %}-{% endif %}
+              </td>
+              <td class="va-help">
+                {% if c.price_adjustment_percent and c.price_adjustment_percent > 0 %}
+                  {{ c.price_adjustment_direction }} {{ c.price_adjustment_percent }}%
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td class="va-help">
+                {% if c.auto_include_new_products %}
+                  Auto include (except excluded)
+                {% else %}
+                  Manual include list
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <div class="d-flex gap-2 justify-content-end flex-wrap">
+                  <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-catalog-edit' vendor.subdomain c.id %}">Open</a>
+                  <form method="post" action="{% url 'vendor-catalogs' vendor.subdomain %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="_action" value="set_default">
+                    <input type="hidden" name="catalog_id" value="{{ c.id }}">
+                    <button class="btn btn-sm btn-outline-secondary" type="submit">Set default</button>
+                  </form>
+                  <form method="post" action="{% url 'vendor-catalogs' vendor.subdomain %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="_action" value="toggle_active">
+                    <input type="hidden" name="catalog_id" value="{{ c.id }}">
+                    <button class="btn btn-sm btn-outline-secondary" type="submit">
+                      {% if c.is_active %}Disable{% else %}Enable{% endif %}
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="va-help">No catalogs yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

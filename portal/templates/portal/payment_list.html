@@ -1,0 +1,50 @@
+{% extends "portal/base_portal.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">Payments</h3>
+        <div class="unified-subtitle">Recent payments linked to your invoices</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'portal:invoice_list' %}" class="btn unified-btn-outline">Invoices</a>
+      </div>
+    </div>
+
+    <div class="unified-body">
+      <div class="unified-table-wrap">
+        <table class="table unified-table">
+          <thead>
+            <tr>
+              <th>Invoice</th>
+              <th>Method</th>
+              <th>Reference</th>
+              <th class="text-end">Amount</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in payments %}
+              <tr>
+                <td>
+                  <a href="{% url 'portal:invoice_detail' p.invoice.id %}">{{ p.invoice.number }}</a>
+                </td>
+                <td>{{ p.method|default:"-" }}</td>
+                <td>{{ p.reference|default:"-" }}</td>
+                <td class="text-end fw-bold">{{ p.amount }}</td>
+                <td>{{ p.created_at|date:"d M Y" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center text-muted">No payments found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

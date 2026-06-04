@@ -1,0 +1,290 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Customer Dashboard{% endblock %}
+
+{% block content %}
+<div class="p-6 space-y-6">
+  <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold">Customer Dashboard</h1>
+      <p class="text-sm text-gray-500">
+        {{ request.user.get_full_name|default:request.user.username }}
+        {% if is_b2b %}<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs border bg-white">B2B</span>{% else %}<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs border bg-white">B2C</span>{% endif %}
+      </p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <a class="px-3 py-2 text-sm rounded-md border {% if active_tab == 'overview' %}bg-gray-900 text-white border-gray-900{% else %}bg-white{% endif %}" href="?tab=overview">Overview</a>
+      <a class="px-3 py-2 text-sm rounded-md border {% if active_tab == 'ecommerce' %}bg-gray-900 text-white border-gray-900{% else %}bg-white{% endif %}" href="?tab=ecommerce">E-commerce</a>
+      <a class="px-3 py-2 text-sm rounded-md border {% if active_tab == 'billing' %}bg-gray-900 text-white border-gray-900{% else %}bg-white{% endif %}" href="?tab=billing">Billing</a>
+      {% if is_b2b %}
+        <a class="px-3 py-2 text-sm rounded-md border {% if active_tab == 'access' %}bg-gray-900 text-white border-gray-900{% else %}bg-white{% endif %}" href="?tab=access">B2B Access</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if active_tab == "overview" %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="p-4 rounded-lg border bg-white">
+        <div class="text-xs text-gray-500">Recent Store Orders</div>
+        <div class="text-2xl font-semibold">{{ store_order_cards|length }}</div>
+        <div class="text-xs text-gray-500 mt-1">Last 20 (all vendors)</div>
+      </div>
+      <div class="p-4 rounded-lg border bg-white">
+        <div class="text-xs text-gray-500">Billing Outstanding</div>
+        <div class="text-2xl font-semibold">
+          {% if billing_summary %}{{ billing_summary.balance }}{% else %}-{% endif %}
+        </div>
+        <div class="text-xs text-gray-500 mt-1">
+          {% if party %}{{ party.name }}{% else %}Not linked{% endif %}
+        </div>
+      </div>
+      <div class="p-4 rounded-lg border bg-white">
+        <div class="text-xs text-gray-500">Account Type</div>
+        <div class="text-2xl font-semibold">{% if is_b2b %}B2B{% else %}B2C{% endif %}</div>
+        <div class="text-xs text-gray-500 mt-1">
+          {% if is_b2b %}Company memberships enabled{% else %}Personal customer access{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="bg-white border rounded-lg overflow-hidden">
+        <div class="px-4 py-3 border-b font-medium flex items-center justify-between">
+          <span>Latest Store Orders</span>
+          <a class="text-sm underline" href="?tab=ecommerce">View all</a>
+        </div>
+        {% if store_order_cards %}
+          <div class="divide-y">
+            {% for c in store_order_cards|slice:":5" %}
+              <div class="p-4 flex items-start justify-between gap-4">
+                <div>
+                  <div class="font-medium">
+                    {{ c.order.order_number }}
+                    <span class="ml-2 text-xs text-gray-500">{{ c.vendor.name|default:c.vendor.subdomain }}</span>
+                  </div>
+                  <div class="text-sm text-gray-600 mt-1">
+                    Status: {{ c.order.get_status_display }} • Payment: {{ c.order.get_payment_status_display }}
+                  </div>
+                  <div class="text-xs text-gray-500 mt-1">{{ c.order.created_at|date:"d M Y, h:i A" }}</div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  {% if c.view_url %}<a class="px-3 py-2 text-sm rounded-md border bg-white" href="{{ c.view_url }}">View</a>{% endif %}
+                  {% if c.track_url %}<a class="px-3 py-2 text-sm rounded-md border bg-white" href="{{ c.track_url }}" target="_blank" rel="noopener">Track</a>{% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="p-4 text-sm text-gray-500">No store orders yet.</div>
+        {% endif %}
+      </div>
+
+      <div class="bg-white border rounded-lg overflow-hidden">
+        <div class="px-4 py-3 border-b font-medium flex items-center justify-between">
+          <span>Recent Billing</span>
+          <a class="text-sm underline" href="?tab=billing">Open billing</a>
+        </div>
+        {% if party and billing_summary %}
+          <div class="p-4">
+            <div class="text-sm text-gray-600">Linked Party</div>
+            <div class="font-medium">{{ party.name }} <span class="text-sm text-gray-500 ml-2">{{ party.mobile }}</span></div>
+            <div class="grid grid-cols-3 gap-3 mt-4">
+              <div class="p-3 rounded-lg border bg-white">
+                <div class="text-xs text-gray-500">Debit</div>
+                <div class="text-lg font-semibold">{{ billing_summary.debit }}</div>
+              </div>
+              <div class="p-3 rounded-lg border bg-white">
+                <div class="text-xs text-gray-500">Credit</div>
+                <div class="text-lg font-semibold">{{ billing_summary.credit }}</div>
+              </div>
+              <div class="p-3 rounded-lg border bg-white">
+                <div class="text-xs text-gray-500">Outstanding</div>
+                <div class="text-lg font-semibold">{{ billing_summary.balance }}</div>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="p-4 text-sm text-gray-500">
+            Billing not linked to this login. Use the same mobile number as billing/party, or ask admin to link it.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if is_b2b %}
+      <div class="bg-white border rounded-lg overflow-hidden">
+        <div class="px-4 py-3 border-b font-medium flex items-center justify-between">
+          <span>B2B Company Access</span>
+          <a class="text-sm underline" href="?tab=access">Manage access</a>
+        </div>
+        <div class="p-4 text-sm text-gray-700">
+          You have access to {{ company_memberships|length }} company account(s).
+        </div>
+      </div>
+    {% else %}
+      <div class="bg-white border rounded-lg overflow-hidden">
+        <div class="px-4 py-3 border-b font-medium">B2C Quick Help</div>
+        <div class="p-4 text-sm text-gray-700">
+          Use the <a class="underline" href="?tab=ecommerce">E-commerce</a> tab for orders and tracking, and <a class="underline" href="?tab=billing">Billing</a> for invoices/payments.
+        </div>
+      </div>
+    {% endif %}
+
+  {% elif active_tab == "ecommerce" %}
+    <div class="bg-white border rounded-lg overflow-hidden">
+      <div class="px-4 py-3 border-b font-medium">E-commerce Orders</div>
+      {% if store_order_cards %}
+        <div class="divide-y">
+          {% for c in store_order_cards %}
+            <div class="p-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div class="min-w-0">
+                <div class="font-medium truncate">
+                  {{ c.order.order_number }}
+                  <span class="ml-2 text-xs text-gray-500">{{ c.vendor.name|default:c.vendor.subdomain }}</span>
+                </div>
+                <div class="text-sm text-gray-600 mt-1">
+                  Status: {{ c.order.get_status_display }} • Payment: {{ c.order.get_payment_status_display }}
+                </div>
+                <div class="text-sm text-gray-700 mt-1">Total: {{ c.order.total_amount }}</div>
+                <div class="text-xs text-gray-500 mt-1">{{ c.order.created_at|date:"d M Y, h:i A" }}</div>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                {% if c.view_url %}<a class="px-3 py-2 text-sm rounded-md border bg-white" href="{{ c.view_url }}">View</a>{% endif %}
+                {% if c.track_url %}<a class="px-3 py-2 text-sm rounded-md border bg-white" href="{{ c.track_url }}" target="_blank" rel="noopener">Track</a>{% endif %}
+                {% if c.order.invoice_pdf %}
+                  <a class="px-3 py-2 text-sm rounded-md border bg-white" href="{{ c.order.invoice_pdf.url }}" target="_blank" rel="noopener">Invoice PDF</a>
+                {% endif %}
+                {% if c.vendor %}
+                  <a class="px-3 py-2 text-sm rounded-md border bg-white" href="{% url 'store-home' c.vendor.subdomain %}" target="_blank" rel="noopener">Open Store</a>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="p-4 text-sm text-gray-500">No store orders found for this account.</div>
+      {% endif %}
+    </div>
+
+  {% elif active_tab == "billing" %}
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-semibold">Billing</h2>
+        {% if party %}
+          <p class="text-sm text-gray-500">{{ party.name }} {{ party.mobile }}</p>
+        {% else %}
+          <p class="text-sm text-gray-500">Party not linked to this account.</p>
+        {% endif %}
+      </div>
+      {% if party %}
+        <a class="px-3 py-2 text-sm rounded-md border bg-white" href="{% url 'accounts:party_ledger' party.id %}">View Ledger</a>
+      {% endif %}
+    </div>
+
+    {% if party and billing_summary %}
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-lg border bg-white">
+          <div class="text-xs text-gray-500">Total Debit</div>
+          <div class="text-2xl font-semibold">{{ billing_summary.debit }}</div>
+        </div>
+        <div class="p-4 rounded-lg border bg-white">
+          <div class="text-xs text-gray-500">Total Credit</div>
+          <div class="text-2xl font-semibold">{{ billing_summary.credit }}</div>
+        </div>
+        <div class="p-4 rounded-lg border bg-white">
+          <div class="text-xs text-gray-500">Outstanding</div>
+          <div class="text-2xl font-semibold">{{ billing_summary.balance }}</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-white border rounded-lg overflow-hidden">
+          <div class="px-4 py-3 border-b font-medium">Recent Invoices</div>
+          {% if invoices %}
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-left">
+                <tr>
+                  <th class="px-4 py-2">Invoice</th>
+                  <th class="px-4 py-2">Amount</th>
+                  <th class="px-4 py-2">Status</th>
+                  <th class="px-4 py-2">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for inv in invoices %}
+                  <tr class="border-t">
+                    <td class="px-4 py-2">{{ inv.number }}</td>
+                    <td class="px-4 py-2">{{ inv.amount }}</td>
+                    <td class="px-4 py-2">{{ inv.get_status_display }}</td>
+                    <td class="px-4 py-2">{{ inv.created_at|date:"d M Y" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="p-4 text-sm text-gray-500">No invoices found.</div>
+          {% endif %}
+        </div>
+
+        <div class="bg-white border rounded-lg overflow-hidden">
+          <div class="px-4 py-3 border-b font-medium">Recent Payments</div>
+          {% if payments %}
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-left">
+                <tr>
+                  <th class="px-4 py-2">Amount</th>
+                  <th class="px-4 py-2">Method</th>
+                  <th class="px-4 py-2">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in payments %}
+                  <tr class="border-t">
+                    <td class="px-4 py-2">{{ p.amount }}</td>
+                    <td class="px-4 py-2">{{ p.method|default:"-" }}</td>
+                    <td class="px-4 py-2">{{ p.created_at|date:"d M Y" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="p-4 text-sm text-gray-500">No payments found.</div>
+          {% endif %}
+        </div>
+      </div>
+    {% else %}
+      <div class="p-4 rounded-lg border bg-white text-sm text-gray-600">
+        Billing not linked. Make sure your login mobile matches the party mobile in billing.
+      </div>
+    {% endif %}
+
+  {% elif active_tab == "access" and is_b2b %}
+    <div class="bg-white border rounded-lg overflow-hidden">
+      <div class="px-4 py-3 border-b font-medium">B2B Access (Company Memberships)</div>
+      {% if company_memberships %}
+        <div class="divide-y">
+          {% for m in company_memberships %}
+            <div class="p-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div class="min-w-0">
+                <div class="font-medium truncate">
+                  {{ m.company.name }}
+                  <span class="ml-2 text-xs text-gray-500">{{ m.company.vendor.name|default:m.company.vendor.subdomain }}</span>
+                </div>
+                <div class="text-sm text-gray-600 mt-1">Role: {{ m.role|default:"Member" }}</div>
+                <div class="text-xs text-gray-500 mt-1">Added: {{ m.created_at|date:"d M Y" }}</div>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <a class="px-3 py-2 text-sm rounded-md border bg-white" href="{% url 'store-home' m.company.vendor.subdomain %}" target="_blank" rel="noopener">Open Vendor Store</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="p-4 text-sm text-gray-500">No active company memberships.</div>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+

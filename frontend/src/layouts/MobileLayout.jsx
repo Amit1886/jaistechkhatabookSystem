@@ -3,6 +3,7 @@ import React from "react";
 import BottomNav from "../components/shared/BottomNav";
 import AppHeader from "../components/shared/AppHeader";
 import AppShell from "../components/shared/AppShell";
+import LiveStreamPanel from "../modules/realtime/LiveStreamPanel";
 
 export default function MobileLayout() {
   return (
@@ -22,14 +23,8 @@ export default function MobileLayout() {
         </section>
 
         <section className="rounded-xl bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold">Live Cards</h2>
-          <div className="mt-2 space-y-2">
-            {[1, 2, 3].map((row) => (
-              <div key={row} className="rounded-lg border p-3 text-sm">
-                Swipe-enabled order card #{row}
-              </div>
-            ))}
-          </div>
+          <h2 className="text-sm font-semibold">Live Feeds</h2>
+          <LiveStreamPanel />
         </section>
       </main>
 

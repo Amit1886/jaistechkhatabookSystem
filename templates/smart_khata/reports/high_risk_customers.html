@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid py-2 unified-list-screen">
+  <div class="unified-list-card">
+    <div class="unified-list-header">
+      <h3>High Risk Customers</h3>
+      <div class="unified-subtitle">Credit score below {{ threshold }}</div>
+    </div>
+    <div class="unified-list-body">
+      <div class="unified-table-wrap">
+        <table class="table unified-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th class="text-end">Total Due</th>
+              <th class="text-center">Score</th>
+              <th class="text-center">Avg Delay</th>
+              <th>Last Payment</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in customers %}
+            <tr>
+              <td class="fw-semibold">{{ c.name }}</td>
+              <td class="text-end fw-bold">{{ c.total_due|default:"0.00" }}</td>
+              <td class="text-center"><span class="badge bg-danger">{{ c.credit_score|default:"0" }}</span></td>
+              <td class="text-center">{{ c.average_payment_delay|default:"0" }}d</td>
+              <td>{{ c.last_payment_date|date:"d M Y"|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No high risk customers.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

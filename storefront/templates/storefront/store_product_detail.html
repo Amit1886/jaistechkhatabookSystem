@@ -1,0 +1,230 @@
+{% extends "storefront/store_shell.html" %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div class="muted small">
+      <a class="text-decoration-none" href="{% url 'store-home' vendor.subdomain %}">Home</a>
+      {% if product.category %} / <a class="text-decoration-none" href="{% url 'store-home' vendor.subdomain %}?category={{ product.category.slug }}">{{ product.category.name }}</a>{% endif %}
+      / <span class="fw-semibold">{{ product.name }}</span>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'store-cart' vendor.subdomain %}">
+        <i class="bi bi-cart3 me-1"></i>Cart{% if cart.total_qty %} ({{ cart.total_qty }}){% endif %}
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-7">
+      <div class="card-soft shadow-soft p-3">
+        <div class="row g-3">
+          <div class="col-12 col-md-2">
+            <div class="thumb-rail" id="thumbRail">
+              {% for m in media_list|slice:":10" %}
+                {% if m.media_type == "image" %}
+                  <img class="thumb-mini {% if hero_media and hero_media.id == m.id %}active{% elif not hero_media and forloop.first %}active{% endif %}" src="{{ m.media.url }}" alt="{{ m.alt_text }}"
+                       data-type="image" data-src="{{ m.media.url }}">
+                {% else %}
+                  <div class="thumb-mini d-flex align-items-center justify-content-center {% if hero_media and hero_media.id == m.id %}active{% elif not hero_media and forloop.first %}active{% endif %}"
+                       data-type="video" data-src="{{ m.media.url }}">
+                    <i class="bi bi-play-circle muted"></i>
+                  </div>
+                {% endif %}
+              {% empty %}
+                <div class="thumb-mini d-flex align-items-center justify-content-center active">
+                  <i class="bi bi-image muted"></i>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="col-12 col-md-10">
+            <div id="galleryMain">
+              {% if hero_media and hero_media.media_type == "video" %}
+                <video class="gallery-main" controls playsinline src="{{ hero_media.media.url }}"></video>
+              {% elif hero_media and hero_media.media_type == "image" %}
+                <img class="gallery-main" src="{{ hero_media.media.url }}" alt="{{ hero_media.alt_text }}">
+              {% else %}
+                <div class="gallery-main d-flex align-items-center justify-content-center">
+                  <i class="bi bi-image muted" style="font-size: 34px;"></i>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3 flex-wrap">
+          {% if listing and listing.discount_percent %}
+            <span class="pill small badge-off">{{ listing.discount_percent }}% OFF</span>
+          {% endif %}
+          <span class="pill small"><i class="bi bi-shield-check me-1"></i>Secure checkout</span>
+          <span class="pill small"><i class="bi bi-arrow-repeat me-1"></i>7-day return</span>
+        </div>
+      </div>
+
+      {% if similar_listings %}
+        <div class="mt-3">
+          <div class="fw-bold mb-2">Similar products</div>
+          <div class="row g-3">
+            {% for s in similar_listings %}
+              <div class="col-6 col-md-4">
+                <div class="card product-card shadow-soft h-100">
+                  <div class="p-2">
+                    {% with m=s.product.media.first %}
+                      {% if m and m.media_type == "image" %}
+                        <img class="w-100 thumb" loading="lazy" src="{{ m.media.url }}" alt="{{ m.alt_text }}">
+                      {% else %}
+                        <div class="thumb d-flex align-items-center justify-content-center">
+                          <i class="bi bi-image muted"></i>
+                        </div>
+                      {% endif %}
+                    {% endwith %}
+                  </div>
+                  <div class="card-body pt-2">
+                    <div class="fw-semibold line-clamp-2" style="min-height: 40px;">{{ s.effective_title }}</div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                      <div class="price">&#8377;{{ s.display_price|default:s.effective_price }}</div>
+                      <a class="btn btn-sm btn-outline-secondary" href="{% url 'store-product-detail' vendor.subdomain s.product.slug %}">View</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="col-12 col-lg-5">
+      <div class="card-soft shadow-soft p-3 mb-3">
+        <div class="fw-bold mb-1">{{ listing.effective_title|default:product.name }}</div>
+        <div class="muted small">{{ product.category.name|default:"" }}</div>
+
+        <div class="mt-3 d-flex align-items-end justify-content-between flex-wrap gap-2">
+          <div>
+            <div class="price fs-2">&#8377;{{ listing.display_price|default:product.b2c_price }}</div>
+            {% if listing and product.mrp and product.mrp > listing.display_price %}
+              <div class="small">
+                <span class="price-mrp">&#8377;{{ product.mrp }}</span>
+                {% if listing.discount_percent %}<span class="muted ms-1">({{ listing.discount_percent }}% off)</span>{% endif %}
+              </div>
+            {% endif %}
+          </div>
+          <div class="text-end">
+            <span class="pill small">
+              <i class="bi bi-star-fill me-1" style="color:#f59e0b;"></i>{{ sold_by.rating|floatformat:1 }}
+            </span>
+            <div class="muted small mt-1">{{ sold_by.ratings_count }} ratings</div>
+          </div>
+        </div>
+
+        {% if listing %}
+          <div class="d-flex gap-2 mt-3">
+            <form class="flex-fill" method="post" action="{% url 'store-cart-add' vendor.subdomain %}">
+              {% csrf_token %}
+              <input type="hidden" name="listing_id" value="{{ listing.id }}">
+              <input type="hidden" name="qty" value="1">
+              <button class="btn btn-outline-secondary w-100" type="submit"><i class="bi bi-cart-plus me-1"></i>Add to cart</button>
+            </form>
+            <form class="flex-fill" method="post" action="{% url 'store-buy-now' vendor.subdomain %}">
+              {% csrf_token %}
+              <input type="hidden" name="listing_id" value="{{ listing.id }}">
+              <input type="hidden" name="qty" value="1">
+              <button class="btn btn-brand w-100" type="submit">Buy now</button>
+            </form>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="card-soft shadow-soft p-3 mb-3">
+        <div class="fw-bold mb-2">Select size</div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button type="button" class="btn btn-sm btn-outline-secondary">S</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary">M</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary">L</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary">XL</button>
+        </div>
+        <div class="muted small mt-2">Demo UI (size variants can be added later).</div>
+      </div>
+
+      <div class="card-soft shadow-soft p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="fw-bold">Product highlights</div>
+          <button type="button" class="btn btn-sm copy-btn" id="copyHighlights">Copy</button>
+        </div>
+        <div class="row g-2 mt-1 small" id="highlightsBox">
+          <div class="col-6 muted">SKU</div><div class="col-6 fw-semibold">{{ product.sku }}</div>
+          <div class="col-6 muted">GST</div><div class="col-6 fw-semibold">{{ product.gst_percent }}%</div>
+          <div class="col-6 muted">MRP</div><div class="col-6 fw-semibold">&#8377;{{ product.mrp }}</div>
+          <div class="col-6 muted">Category</div><div class="col-6 fw-semibold">{{ product.category.name|default:"-" }}</div>
+        </div>
+        <hr>
+        <div class="fw-semibold mb-1">Description</div>
+        <div class="muted small">{{ listing.effective_description|default:product.description }}</div>
+      </div>
+
+      <div class="card-soft shadow-soft p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="fw-bold">Sold by</div>
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'store-home' vendor.subdomain %}">View shop</a>
+        </div>
+        <div class="mt-2">
+          <div class="fw-semibold">{{ sold_by.name }}</div>
+          <div class="d-flex gap-2 flex-wrap mt-2">
+            <span class="pill small"><i class="bi bi-bag me-1"></i>{{ sold_by.products_online }} products</span>
+            <span class="pill small"><i class="bi bi-receipt me-1"></i>{{ sold_by.orders_total }} orders</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-soft shadow-soft p-3">
+        <div class="fw-bold mb-2">Ratings & reviews</div>
+        <div class="d-flex align-items-center gap-3">
+          <div class="fw-bold" style="font-size: 42px; line-height: 1;">{{ sold_by.rating|floatformat:1 }}</div>
+          <div class="flex-grow-1">
+            <div class="progress mb-2" style="height:8px;">
+              <div class="progress-bar" style="width:78%; background: #22c55e;"></div>
+            </div>
+            <div class="progress mb-2" style="height:8px;">
+              <div class="progress-bar" style="width:42%; background: #84cc16;"></div>
+            </div>
+            <div class="progress mb-2" style="height:8px;">
+              <div class="progress-bar" style="width:18%; background: #f59e0b;"></div>
+            </div>
+            <div class="muted small">{{ sold_by.ratings_count }} ratings (demo)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const rail = document.getElementById("thumbRail");
+      const main = document.getElementById("galleryMain");
+      if (rail && main){
+        rail.addEventListener("click", function(ev){
+          const el = ev.target && (ev.target.closest ? ev.target.closest("[data-src]") : null);
+          if (!el) return;
+          rail.querySelectorAll(".thumb-mini").forEach(x => x.classList.remove("active"));
+          el.classList.add("active");
+          const src = el.getAttribute("data-src") || "";
+          const type = el.getAttribute("data-type") || "image";
+          if (!src) return;
+          if (type === "video"){
+            main.innerHTML = '<video class="gallery-main" controls src="'+src.replace(/"/g,'&quot;')+'"></video>';
+          } else {
+            main.innerHTML = '<img class="gallery-main" src="'+src.replace(/"/g,'&quot;')+'" alt="">';
+          }
+        });
+      }
+
+      const copyBtn = document.getElementById("copyHighlights");
+      const box = document.getElementById("highlightsBox");
+      if (copyBtn && box && navigator.clipboard){
+        copyBtn.addEventListener("click", async function(){
+          const txt = box.innerText.replace(/\s+\n/g, "\n").trim();
+          try{ await navigator.clipboard.writeText(txt); copyBtn.textContent = "Copied"; setTimeout(()=>copyBtn.textContent="Copy",1200); }catch(e){}
+        });
+      }
+    })();
+  </script>
+{% endblock %}

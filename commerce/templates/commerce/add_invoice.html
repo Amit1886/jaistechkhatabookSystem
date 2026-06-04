@@ -1,47 +1,44 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block title %}Add Invoice{% endblock %}
+
+{% block pc_badges %}
+  <span class="badge bg-warning text-dark fw-bold">Billing</span>
+{% endblock %}
+
+{% block pc_actions %}
+  <a class="btn btn-outline-light btn-lg fw-bold" href="{% url 'commerce:invoice_list' %}" accesskey="l" title="Alt+L">Invoices</a>
+  <button type="button" class="btn btn-warning btn-lg fw-bold" onclick="showKeyboardHelp()" title="F1">Shortcuts</button>
+{% endblock %}
+
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/invoice.css' %}">
+  {% include "core/includes/messages.html" %}
+  {% include "core/includes/keyboard_help_common.html" %}
 
-<div class="container py-4">
-  <div class="invoice-card">
-    <h3 class="section-title mb-4">
-       Add Invoice
-    </h3>
+  <form method="post" class="row g-3" action="{% url 'commerce:add_invoice' %}">
+    {% csrf_token %}
 
-    <form method="POST" action="{% url 'commerce:add_invoice' %}">
-      {% csrf_token %}
-
-      <!-- Select Order -->
-      <div class="mb-3">
-        <label>Select Order</label>
-        <select name="order" class="form-control" required>
-          <option value="">-- Select Order --</option>
-          {% for o in orders %}
-            <option value="{{ o.id }}">
-              Order #{{ o.id }}  {{ o.party.name }}  {{ o.total_amount }}
-            </option>
-          {% endfor %}
-        </select>
+    <div class="col-12">
+      <div class="card border-primary">
+        <div class="card-body">
+          <label for="order" class="form-label fw-bold">Order</label>
+          <select name="order" id="order" class="form-select form-select-lg fw-bold" required data-kb-primary="1" autofocus>
+            <option value="">-- Select Order --</option>
+            {% for o in orders %}
+              <option value="{{ o.id }}" {% if initial_order_id|stringformat:'s' == o.id|stringformat:'s' %}selected{% endif %}>
+                Order #{{ o.id }} - {{ o.party.name }} - &#8377;{{ o.total_amount }}
+              </option>
+            {% endfor %}
+          </select>
+          <small class="text-muted">Note: an order can have only one invoice.</small>
+        </div>
       </div>
-
-      <!-- Notes -->
-      <div class="mb-3">
-        <label>Notes (Optional)</label>
-        <textarea name="notes" class="form-control" rows="3"></textarea>
-      </div>
-
-      <button type="submit" class="btn-gradient">
-         Create Invoice
-      </button>
-    </form>
-
-    <div class="text-center mt-4">
-      <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary">
-         Back to Dashboard
-      </a>
     </div>
-  </div>
-</div>
+
+    <div class="col-12 d-flex justify-content-end gap-2">
+      <a id="kbCancel" data-kb-cancel href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary btn-lg fw-bold">Back</a>
+      <button type="submit" class="btn btn-success btn-lg fw-bold" data-kb-submit>Create Invoice</button>
+    </div>
+  </form>
 {% endblock %}

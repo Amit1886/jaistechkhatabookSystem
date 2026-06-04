@@ -1,0 +1,80 @@
+{% extends "storefront/store_shell.html" %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+      <h3 class="fw-bold m-0">Order</h3>
+      <div class="muted small">{{ order.order_number }}</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'store-me-orders' vendor.subdomain %}">Back</a>
+      <a class="btn btn-outline-secondary btn-sm" href="{{ track_url }}">Track</a>
+      {% if order.payment_status != "paid" %}
+        <a class="btn btn-brand btn-sm" href="{{ payment_url }}">Pay now</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-7">
+      <div class="card product-card shadow-soft">
+        <div class="card-body">
+          <div class="fw-semibold mb-2">Items</div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th class="text-end">Qty</th>
+                  <th class="text-end">Price</th>
+                  <th class="text-end">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for it in order.items.all %}
+                  <tr>
+                    <td class="fw-semibold">{{ it.product.name }}</td>
+                    <td class="text-end">{{ it.qty }}</td>
+                    <td class="text-end">&#8377;{{ it.unit_price }}</td>
+                    <td class="text-end">&#8377;{{ it.line_total }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+      <div class="card product-card shadow-soft mb-3">
+        <div class="card-body">
+          <div class="fw-semibold mb-2">Summary</div>
+          <div class="d-flex justify-content-between"><div class="muted">Subtotal</div><div>&#8377;{{ order.subtotal_amount }}</div></div>
+          <div class="d-flex justify-content-between"><div class="muted">Discount</div><div>- &#8377;{{ order.discount_amount }}</div></div>
+          <div class="d-flex justify-content-between"><div class="muted">Shipping</div><div>&#8377;{{ order.shipping_amount }}</div></div>
+          <div class="d-flex justify-content-between"><div class="muted">Tax</div><div>&#8377;{{ order.tax_amount }}</div></div>
+          <hr class="my-2">
+          <div class="d-flex justify-content-between fw-bold"><div>Total</div><div>&#8377;{{ order.total_amount }}</div></div>
+          <div class="mt-2 muted small">Status: {{ order.status }} · Payment: {{ order.payment_status }}</div>
+        </div>
+      </div>
+
+      <div class="card product-card shadow-soft">
+        <div class="card-body">
+          <div class="fw-semibold mb-2">Delivery Address</div>
+          {% if order.address %}
+            <div>{{ order.address.full_name }}</div>
+            <div class="muted small">{{ order.address.mobile }}</div>
+            <div class="mt-2">{{ order.address.line1 }}</div>
+            {% if order.address.line2 %}<div>{{ order.address.line2 }}</div>{% endif %}
+            <div>{{ order.address.city }} {{ order.address.pincode }}</div>
+            <div>{{ order.address.state }}</div>
+          {% else %}
+            <div class="muted">No address.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

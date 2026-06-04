@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_filters %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">Manage Portal Access</h3>
+        <div class="unified-subtitle">{{ party.name }} • {{ party.party_type|title }}</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'khataapp:party_view' party.id %}" class="btn unified-btn-outline">Party View</a>
+        {% if party.party_type == 'customer' %}
+          <a href="{% url 'portal:manage_customers' %}" class="btn unified-btn-outline">Back</a>
+        {% else %}
+          <a href="{% url 'portal:manage_suppliers' %}" class="btn unified-btn-outline">Back</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="unified-body">
+      {% if not portal_globally_enabled %}
+        <div class="alert alert-danger">
+          Portal is disabled in Settings. Enable it to allow customer/supplier logins and welcome kit automation.
+        </div>
+      {% elif not portal_role_enabled %}
+        <div class="alert alert-warning">
+          {{ party.party_type|title }} portal is disabled in Settings. Logins for this role are currently blocked.
+        </div>
+      {% endif %}
+
+      <div class="report-summary-grid mb-3">
+        <div class="report-summary-card">
+          <div class="label">Portal Status</div>
+          <div class="value">
+            {% if portal_user %}
+              {% if portal_user.is_active %}
+                <span class="badge bg-success">Enabled</span>
+              {% else %}
+                <span class="badge bg-secondary">Disabled</span>
+              {% endif %}
+            {% else %}
+              <span class="badge bg-light text-dark">Not created</span>
+            {% endif %}
+          </div>
+          <div class="meta">Login URL: <span class="small text-muted">{{ login_url }}</span></div>
+          {% if after_login_urls %}
+            <div class="meta mt-1">
+              After login:
+              {% if after_login_urls.ecommerce %}
+                <div class="small text-muted">E-commerce: {{ after_login_urls.ecommerce }}</div>
+              {% endif %}
+              {% if after_login_urls.billing %}
+                <div class="small text-muted">Billing: {{ after_login_urls.billing }}</div>
+              {% endif %}
+              {% if after_login_urls.dashboard %}
+                <div class="small text-muted">Dashboard: {{ after_login_urls.dashboard }}</div>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="report-summary-card">
+          <div class="label">Username</div>
+          <div class="value">{{ portal_user.username|default:"-" }}</div>
+          <div class="meta">Mobile: {{ party.mobile|default:"-" }} • Email: {{ party.email|default:"-" }}</div>
+        </div>
+
+        <div class="report-summary-card">
+          <div class="label">Security</div>
+          <div class="value">
+            {% if portal_user and portal_user.must_change_password %}
+              <span class="badge bg-warning text-dark">Must change password</span>
+            {% else %}
+              <span class="badge bg-light text-dark">Normal</span>
+            {% endif %}
+          </div>
+          <div class="meta">Last login: {{ portal_user.last_login_at|date:"d M Y H:i"|default:"-" }}</div>
+        </div>
+      </div>
+
+      {% if new_password %}
+        <div class="alert alert-warning">
+          <div class="fw-bold">New Password Generated</div>
+          <div class="small text-muted">Copy and share only with the customer/supplier. This is shown once.</div>
+          <div class="mt-2">
+            <code style="font-size:14px;">{{ new_password }}</code>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="unified-grid cols-2">
+        <div class="unified-section">
+          <h5 class="mb-2">Actions</h5>
+          <div class="d-flex gap-2 flex-wrap">
+            {% if not portal_user %}
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+                <button class="btn unified-btn-primary" type="submit" {% if not portal_globally_enabled or not portal_role_enabled %}disabled{% endif %}>Create Portal Access</button>
+              </form>
+            {% else %}
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="{% if portal_user.is_active %}disable{% else %}enable{% endif %}">
+                <button class="btn unified-btn-outline" type="submit">
+                  {% if portal_user.is_active %}Disable Login{% else %}Enable Login{% endif %}
+                </button>
+              </form>
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reset_password">
+                <button class="btn unified-btn-outline" type="submit" {% if not portal_globally_enabled or not portal_role_enabled %}disabled{% endif %}>Reset Password</button>
+              </form>
+              <form method="post" onsubmit="return confirm('Delete portal access?')">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <button class="btn btn-danger" type="submit">Delete Access</button>
+              </form>
+            {% endif %}
+          </div>
+          <div class="small text-muted mt-2">
+            Reset password also sends a Welcome Kit (WhatsApp/SMS/Email) based on settings.
+          </div>
+        </div>
+
+        <div class="unified-section">
+          <h5 class="mb-2">Update Username</h5>
+          {% if portal_user %}
+            <form method="post" class="d-flex gap-2 flex-wrap align-items-end">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_username">
+              <div style="min-width:240px;flex:1;">
+                <label class="unified-label">New Username</label>
+                <input type="text" name="username" class="form-control" value="{{ portal_user.username }}">
+              </div>
+              <button class="btn unified-btn-primary" type="submit">Save</button>
+            </form>
+          {% else %}
+            <div class="text-muted small">Create portal access first.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="unified-section mt-3">
+        <h5 class="mb-2">Welcome Kit</h5>
+        {% if portal_user %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="send_welcome">
+            <button class="btn unified-btn-outline" type="submit" {% if not portal_globally_enabled or not portal_role_enabled %}disabled{% endif %}>Send Welcome Kit (Reset Password)</button>
+          </form>
+          <div class="small text-muted mt-2">
+            For security, Welcome Kit regenerates a new password.
+          </div>
+        {% else %}
+          <div class="text-muted small">Create portal access first.</div>
+        {% endif %}
+      </div>
+
+      <div class="unified-grid cols-2 mt-3">
+        <div class="unified-section">
+          <h5 class="mb-2">Set Password</h5>
+          {% if portal_user %}
+            <form method="post" class="unified-grid cols-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="set_password">
+              <div class="unified-section">
+                <label class="unified-label">New Password</label>
+                <input type="password" name="new_password" minlength="8" class="form-control" placeholder="Min 8 characters" required>
+              </div>
+              <div class="unified-section">
+                <label class="unified-label">Confirm Password</label>
+                <input type="password" name="confirm_password" minlength="8" class="form-control" required>
+              </div>
+              <div class="unified-section" style="grid-column:1/-1;">
+                <button class="btn unified-btn-primary w-100" type="submit" {% if not portal_globally_enabled or not portal_role_enabled %}disabled{% endif %}>
+                  Save & Send Welcome Kit
+                </button>
+                <div class="small text-muted mt-2">
+                  For security, the portal user will be asked to change the password on next login.
+                </div>
+              </div>
+            </form>
+          {% else %}
+            <div class="text-muted small">Create portal access first.</div>
+          {% endif %}
+        </div>
+
+        <div class="unified-section">
+          <h5 class="mb-2">Portal Permissions</h5>
+          {% if portal_user %}
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_permissions">
+              <div class="d-grid gap-2">
+                {% for p in perm_items %}
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="perm" value="{{ p.key }}" id="perm_{{ p.key }}" {% if perm_map|get_item:p.key != False %}checked{% endif %}>
+                    <label class="form-check-label" for="perm_{{ p.key }}">{{ p.label }}</label>
+                  </div>
+                {% empty %}
+                  <div class="text-muted small">No permission keys configured for this role.</div>
+                {% endfor %}
+              </div>
+              <button class="btn unified-btn-outline w-100 mt-3" type="submit">Save Permissions</button>
+            </form>
+          {% else %}
+            <div class="text-muted small">Create portal access first.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

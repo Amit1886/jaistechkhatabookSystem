@@ -1,0 +1,61 @@
+{% extends "central_engine/layout.html" %}
+
+{% block ce_title %}Task Center{% endblock %}
+
+{% block ce_content %}
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-md-6">
+      <div class="card ce-metric-card ce-gradient-card">
+        <div class="card-body">
+          <div class="metric-label">Daily Streak</div>
+          <div class="metric-value">{{ engine.daily_task_streak }} days</div>
+          <div class="small">Complete at least one task daily.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="card ce-soft">
+        <div class="card-body">
+          <div class="metric-label">Today</div>
+          <div class="metric-value">{{ today }}</div>
+          <div class="small text-muted">Completed: {{ completed|length }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Task</th>
+          <th class="text-muted small">Reward</th>
+          <th class="text-end">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tasks %}
+          <tr>
+            <td>
+              <div class="fw-semibold">{{ t.title }}</div>
+              <div class="small text-muted">{{ t.description }}</div>
+            </td>
+            <td class="small text-muted">+{{ t.coins_reward }} coins, +{{ t.points_reward }} points</td>
+            <td class="text-end">
+              {% if t.key in completed %}
+                <span class="badge bg-success">Completed</span>
+              {% else %}
+                <form method="post" action="{% url 'central_engine:task_complete' %}" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="task_key" value="{{ t.key }}">
+                  <button class="btn btn-sm btn-outline-primary" type="submit">Complete</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+

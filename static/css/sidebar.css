@@ -1,15 +1,20 @@
 /* ===
    SIDEBAR CORE
 ==== */
+:root {
+    --sidebar-width: 260px;
+    --sidebar-collapsed-width: 80px;
+}
+
 .sidebar {
     position: fixed;
     left: 0;
     top: 0;
-    width: 260px;
+    width: var(--sidebar-width);
     height: 100vh;
     background: #0f172a;
     color: #fff;
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, transform 0.3s ease;
     overflow-x: hidden;   /* horizontal hide */
     overflow-y: auto;     /* vertical scroll ENABLE */
     z-index: 1000;
@@ -18,8 +23,8 @@
    COLLAPSED STATE
 ==== */
 .sidebar.collapsed {
-    width: 80px;
-    overflow-y: hidden;   /* icons-only view */
+    width: var(--sidebar-collapsed-width);
+    overflow-y: auto;   /* keep scroll usable in icon-only mode */
 }
 
 /* ===
@@ -59,6 +64,22 @@
     font-size: 22px;
     cursor: pointer;
     min-width: 30px;
+    height: 34px;
+    width: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+.btn-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+.btn-toggle:active {
+    transform: scale(0.98);
+}
+.btn-toggle i {
+    line-height: 1;
 }
 
 /* ===
@@ -95,8 +116,20 @@
 ==== */
 .icon {
     width: 30px;
+    min-width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
     text-align: center;
-    font-size: 18px;
+    font-size: 16px;
+    color: #93c5fd;
+    background: rgba(96, 165, 250, 0.12);
+}
+
+.icon i {
+    line-height: 1;
 }
 
 .label {
@@ -133,20 +166,41 @@
 
 .submenu a {
     font-size: 14px;
-    padding: 6px 0;
-    display: block;
+    padding: 7px 8px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
     color: #cbd5f5;
+    border-radius: 8px;
 }
 
 .submenu a:hover {
+    background: rgba(255, 255, 255, 0.08);
     color: #fff;
+}
+
+.submenu-icon {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    color: #93c5fd;
+    background: rgba(96, 165, 250, 0.1);
+    font-size: 13px;
+}
+
+.submenu-icon i {
+    line-height: 1;
 }
 
 /* ===
    HOVER OPEN MODE
 ==== */
 .sidebar.hover-open {
-    width: 260px !important;
+    width: var(--sidebar-width) !important;
     box-shadow: 4px 0 15px rgba(0,0,0,0.4);
     overflow-y: auto;   /* 👈 ensure scroll works */
 }
@@ -161,12 +215,23 @@
    MAIN CONTENT SHIFT
 ==== */
 .main-content {
-    margin-left: 260px;
-    transition: margin-left 0.3s ease;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.3s ease, width 0.3s ease;
 }
 
 .sidebar.collapsed ~ .main-content {
-    margin-left: 80px;
+    margin-left: var(--sidebar-collapsed-width);
+}
+
+body.sidebar-collapsed .main-content {
+    margin-left: var(--sidebar-collapsed-width);
+}
+
+body.sidebar-expanded .main-content {
+    margin-left: var(--sidebar-width);
 }
 
 /* No sidebar layout (e.g., admin builder) */
@@ -184,4 +249,45 @@
 .sidebar::-webkit-scrollbar-thumb {
     background: rgba(255,255,255,0.2);
     border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+    :root {
+        --sidebar-width: 260px;
+        --sidebar-collapsed-width: 56px;
+    }
+
+    .sidebar {
+        width: var(--sidebar-width);
+        box-shadow: 4px 0 18px rgba(15, 23, 42, 0.22);
+    }
+
+    .sidebar.collapsed {
+        width: var(--sidebar-width);
+        transform: translateX(calc(-1 * (var(--sidebar-width) - var(--sidebar-collapsed-width))));
+        overflow-y: hidden;
+    }
+
+    .sidebar.collapsed .logo-header {
+        justify-content: flex-end;
+        padding-left: 8px;
+        padding-right: 11px;
+    }
+
+    .sidebar.collapsed .menu {
+        pointer-events: none;
+    }
+
+    .main-content {
+        margin-left: var(--sidebar-collapsed-width);
+        width: calc(100% - var(--sidebar-collapsed-width));
+    }
+
+    body.sidebar-expanded .main-content {
+        margin-left: var(--sidebar-collapsed-width);
+    }
+
+    body.no-sidebar .main-content {
+        width: 100%;
+    }
 }

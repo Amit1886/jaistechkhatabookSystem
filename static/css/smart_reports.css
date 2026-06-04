@@ -1,0 +1,101 @@
+.smart-report-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(15, 118, 110, 0.22);
+  background: #ecfdf5;
+  color: #0f766e;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.smart-report-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #10b981;
+  box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.14);
+}
+
+.smart-report-live-pill.is-refreshing .smart-report-live-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.16);
+}
+
+.smart-report-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.smart-report-actions .btn,
+.smart-report-actions button {
+  min-height: 31px;
+  border-radius: 7px;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.smart-report-quickbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #d7e3f1;
+  background: #f8fbff;
+  border-radius: 8px;
+}
+
+.smart-report-quickbar input {
+  min-width: 220px;
+}
+
+.smart-report-print-header {
+  display: none;
+}
+
+@media print {
+  .sidebar,
+  .topbar,
+  .footer,
+  .smart-report-actions,
+  .smart-report-live-pill,
+  .doc-action-bar,
+  .no-print,
+  button,
+  .btn {
+    display: none !important;
+  }
+
+  .main-content,
+  .page-content,
+  .container-fluid,
+  .pc-universal-shell {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .unified-report-card,
+  .unified-list-card,
+  .card {
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+
+  .smart-report-print-header {
+    display: block;
+    margin-bottom: 14px;
+    border-bottom: 2px solid #111827;
+    padding-bottom: 10px;
+  }
+}

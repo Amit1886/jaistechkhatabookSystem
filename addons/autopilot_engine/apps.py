@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 
 
 class AutopilotEngineConfig(AppConfig):
@@ -7,6 +8,9 @@ class AutopilotEngineConfig(AppConfig):
     verbose_name = "Addons Autopilot Engine"
 
     def ready(self):
+        if getattr(settings, "LIGHTWEIGHT_DEPLOYMENT", False):
+            return
+
         from . import signals  # noqa: F401
         from . import listeners  # noqa: F401
         from .integrations import legacy_events  # noqa: F401

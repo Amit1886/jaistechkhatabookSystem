@@ -1,0 +1,66 @@
+{% extends "core/pc_universal.html" %}
+
+{% block title %}Inventory Books{% endblock %}
+
+{% block pc_actions %}
+  <a href="{% url 'reports:inventory_summary' %}" class="btn btn-outline-light btn-sm fw-bold">Inventory Summary</a>
+{% endblock %}
+
+{% block pc_content %}
+  <div class="unified-section unified-filter-row">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="unified-label">Product</label>
+        <select name="product_id" class="form-select">
+          <option value="">Select product…</option>
+          {% for p in products %}
+            <option value="{{ p.id }}" {% if selected_product_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="unified-label">From</label>
+        <input type="date" name="from" value="{{ date_from|date:'Y-m-d' }}" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="unified-label">To</label>
+        <input type="date" name="to" value="{{ date_to|date:'Y-m-d' }}" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <button class="btn unified-btn-primary" type="submit">Apply</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="unified-table-wrap">
+    <table class="table unified-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Warehouse</th>
+          <th>Movement</th>
+          <th class="text-end">Qty In</th>
+          <th class="text-end">Qty Out</th>
+          <th class="text-end">Running</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>{{ r.date|date:"Y-m-d" }}</td>
+            <td>{{ r.warehouse_id|default:"-" }}</td>
+            <td>{{ r.movement|upper }}</td>
+            <td class="text-end">{{ r.qty_in }}</td>
+            <td class="text-end">{{ r.qty_out }}</td>
+            <td class="text-end" style="font-weight:900;">{{ r.running_qty }}</td>
+            <td style="font-family: monospace;">{{ r.reference_type }}#{{ r.reference_id }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">Select a product to view movement.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+

@@ -1,0 +1,32 @@
+.ce-nav .nav-link {
+  border-radius: 999px;
+}
+
+.ce-gradient-card {
+  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 45%, #1d4ed8 100%);
+  color: #fff;
+}
+
+.ce-metric-card {
+  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.18);
+}
+
+.ce-metric-card .metric-label {
+  opacity: 0.85;
+  font-size: 0.85rem;
+}
+
+.ce-metric-card .metric-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.ce-soft {
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  border-radius: 14px;
+}
+

@@ -1,23 +1,12 @@
 # khataapp/utils/permissions.py
-from django.core.exceptions import ObjectDoesNotExist
+"""
+Compatibility wrapper for feature gating.
 
-def user_has_feature(user, feature_name):
-    """
-    Check if a user has access to a feature based on their plan.
-    Returns True/False
-    """
-    try:
-        profile = user.khata_profile  # OneToOne UserProfile
-        plan = profile.plan
-        if not plan:
-            return False  # No plan, no features
+Historically this module implemented its own (incorrect) plan-feature check which could
+diverge from the billing subscription/feature registry system. Keep a stable import
+path for legacy callers but delegate to the canonical implementation.
+"""
 
-        # Example: assuming Plan model has a JSONField/ListField 'features'
-        if hasattr(plan, 'features'):
-            return feature_name in plan.features
-        else:
-            # If no features defined, allow all for now
-            return True
+from billing.services import user_has_feature  # re-export
 
-    except ObjectDoesNotExist:
-        return False  # No profile, deny access
+__all__ = ["user_has_feature"]

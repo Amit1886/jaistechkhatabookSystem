@@ -1,0 +1,597 @@
+{% extends "billing/base.html" %}
+{% load billing_extras %}
+{% block billing_content %}
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h3 class="mb-0">{% if mode == "edit" %}User Management{% else %}Add Linked User{% endif %}</h3>
+      <div class="text-muted small">
+        {% if mode == "edit" %}
+          One place to manage login, portals, permissions, features, and activity.
+        {% else %}
+          Create a new user linked to your billing profile.
+        {% endif %}
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'billing:users_manage' %}">Back</a>
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'accounts:edit_profile' %}">Profile</a>
+    </div>
+  </div>
+
+  <hr>
+
+  {% if mode == "edit" %}
+    <ul class="nav nav-tabs" id="userMgmtTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-overview" data-bs-toggle="tab" data-bs-target="#pane-overview" type="button" role="tab">Overview</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-access" data-bs-toggle="tab" data-bs-target="#pane-access" type="button" role="tab">Access</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-activity" data-bs-toggle="tab" data-bs-target="#pane-activity" type="button" role="tab">Activity</button>
+      </li>
+    </ul>
+
+    <div class="tab-content pt-3">
+      <div class="tab-pane fade show active" id="pane-overview" role="tabpanel">
+        <div class="row g-3">
+          <div class="col-12 col-lg-4">
+            <div class="border rounded-3 p-3 bg-light">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="fw-semibold">Portal Status</div>
+                {% if member.is_active %}
+                  <span class="badge bg-success">Enabled</span>
+                {% else %}
+                  <span class="badge bg-secondary">Disabled</span>
+                {% endif %}
+              </div>
+              <div class="small mt-2">
+                <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                  <div><b>Login URL:</b> <code id="loginUrlText">{{ login_url }}</code></div>
+                  <button class="btn btn-outline-secondary btn-sm" type="button" data-copy-target="loginUrlText">Copy</button>
+                </div>
+                <div class="mt-1"><b>Role:</b> <code>{{ member.billing_role_type|default:"-" }}</code>{% if member.billing_child_role %} / <code>{{ member.billing_child_role }}</code>{% endif %}</div>
+                <div class="mt-2"><b>After login (allowed):</b></div>
+                <ul class="mb-0">
+                  {% for link in portal_links.after_login %}
+                    {% if link.url %}
+                      <li class="d-flex align-items-center justify-content-between gap-2">
+                        <a href="{{ link.url }}">{{ link.label }}</a>
+                        <button class="btn btn-outline-secondary btn-sm" type="button" data-copy-value="{{ link.url }}">Copy link</button>
+                      </li>
+                    {% endif %}
+                  {% empty %}
+                    <li class="text-muted">No portal links available for this user.</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-4">
+            <div class="border rounded-3 p-3 bg-light">
+              <div class="fw-semibold">User</div>
+              <div class="mt-2 small">
+                <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                  <div><b>ID:</b> <code id="userIdText">{{ member.id }}</code></div>
+                  <button class="btn btn-outline-secondary btn-sm" type="button" data-copy-target="userIdText">Copy</button>
+                </div>
+                <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mt-1">
+                  <div><b>Email:</b> <code id="userEmailText">{{ member.email }}</code></div>
+                  <button class="btn btn-outline-secondary btn-sm" type="button" data-copy-target="userEmailText">Copy</button>
+                </div>
+                <div class="mt-1"><b>Username:</b> <code>{{ member.username|default:"-" }}</code></div>
+                <div class="mt-1"><b>Mobile:</b> <code>{{ member.mobile|default:"-" }}</code></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-4">
+            <div class="border rounded-3 p-3 bg-light">
+              <div class="fw-semibold">Security</div>
+              <div class="mt-2 small">
+                <div><b>Last login:</b> {{ member.last_login|default:"-" }}</div>
+                <div><b>Joined:</b> {{ member.date_joined|default:"-" }}</div>
+              </div>
+              <hr>
+              <div class="fw-semibold">Actions</div>
+              <div class="d-flex gap-2 flex-wrap mt-2">
+                {% if can_impersonate %}
+                  <form method="post" class="m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="impersonate">
+                    <button class="btn btn-outline-success btn-sm" type="submit">View As User</button>
+                  </form>
+                {% endif %}
+                {% if request.session.impersonator_id %}
+                  <a class="btn btn-outline-secondary btn-sm" href="{% url 'billing:impersonate_stop' %}">Return to Admin</a>
+                {% endif %}
+                <form method="post" class="m-0">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="toggle_active">
+                  <button class="btn btn-outline-primary btn-sm" type="submit">
+                    {% if member.is_active %}Disable Login{% else %}Enable Login{% endif %}
+                  </button>
+                </form>
+                <form method="post" class="m-0">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="reset_password">
+                  <button class="btn btn-warning btn-sm" type="submit">Reset Password</button>
+                </form>
+                <form method="post" class="m-0">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="send_welcome_kit">
+                  <button class="btn btn-outline-secondary btn-sm" type="submit">Send Welcome Kit</button>
+                </form>
+              </div>
+              <div class="text-muted small mt-2">
+                Reset/Welcome kit generates a new password and tries WhatsApp/Email (best effort).
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="pane-access" role="tabpanel">
+        <div class="border rounded-3 p-3 mb-3 bg-light">
+          <div class="fw-semibold">Quick Setup (Easy)</div>
+          <div class="text-muted small">1-click presets to set role permissions + features quickly. After applying, press “Save Changes”.</div>
+          <div class="row g-2 mt-2 align-items-end">
+            <div class="col-12 col-md-6">
+              <label class="form-label small mb-1">Preset</label>
+              <select id="presetSelect" class="form-select form-select-sm">
+                <option value="">Select preset…</option>
+                {% for p in quick_presets %}
+                  <option value="{{ p.id }}">{{ p.label }} — {{ p.desc }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-6 d-flex gap-2">
+              <button type="button" id="presetApply" class="btn btn-primary btn-sm">Apply Preset</button>
+              <button type="button" id="presetPortalOn" class="btn btn-outline-secondary btn-sm">Portal: ON</button>
+              <button type="button" id="presetPortalOff" class="btn btn-outline-secondary btn-sm">Portal: OFF</button>
+            </div>
+          </div>
+          <div id="presetMsg" class="text-muted small mt-2"></div>
+        </div>
+
+        <div class="border rounded-3 p-3">
+          <div class="fw-semibold mb-2">Access Matrix (Full List)</div>
+          <div class="text-muted small mb-2">
+            Permissions: <b>{{ perm_enabled_count }}</b>/<b>{{ perm_total_count }}</b> enabled •
+            Features: <b>{{ feature_enabled_count }}</b>/<b>{{ feature_total_count }}</b> enabled
+          </div>
+          <div class="row g-2">
+            <div class="col-12 col-lg-6">
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <div class="fw-semibold">Permissions</div>
+                <input id="permSearch" class="form-control form-control-sm" placeholder="Search permission...">
+              </div>
+              <ul id="permList" class="small mb-0 mt-2">
+                {% for p in permission_toggles %}
+                  <li data-search="{{ p.label|lower }} {{ p.key|lower }}">
+                    {{ p.label }}
+                    {% if p.enabled %}
+                      <span class="badge bg-success ms-1">ON</span>
+                    {% else %}
+                      <span class="badge bg-secondary ms-1">OFF</span>
+                    {% endif %}
+                    <span class="text-muted">(<code>{{ p.key }}</code>)</span>
+                  </li>
+                {% empty %}
+                  <li class="text-muted">No permissions configured.</li>
+                {% endfor %}
+              </ul>
+            </div>
+            <div class="col-12 col-lg-6">
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <div class="fw-semibold">Features & Services</div>
+                <input id="featureSearch" class="form-control form-control-sm" placeholder="Search feature...">
+              </div>
+              <ul id="featureList" class="small mb-0 mt-2">
+                {% for f in feature_rows %}
+                  <li data-search="{{ f.label|lower }} {{ f.key|lower }} {{ f.group|lower }}">
+                    {{ f.label }}
+                    {% if f.effective %}
+                      <span class="badge bg-success ms-1">ON</span>
+                    {% else %}
+                      <span class="badge bg-secondary ms-1">OFF</span>
+                    {% endif %}
+                    {% if f.overridden %}<span class="badge bg-light text-dark ms-1">manual</span>{% endif %}
+                    <span class="text-muted">(<code>{{ f.key }}</code>)</span>
+                  </li>
+                {% empty %}
+                  <li class="text-muted">No features configured.</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <form method="post" class="mt-3">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save">
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <div class="row g-3">
+            <div class="col-12 col-lg-6">
+              <div class="border rounded-3 p-3">
+                <div class="fw-semibold mb-2">Account</div>
+                <div class="row g-2">
+                  <div class="col-12">
+                    <label class="form-label">Email</label>
+                    {{ form.email }}
+                    <div class="text-danger small">{{ form.email.errors }}</div>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label">Mobile</label>
+                    {{ form.mobile }}
+                    <div class="text-danger small">{{ form.mobile.errors }}</div>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label">Username</label>
+                    {{ form.username }}
+                    <div class="text-danger small">{{ form.username.errors }}</div>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">New Password (optional)</label>
+                    {{ form.password }}
+                    <div class="text-danger small">{{ form.password.errors }}</div>
+                  </div>
+                  <div class="col-12">
+                    <div class="form-check">
+                      {{ form.is_active }}
+                      <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                    </div>
+                    <div class="text-danger small">{{ form.is_active.errors }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+              <div class="border rounded-3 p-3">
+                <div class="fw-semibold mb-2">Role & Permissions (Editable)</div>
+                <div class="row g-2">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label">Role Type</label>
+                    {{ form.billing_role_type }}
+                    <div class="text-danger small">{{ form.billing_role_type.errors }}</div>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label">Child Role (key)</label>
+                    {{ form.billing_child_role }}
+                    <div class="form-text">{{ form.billing_child_role.help_text }}</div>
+                    <div class="text-danger small">{{ form.billing_child_role.errors }}</div>
+                  </div>
+                </div>
+
+                {% if permission_toggles %}
+                  <hr>
+                  <div class="fw-semibold mb-2">Permissions (User-wise)</div>
+                  <div class="row g-2">
+                    {% for p in permission_toggles %}
+                      <div class="col-12 col-md-6">
+                        <label class="form-check">
+                          <input class="form-check-input" type="checkbox" name="perm__{{ p.key }}" value="1" {% if p.enabled %}checked{% endif %}>
+                          <span class="form-check-label">{{ p.label }}</span>
+                        </label>
+                        <div class="text-muted small"><code>{{ p.key }}</code></div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="border rounded-3 p-3 mt-3">
+            <div class="fw-semibold mb-2">Features & Services (Editable)</div>
+            <div class="text-muted small mb-2">Toggle per-user feature access (overrides plan defaults).</div>
+            <div class="row g-2">
+              {% regroup feature_rows by group as feature_groups %}
+              {% for g in feature_groups %}
+                <div class="col-12">
+                  <div class="fw-semibold">{{ g.grouper }}</div>
+                </div>
+                {% for f in g.list %}
+                  <div class="col-12 col-md-6 col-lg-4">
+                    <label class="form-check">
+                      <input class="form-check-input" type="checkbox" name="feature__{{ f.id }}" value="1" {% if f.effective %}checked{% endif %}>
+                      <span class="form-check-label">{{ f.label }}</span>
+                    </label>
+                    <div class="text-muted small">
+                      <code>{{ f.key }}</code>
+                      {% if f.overridden %}<span class="badge bg-light text-dark ms-1">manual</span>{% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-3">
+            <button class="btn btn-primary" type="submit">Save Changes</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="tab-pane fade" id="pane-activity" role="tabpanel">
+        <div class="row g-3">
+          <div class="col-12 col-lg-6">
+            <div class="border rounded-3 p-3">
+              <div class="fw-semibold mb-2">Working History (Snapshot)</div>
+              <div class="row g-2 small">
+                <div class="col-6">Parties: <b>{{ activity.parties }}</b></div>
+                <div class="col-6">Transactions: <b>{{ activity.transactions }}</b></div>
+                <div class="col-6">Total Credit: <b>₹{{ activity.total_credit }}</b></div>
+                <div class="col-6">Total Debit: <b>₹{{ activity.total_debit }}</b></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="border rounded-3 p-3">
+              <div class="fw-semibold mb-2">Trace & Totals</div>
+              <div class="text-muted small mb-2">
+                Child accounts count: <b>{{ trace.children_count }}</b>
+              </div>
+              <div class="row g-2 small">
+                <div class="col-6 col-md-4">Parties: <b>{{ totals.parties }}</b></div>
+                <div class="col-6 col-md-4">Transactions: <b>{{ totals.transactions }}</b></div>
+                <div class="col-6 col-md-4">Orders: <b>{{ totals.orders }}</b></div>
+                <div class="col-6 col-md-4">Invoices: <b>{{ totals.invoices }}</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-0">
+          <div class="col-12 col-lg-6">
+            <div class="border rounded-3 p-3 mt-3">
+              <div class="fw-semibold">Recent Transactions</div>
+              <ul class="small mb-0 mt-2">
+                {% for t in recent.transactions %}
+                  <li>{{ t.date }} — {{ t.party.name|default:"Party" }} — ₹{{ t.amount }}</li>
+                {% empty %}
+                  <li class="text-muted">No transactions</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="border rounded-3 p-3 mt-3">
+              <div class="fw-semibold">Recent Parties</div>
+              <ul class="small mb-0 mt-2">
+                {% for p in recent.parties %}
+                  <li>{{ p.name }}</li>
+                {% empty %}
+                  <li class="text-muted">No parties</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="border rounded-3 p-3 mt-3">
+              <div class="fw-semibold">Recent Orders</div>
+              <ul class="small mb-0 mt-2">
+                {% for o in recent.orders %}
+                  <li>#{{ o.id }}</li>
+                {% empty %}
+                  <li class="text-muted">No orders</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="border rounded-3 p-3 mt-3">
+              <div class="fw-semibold">Recent Invoices</div>
+              <ul class="small mb-0 mt-2">
+                {% for inv in recent.invoices %}
+                  <li>
+                    {% if inv.invoice_number %}{{ inv.invoice_number }}{% elif inv.number %}{{ inv.number }}{% else %}#{{ inv.id }}{% endif %}
+                    — ₹{{ inv.amount }} — {% if inv.paid %}Paid{% else %}Pending{% endif %}
+                  </li>
+                {% empty %}
+                  <li class="text-muted">No invoices</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="border rounded-3 p-3 mt-3">
+          <div class="fw-semibold mb-2">Subscription Events</div>
+          <ul class="small mb-0">
+            {% for ev in subscription_events %}
+              <li>{{ ev.created_at }} — {{ ev.event_type }}{% if ev.plan %} ({{ ev.plan.name }}){% endif %}</li>
+            {% empty %}
+              <li class="text-muted">No events</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if mode != "edit" %}
+    <form method="post" class="mt-3">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save">
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="row g-3">
+        <div class="col-12 col-lg-6">
+          <div class="border rounded-3 p-3">
+            <div class="fw-semibold mb-2">Account</div>
+            <div class="row g-2">
+              <div class="col-12">
+                <label class="form-label">Email</label>
+                {{ form.email }}
+                <div class="text-danger small">{{ form.email.errors }}</div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label">Mobile</label>
+                {{ form.mobile }}
+                <div class="text-danger small">{{ form.mobile.errors }}</div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label">Username</label>
+                {{ form.username }}
+                <div class="text-danger small">{{ form.username.errors }}</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Password</label>
+                {{ form.password }}
+                <div class="text-danger small">{{ form.password.errors }}</div>
+              </div>
+              <div class="col-12">
+                <div class="form-check">
+                  {{ form.is_active }}
+                  <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                </div>
+                <div class="text-danger small">{{ form.is_active.errors }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="border rounded-3 p-3">
+            <div class="fw-semibold mb-2">Role</div>
+            <div class="row g-2">
+              <div class="col-12 col-md-6">
+                <label class="form-label">Role Type</label>
+                {{ form.billing_role_type }}
+                <div class="text-danger small">{{ form.billing_role_type.errors }}</div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label">Child Role (key)</label>
+                {{ form.billing_child_role }}
+                <div class="form-text">{{ form.billing_child_role.help_text }}</div>
+                <div class="text-danger small">{{ form.billing_child_role.errors }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2 mt-3">
+        <button class="btn btn-primary" type="submit">Create User</button>
+      </div>
+    </form>
+  {% endif %}
+{% endblock %}
+
+<script>
+  function copyText(text) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
+
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-copy-target],[data-copy-value]");
+    if (!btn) return;
+    if (btn.dataset.copyValue) return copyText(btn.dataset.copyValue);
+    const id = btn.dataset.copyTarget;
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    copyText(el.textContent || "");
+  });
+
+  function wireSearch(inputId, listId) {
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(listId);
+    if (!input || !list) return;
+    input.addEventListener("input", () => {
+      const q = String(input.value || "").trim().toLowerCase();
+      list.querySelectorAll("li[data-search]").forEach((li) => {
+        const hay = String(li.dataset.search || "");
+        li.style.display = !q || hay.includes(q) ? "" : "none";
+      });
+    });
+  }
+  document.addEventListener("DOMContentLoaded", () => {
+    wireSearch("permSearch", "permList");
+    wireSearch("featureSearch", "featureList");
+  });
+
+  // Quick preset application (no backend roundtrip)
+  const PRESETS = {
+    {% for p in quick_presets %}
+      "{{ p.id }}": {
+        perm_on: [{% for k in p.perm_on %}"{{ k }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+        perm_off: [{% for k in p.perm_off %}"{{ k }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+        feature_on: [{% for k in p.feature_on %}"{{ k }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+        feature_off: [{% for k in p.feature_off %}"{{ k }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+      },
+    {% endfor %}
+  };
+  const FEATURE_KEY_TO_ID = {
+    {% for k,v in feature_key_to_id.items %}
+      "{{ k }}": {{ v }},
+    {% endfor %}
+  };
+
+  function setPerm(key, enabled) {
+    const el = document.querySelector(`input[name="perm__${CSS.escape(key)}"]`);
+    if (el) el.checked = !!enabled;
+  }
+  function setFeatureKey(key, enabled) {
+    const id = FEATURE_KEY_TO_ID[key];
+    if (!id) return;
+    const el = document.querySelector(`input[name="feature__${id}"]`);
+    if (el) el.checked = !!enabled;
+  }
+  function flashPresetMsg(text) {
+    const el = document.getElementById("presetMsg");
+    if (!el) return;
+    el.textContent = text || "";
+    if (!text) return;
+    setTimeout(() => {
+      try { el.textContent = ""; } catch (e) {}
+    }, 2000);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const sel = document.getElementById("presetSelect");
+    const applyBtn = document.getElementById("presetApply");
+    const portalOnBtn = document.getElementById("presetPortalOn");
+    const portalOffBtn = document.getElementById("presetPortalOff");
+    if (applyBtn && sel) {
+      applyBtn.addEventListener("click", () => {
+        const id = String(sel.value || "").trim();
+        if (!id || !PRESETS[id]) return flashPresetMsg("Select a preset first.");
+        const p = PRESETS[id];
+        (p.perm_on || []).forEach((k) => setPerm(k, true));
+        (p.perm_off || []).forEach((k) => setPerm(k, false));
+        (p.feature_on || []).forEach((k) => setFeatureKey(k, true));
+        (p.feature_off || []).forEach((k) => setFeatureKey(k, false));
+        flashPresetMsg("Preset applied. Now click “Save Changes”.");
+      });
+    }
+    if (portalOnBtn) {
+      portalOnBtn.addEventListener("click", () => {
+        ["portal.view_invoices", "portal.view_reports", "portal.place_orders", "portal.make_payments"].forEach((k) => setPerm(k, true));
+        setFeatureKey("portal.customer", true);
+        setFeatureKey("portal.supplier", true);
+        flashPresetMsg("Portal permissions enabled (basic). Save Changes.");
+      });
+    }
+    if (portalOffBtn) {
+      portalOffBtn.addEventListener("click", () => {
+        ["portal.view_invoices", "portal.view_reports", "portal.place_orders", "portal.make_payments"].forEach((k) => setPerm(k, false));
+        setFeatureKey("portal.customer", false);
+        setFeatureKey("portal.supplier", false);
+        flashPresetMsg("Portal permissions disabled. Save Changes.");
+      });
+    }
+  });
+</script>

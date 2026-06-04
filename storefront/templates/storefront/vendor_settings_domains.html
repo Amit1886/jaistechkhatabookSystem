@@ -1,0 +1,38 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Domains</div>
+        <div class="va-help">Custom domain setup for your storefront.</div>
+      </div>
+      <div class="va-help">
+        Current: <span class="fw-semibold">{{ vendor.subdomain }}</span>
+      </div>
+    </div>
+  </div>
+
+  <form method="post" class="va-panel p-3">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Custom domain (optional)</div>
+        <label class="form-label va-form-label">Domain</label>
+        <input class="form-control" name="custom_domain" value="{{ custom_domain|default:'' }}" placeholder="shop.yourdomain.com">
+        <div class="va-help mt-1">Phase B will verify DNS & enable SSL automatically.</div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Instructions</div>
+        <div class="va-help">
+          Add a <span class="fw-semibold">CNAME</span> record pointing to:
+          <div class="mt-2"><code>{{ vendor.subdomain }}.billentra.local</code></div>
+        </div>
+      </div>
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Save</button>
+      </div>
+    </div>
+  </form>
+{% endblock %}
+

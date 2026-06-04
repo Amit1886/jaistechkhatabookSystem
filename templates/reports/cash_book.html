@@ -2,22 +2,86 @@
 {% block title %}Cash Book{% endblock %}
 
 {% block content %}
-<h2>Cash Book</h2>
+<div class="container-fluid py-2 unified-report-screen" data-master-list-wrap>
+  <div class="unified-report-card">
+    <div class="unified-report-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Cash Book</h3>
+        <div class="unified-subtitle">Cash transactions only</div>
+      </div>
+    </div>
 
-<p><strong>Balance:</strong> {{ balance }}</p>
+    <div class="unified-report-body">
+      <div class="report-summary-grid">
+        <div class="report-summary-card">
+          <div class="label">Cash In</div>
+          <div class="value">{{ total_in }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Cash Out</div>
+          <div class="value">{{ total_out }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Balance</div>
+          <div class="value">{{ balance }}</div>
+        </div>
+      </div>
 
-<table>
-    <tr>
-        <th>Date</th>
-        <th>Type</th>
-        <th>Amount</th>
-    </tr>
-    {% for t in transactions %}
-    <tr>
-        <td>{{ t.date }}</td>
-        <td>{{ t.type }}</td>
-        <td>{{ t.amount }}</td>
-    </tr>
-    {% endfor %}
-</table>
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" method="get">
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="cashSearch">Search</label>
+          <input id="cashSearch" data-master-search type="text" class="form-control" placeholder="Search party/notes">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="fromDate">From</label>
+          <input id="fromDate" name="from" type="date" class="form-control" value="{{ date_from|date:'Y-m-d' }}">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="toDate">To</label>
+          <input id="toDate" name="to" type="date" class="form-control" value="{{ date_to|date:'Y-m-d' }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <a class="btn unified-btn-outline" href="{% url 'reports:cash_book' %}">Reset</a>
+        </div>
+      </form>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" data-master-list data-page-size="15">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Party</th>
+              <th>Type</th>
+              <th class="text-end">Amount</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in transactions %}
+            <tr>
+              <td>{{ t.date|date:"d M Y" }}</td>
+              <td>{{ t.party.name }}</td>
+              <td>
+                {% if t.txn_type == 'credit' %}
+                  <span class="badge bg-success">In</span>
+                {% else %}
+                  <span class="badge bg-danger">Out</span>
+                {% endif %}
+              </td>
+              <td class="text-end fw-bold">{{ t.amount }}</td>
+              <td>{{ t.notes|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center">No cash entries.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-2" data-master-pagination></div>
+      {% include 'core/includes/document_action_bar.html' %}
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}WhatsApp Automation Dashboard{% endblock %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+
+  <style>
+    .wa-hero { background: linear-gradient(135deg,#0f172a,#111827); color:#e2e8f0; border-radius:16px; padding:18px; }
+    .wa-pill { display:inline-flex; gap:6px; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700; text-transform:uppercase; }
+    .wa-pill-green { background:#22c55e33; color:#22c55e; }
+    .wa-pill-blue { background:#3b82f633; color:#60a5fa; }
+    .wa-card { border:1px solid #e2e8f0; border-radius:12px; }
+    .wa-stat { background:#0b1220; color:#e2e8f0; border-radius:12px; padding:12px; }
+    .wa-stat .value { font-size:22px; font-weight:800; }
+  </style>
+
+  <div class="container-fluid py-2 unified-screen">
+    <div class="wa-hero mb-3 d-flex flex-wrap justify-content-between gap-3">
+      <div>
+        <div class="wa-pill wa-pill-green mb-1">Step 1</div>
+        <h3 class="mb-1">Connect WhatsApp & Automate Billing</h3>
+        <div class="text-muted">Follow the steps below to get webhook, test commands, and monitor activity.</div>
+        <div class="mt-2 d-flex gap-2 flex-wrap">
+          <a class="btn btn-light btn-sm" href="{% url 'whatsapp:setup_wizard' %}">Open Setup Wizard</a>
+          <a class="btn btn-outline-light btn-sm" href="{{ unified_webhook_url }}" target="_blank" rel="noopener">Unified Webhook</a>
+          <a class="btn btn-outline-light btn-sm" href="{{ webhook_url }}" target="_blank" rel="noopener">Accounting Webhook</a>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <div class="wa-stat text-center">
+          <div class="small text-muted">Messages</div>
+          <div class="value">{{ logs|length }}</div>
+        </div>
+        <div class="wa-stat text-center">
+          <div class="small text-muted">Last Activity</div>
+          <div class="value">{% if logs %}{{ logs.0.created_at|date:"d M" }}{% else %}-{% endif %}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+              <div>
+                <div class="wa-pill wa-pill-blue mb-1">Configure</div>
+                <h6 class="mb-0">API Settings{% if not request.user.is_staff %} (Admin only){% endif %}</h6>
+                <div class="small text-muted">Provider, token, webhook secret – saved securely.</div>
+              </div>
+              <a class="btn btn-sm unified-btn-outline" href="{% url 'core_settings:settings_center' %}">Settings Center</a>
+            </div>
+            <form method="post" class="row g-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="save_settings">
+              <div class="col-12">
+                <div class="form-check">
+                  {{ settings_form.enabled }}
+                  <label class="form-check-label" for="{{ settings_form.enabled.id_for_label }}">Enable WhatsApp automation</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Provider</label>
+                {{ settings_form.provider }}
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">UltraMsg Instance ID</label>
+                {{ settings_form.ultramsg_instance_id }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">UltraMsg Token</label>
+                {{ settings_form.ultramsg_token }}
+                <div class="small text-muted mt-1">Saved: {{ masked_token|default:"-" }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Webhook Secret</label>
+                {{ settings_form.webhook_secret }}
+                <div class="small text-muted mt-1">Saved: {{ masked_secret|default:"-" }}</div>
+              </div>
+              <div class="col-12 d-flex justify-content-end">
+                <button class="btn unified-btn-primary" type="submit" {% if not request.user.is_staff %}disabled{% endif %}>Save Settings</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+              <div>
+                <div class="wa-pill wa-pill-blue mb-1">Test</div>
+                <h6 class="mb-0">Try a Command</h6>
+                <div class="small text-muted">Tap a sample, then Run to simulate.</div>
+              </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <button class="btn btn-sm unified-btn-outline sample-cmd" data-cmd="sale 5 ice cream 250">Sale</button>
+              <button class="btn btn-sm unified-btn-outline sample-cmd" data-cmd="expense diesel 500">Expense</button>
+              <button class="btn btn-sm unified-btn-outline sample-cmd" data-cmd="receive payment 5000 from Ram Traders">Receive</button>
+            </div>
+            <form method="post" class="row g-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="simulate">
+              <div class="col-12">
+                {{ cmd_form.command }}
+              </div>
+              <div class="col-12 d-flex justify-content-end">
+                <button class="btn unified-btn-primary" type="submit">Run</button>
+              </div>
+            </form>
+            <hr class="my-3">
+            <div class="small text-muted">
+              <div class="fw-semibold">Central Webhook</div>
+              <code class="d-block" style="word-break:break-all;">{{ unified_webhook_url }}</code>
+              <div class="mt-2 fw-semibold">Accounting-only Webhook</div>
+              <code class="d-block" style="word-break:break-all;">{{ webhook_url }}</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+          <div>
+            <div class="wa-pill wa-pill-green mb-1">Monitor</div>
+            <h6 class="mb-0">Recent Messages</h6>
+            <div class="small text-muted">Live view of processed WhatsApp messages.</div>
+          </div>
+          <span class="badge bg-secondary">{{ logs|length }} items</span>
+        </div>
+        <div class="unified-table-wrap">
+          <table class="table unified-table align-middle">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Dir</th>
+                <th>From</th>
+                <th>Body</th>
+                <th>Intent</th>
+                <th>Status</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for m in logs %}
+                <tr>
+                  <td>{{ m.id }}</td>
+                  <td>{{ m.direction }}</td>
+                  <td>{{ m.from_number }}</td>
+                  <td style="max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ m.body }}</td>
+                  <td>{{ m.parsed_intent|default:"-" }}</td>
+                  <td>
+                    {% if m.status == 'processed' %}
+                      <span class="badge bg-success">Processed</span>
+                    {% elif m.status == 'failed' %}
+                      <span class="badge bg-danger">Failed</span>
+                    {% elif m.status == 'ignored' %}
+                      <span class="badge bg-secondary">Ignored</span>
+                    {% else %}
+                      <span class="badge bg-info text-dark">{{ m.status }}</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ m.created_at|date:"d M Y, H:i" }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">No messages yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      document.querySelectorAll(".sample-cmd").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var target = document.getElementById("id_command");
+          if (!target) return;
+          target.value = btn.getAttribute("data-cmd") || "";
+          target.focus();
+        });
+      });
+    })();
+  </script>
+{% endblock %}

@@ -3,17 +3,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}KhataPro{% endblock %}</title>
+    <title>{% block title %}Billentra{% endblock %}</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="icon" href="{% static 'favicon.ico' %}">
+    <link rel="icon" href="{% static 'img/billentra-favicon.ico' %}">
 
-    <!-- Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-
-    <!-- Tailwind -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Vendor CSS -->
+    {% if desktop_mode or use_local_vendor_assets %}
+        <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.css' %}">
+        <link rel="stylesheet" href="{% static 'vendor/tailwind/tailwind-2.2.19.min.css' %}">
+    {% else %}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    {% endif %}
 
     {% block extra_css %}{% endblock %}
 </head>
@@ -24,28 +27,52 @@
     <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
 
         <!-- LOGO HEADER -->
-        <div class="bg-black py-6 flex flex-col items-center">
+        <div style="background:linear-gradient(135deg,#f8fbff 0%,#ffffff 55%,#eef4ff 100%);border-bottom:1px solid #dbe4f0;display:flex;padding:28px 20px 20px;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
             <img
-                src="{% static 'img/logo.png' %}"
-                alt="JaisTech Logo"
-                class="h-14 mb-2"
+                src="{% static 'img/billentra-logo.png' %}"
+                alt="Billentra Logo"
+                style="display:block;height:250px;width:auto;max-width:200px;object-fit:contain;object-position:center;filter:drop-shadow(0 16px 22px rgba(37, 99, 235, 0.16));"
             >
-            <p class="text-gray-300 text-xs tracking-widest uppercase">
-                Empowering Your Digital Future
+            <p style="color:#334155;font-size:15px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-top:10px;">
+                Smart Billing. Easy Business.
             </p>
         </div>
 
         <!-- CONTENT -->
         <div class="p-6 sm:p-8">
+            {% if messages %}
+                <div class="space-y-2 mb-4">
+                    {% for message in messages %}
+                        {% if "error" in message.tags %}
+                            <div class="text-sm rounded-lg border border-red-200 bg-red-50 text-red-800 px-3 py-2">
+                                {{ message }}
+                            </div>
+                        {% elif "success" in message.tags %}
+                            <div class="text-sm rounded-lg border border-green-200 bg-green-50 text-green-800 px-3 py-2">
+                                {{ message }}
+                            </div>
+                        {% elif "warning" in message.tags %}
+                            <div class="text-sm rounded-lg border border-yellow-200 bg-yellow-50 text-yellow-800 px-3 py-2">
+                                {{ message }}
+                            </div>
+                        {% else %}
+                            <div class="text-sm rounded-lg border border-blue-200 bg-blue-50 text-blue-800 px-3 py-2">
+                                {{ message }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
             {% block content %}{% endblock %}
         </div>
 
         <!-- FOOTER -->
         <div class="bg-gray-50 text-center py-3 text-xs text-gray-500">
-             {% now "Y" %} JaisTech  All rights reserved
+             {% now "Y" %} Billentra  All rights reserved
         </div>
     </div>
 
     {% block extra_js %}{% endblock %}
 </body>
 </html>
+

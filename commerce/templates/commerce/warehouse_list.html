@@ -1,78 +1,66 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/modern-app.css' %}">
-{% endblock %}
-
 {% block content %}
-
-<div class="container-fluid warehouse-container">
-
-    <div class="card">
-        <div class="card-header">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <h3 class="mb-0"> Warehouse Management</h3>
-                <a href="{% url 'commerce:warehouse_create' %}" class="btn btn-primary-small">
-                     Add New Warehouse
-                </a>
-            </div>
-        </div>
-
-        <!-- Filter Section -->
-        <div class="filter-row">
-            <input type="text" id="searchWarehouse" class="form-control form-control-sm" placeholder=" Search warehouse by name or location..." style="flex: 1;">
-            <button onclick="resetSearch()" class="btn btn-dark-small"> Reset</button>
-        </div>
-
-        <!-- Table -->
-        <div class="card-body" style="padding: 0;">
-            <div class="table-responsive">
-                <table id="warehouseTable" class="table">
-                    <thead>
-                        <tr>
-                            <th> Name</th>
-                            <th> Location</th>
-                            <th> Manager</th>
-                            <th class="text-right"> Capacity</th>
-                            <th class="text-center"> Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for w in warehouses %}
-                        <tr>
-                            <td><span class="font-semibold">{{ w.name }}</span></td>
-                            <td>{{ w.location }}</td>
-                            <td>{{ w.manager }}</td>
-                            <td class="text-right">{{ w.capacity }} units</td>
-                            <td class="text-center">
-                                <a href="#" class="btn btn-table view btn-sm" title="View"></a>
-                                <a href="{% url 'commerce:warehouse_edit' w.id %}" class="btn btn-table edit btn-sm" title="Edit"></a>
-                                <a href="{% url 'commerce:warehouse_delete' w.id %}"
-                                   onclick="return confirm('Are you sure you want to delete this warehouse?')"
-                                   class="btn btn-table delete btn-sm" title="Delete"></a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="5" class="text-center text-muted" style="padding: 2rem;">
-                            <p style="font-size: 1.1rem; margin: 0;"> No warehouses found</p>
-                            <p style="font-size: 0.9rem; margin: 0.5rem 0 0 0; color: #9ca3af;">Create your first warehouse to get started</p>
-                        </td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+<div class="container-fluid py-2 unified-list-screen" data-ajax-list-wrap data-ajax-url="{% url 'commerce:warehouse_list' %}" data-export-scope>
+  <div class="unified-list-card">
+    <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Warehouse List</h3>
+        <div class="unified-subtitle">Locations and capacity</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'commerce:warehouse_create' %}" class="btn unified-btn-primary">Add Warehouse</a>
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#warehouseTable" data-export-name="warehouses">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#warehouseTable" data-export-name="warehouses">Excel</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#warehouseTable">PDF</button>
+      </div>
     </div>
 
+    <div class="unified-list-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" data-ajax-form>
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="whQ">Search</label>
+          <input id="whQ" name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search name/location">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="fromDate">From</label>
+          <input id="fromDate" name="from" type="date" class="form-control" value="{{ date_from|date:'Y-m-d' }}">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="toDate">To</label>
+          <input id="toDate" name="to" type="date" class="form-control" value="{{ date_to|date:'Y-m-d' }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <button type="button" class="btn unified-btn-outline" data-ajax-reset>Reset</button>
+        </div>
+      </form>
+
+      <div class="small text-muted mb-2" data-ajax-loading style="display:none;">Loading…</div>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" id="warehouseTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Location</th>
+              <th class="text-end">Capacity</th>
+              <th>Date</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody data-ajax-tbody>
+            {% include "commerce/partials/warehouse_list_rows.html" %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-2" data-ajax-pagination>
+        {% include "core/includes/ajax_pagination.html" with page_obj=page_obj %}
+      </div>
+    </div>
+  </div>
 </div>
-
-<script src="{% static 'js/warehouse.js' %}"></script>
-<script>
-function resetSearch() {
-    document.getElementById('searchWarehouse').value = '';
-}
-</script>
-
 {% endblock %}
+

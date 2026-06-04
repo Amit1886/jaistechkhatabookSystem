@@ -107,7 +107,7 @@
                                                 {% endif %}
                                             </td>
                                             <td>
-                                                <span class="badge bg-{{ supplier.status }}">
+                                                <span class="badge {% if supplier.status == 'green' %}bg-success{% elif supplier.status == 'yellow' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
                                                     {% if supplier.status == 'green' %}Good{% elif supplier.status == 'yellow' %}Due Soon{% else %}Overdue{% endif %}
                                                 </span>
                                             </td>

@@ -390,6 +390,50 @@ label {
   animation: fadeIn 0.3s ease-in;
 }
 
+/* ====
+   LEDGER SPECIFIC STYLES
+   ==== */
+
+.ledger-party-card {
+  background: #ffffff;
+  border-color: var(--border-color) !important;
+  color: var(--dark);
+}
+
+.ledger-party-card-muted {
+  color: #64748b !important;
+}
+
+.ledger-party-card-recent {
+  max-height: 130px;
+  overflow: auto;
+  border-top: 1px solid var(--border-color);
+  padding-top: 8px;
+}
+
+.ledger-party-card-row {
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(100, 116, 139, 0.3);
+}
+
+body.dark .ledger-party-card {
+  background: #0b1220;
+  border-color: #172028 !important;
+  color: #e5e7eb;
+}
+
+body.dark .ledger-party-card-muted {
+  color: #94a3b8 !important;
+}
+
+body.dark .ledger-party-card-recent {
+  border-top-color: #172028;
+}
+
+body.dark .ledger-party-card-row {
+  border-bottom-color: rgba(148, 163, 184, 0.25);
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

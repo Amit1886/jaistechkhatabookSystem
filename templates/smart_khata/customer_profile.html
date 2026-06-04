@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Customer Profile</h3>
+        <div class="unified-subtitle">{{ party.name }} • Smart Khata</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'smart_khata:customer_list' %}" class="btn unified-btn-outline">Back</a>
+        <a href="{% url 'smart_khata:reminder_logs' %}?q={{ party.name|urlencode }}" class="btn unified-btn-outline">Reminder Logs</a>
+      </div>
+    </div>
+
+    <div class="unified-body">
+      <!-- CSRF token for JS (CSRF_COOKIE_HTTPONLY=True so cookie can't be read in JS) -->
+      <form id="csrf-form" style="display:none;">{% csrf_token %}</form>
+
+      {% with s=score.score %}
+      <div class="report-summary-grid">
+        <div class="report-summary-card">
+          <div class="label">Credit Score</div>
+          <div class="value">
+            {% if s >= 80 %}
+              <span class="badge bg-success">{{ s }} • Excellent</span>
+            {% elif s >= 60 %}
+              <span class="badge bg-warning text-dark">{{ s }} • Good</span>
+            {% elif s >= 40 %}
+              <span class="badge" style="background:#f97316;color:#111827;">{{ s }} • Risky</span>
+            {% else %}
+              <span class="badge bg-danger">{{ s }} • High Risk</span>
+            {% endif %}
+          </div>
+          <div class="meta">Avg delay: {{ score.average_delay_days }} days</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Total Due</div>
+          <div class="value">{{ score.total_due }}</div>
+          <div class="meta">Last payment: {{ score.last_payment_date|date:"d M Y"|default:"-" }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Mobile</div>
+          <div class="value">{{ party.mobile|default:"-" }}</div>
+          <div class="meta">WhatsApp: {{ party.whatsapp_number|default:"-" }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Credit Period</div>
+          <div class="value">{{ party.credit_period }} days</div>
+          <div class="meta">Email: {{ party.email|default:"-" }}</div>
+        </div>
+      </div>
+
+      {% if s < 40 %}
+        <div class="alert alert-danger">Warning: This customer has a credit score of {{ s }} (High Risk).</div>
+      {% elif s < 60 %}
+        <div class="alert alert-warning">Note: This customer may delay payment (score {{ s }}).</div>
+      {% endif %}
+      {% endwith %}
+
+      <div class="unified-section mt-2">
+        <h5 class="mb-1">Outstanding Invoices</h5>
+        <div class="unified-subtitle">Unpaid invoices with outstanding balance</div>
+        <div class="unified-table-wrap mt-2">
+          <table class="table unified-table">
+            <thead>
+              <tr>
+                <th>Invoice</th>
+                <th>Due Date</th>
+                <th class="text-center">Overdue</th>
+                <th class="text-end">Outstanding</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in outstanding_invoices %}
+              <tr>
+                <td>{{ row.invoice.number|default:row.invoice.id }}</td>
+                <td>{{ row.due_date|date:"d M Y" }}</td>
+                <td class="text-center">
+                  {% if row.days_overdue > 0 %}
+                    <span class="badge bg-danger">{{ row.days_overdue }}d</span>
+                  {% elif row.days_overdue == 0 %}
+                    <span class="badge bg-warning text-dark">Due Today</span>
+                  {% else %}
+                    <span class="badge bg-success">In {{ row.days_overdue|stringformat:"s"|cut:"-" }}d</span>
+                  {% endif %}
+                </td>
+                <td class="text-end fw-bold">{{ row.outstanding|floatformat:2 }}</td>
+                <td class="text-end">
+                  {% if row.invoice.payment_link %}
+                    <a href="{{ row.invoice.payment_link }}" class="btn unified-btn-outline btn-sm" target="_blank">Pay Now</a>
+                  {% endif %}
+                  <button type="button" class="btn unified-btn-outline btn-sm" data-send-reminder data-invoice-id="{{ row.invoice.id }}">Send Reminder</button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted py-3">No outstanding invoices.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="unified-grid cols-2 mt-2">
+        <div class="unified-section">
+          <h6 class="mb-1">Payment Behavior</h6>
+          <div class="unified-subtitle">Last 20 paid invoices</div>
+          <div class="unified-table-wrap mt-2">
+            <table class="table unified-table">
+              <thead>
+                <tr>
+                  <th>Invoice</th>
+                  <th>Due</th>
+                  <th>Paid</th>
+                  <th class="text-center">Delay</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for b in behaviors %}
+                <tr>
+                  <td>{{ b.invoice.number|default:b.invoice_id }}</td>
+                  <td>{{ b.due_date|date:"d M Y" }}</td>
+                  <td>{{ b.paid_date|date:"d M Y"|default:"-" }}</td>
+                  <td class="text-center">{% if b.delay_days > 0 %}<span class="badge bg-danger">{{ b.delay_days }}d</span>{% else %}<span class="badge bg-success">On Time</span>{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-3">No behavior history yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="unified-section">
+          <h6 class="mb-1">Reminder History</h6>
+          <div class="unified-subtitle">Last 20 reminders</div>
+          <div class="unified-table-wrap mt-2">
+            <table class="table unified-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Channel</th>
+                  <th>Status</th>
+                  <th>Tone</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in reminders %}
+                <tr>
+                  <td>{{ r.created_at|date:"d M Y H:i" }}</td>
+                  <td>{{ r.channel }}</td>
+                  <td>{{ r.status }}</td>
+                  <td>{{ r.tone|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-3">No reminders yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const buttons = Array.from(document.querySelectorAll("[data-send-reminder]"));
+    if (!buttons.length) return;
+
+    async function sendReminder(invoiceId, btn){
+      btn.disabled = true;
+      const csrf = document.querySelector("#csrf-form input[name=csrfmiddlewaretoken]")?.value || "";
+      try{
+        const resp = await fetch("/api/reminder/send/", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrf,
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({ invoice_id: String(invoiceId) })
+        });
+        const data = await resp.json().catch(()=> ({}));
+        if (resp.ok && data.ok){
+          btn.textContent = "Reminder Sent";
+        } else {
+          btn.textContent = "Failed";
+          console.warn("reminder send", data);
+        }
+      } catch(e){
+        btn.textContent = "Error";
+      } finally{
+        setTimeout(()=>{ btn.disabled = false; btn.textContent = "Send Reminder"; }, 2500);
+      }
+    }
+
+    buttons.forEach(btn => {
+      btn.addEventListener("click", () => sendReminder(btn.dataset.invoiceId, btn));
+    });
+  })();
+</script>
+{% endblock %}

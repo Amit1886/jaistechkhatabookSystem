@@ -37,6 +37,14 @@ class Party(models.Model):
     email = models.EmailField(blank=True)
     gst = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
+    pincode_text = models.CharField(max_length=12, blank=True, default="")
+    pincode = models.ForeignKey(
+        "location.Pincode",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="parties",
+    )
     party_type = models.CharField(max_length=10, choices=PARTY_TYPE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -52,6 +60,18 @@ class Party(models.Model):
 
     # Credit Rating
     credit_grade = models.CharField(max_length=5, default='-', blank=True)
+
+    # Smart Khata (Customer Credit Score)
+    credit_score = models.PositiveSmallIntegerField(
+        default=50,
+        help_text="Smart Khata credit score (0-100). Auto-updated based on payment behavior.",
+    )
+    last_payment_date = models.DateField(blank=True, null=True)
+    average_payment_delay = models.IntegerField(
+        default=0,
+        help_text="Average payment delay (days). 0 means on-time/early on average.",
+    )
+    total_due = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     # Supplier specific fields
     credit_period = models.PositiveIntegerField(default=30, help_text="Credit period in days")
@@ -139,6 +159,12 @@ class ReminderLog(models.Model):
         ("skipped", "Skipped"),
     )
 
+    TONES = (
+        ("friendly", "Friendly"),
+        ("professional", "Professional"),
+        ("strict", "Strict"),
+    )
+
     party = models.ForeignKey(
         "khataapp.Party",
         on_delete=models.SET_NULL,
@@ -146,7 +172,15 @@ class ReminderLog(models.Model):
         blank=True,
         related_name="reminder_logs"
     )
+    invoice = models.ForeignKey(
+        "commerce.Invoice",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="khata_reminder_logs",
+    )
     reminder_type = models.CharField(max_length=20, choices=REMINDER_TYPES, default="due")
+    tone = models.CharField(max_length=20, choices=TONES, default="professional")
     channel = models.CharField(max_length=20, choices=CHANNELS, default="whatsapp")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="scheduled")
     scheduled_for = models.DateTimeField(blank=True, null=True)
@@ -273,7 +307,8 @@ def auto_create_login_link(sender, instance: Party, created, **kwargs):
         base_url = ""
 
     url = f"{base_url}{reverse('accounts:login_link', args=[link.token])}"
-    message = f"Click here for more details \uD83D\uDC49 {url}"
+    # Use a non-surrogate emoji escape to avoid UnicodeEncodeError in DB writes.
+    message = f"Click here for more details \U0001F449 {url}"
 
     OfflineMessage.objects.create(
         party=instance,
@@ -345,12 +380,22 @@ class Transaction(models.Model):
         related_name="transactions"
     )
 
+    voucher_type = models.CharField(max_length=40, blank=True, null=True, db_index=True)
+
     invoice = models.ForeignKey(
         "commerce.Invoice",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="transactions"
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_khata_transactions",
     )
 
     gst_type = models.CharField(
@@ -361,6 +406,8 @@ class Transaction(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.party.name} - {self.txn_type.capitalize()} - ₹{self.amount}"
@@ -394,6 +441,7 @@ class CompanySettings(models.Model):
     whatsapp_number = models.CharField(max_length=20, blank=True, null=True)
     sms_api_key = models.CharField(max_length=255, blank=True, null=True)
     sms_sender_number = models.CharField(max_length=20, blank=True, null=True)
+    auto_sms_send = models.BooleanField(default=True)
     enable_auto_whatsapp = models.BooleanField(default=True)
     enable_monthly_email = models.BooleanField(default=True)
     def __str__(self):
@@ -684,4 +732,15 @@ class StockLedger(models.Model):
 
     class Meta:
         ordering = ['created_at']
+
+
+# ---------------- CENTRAL BUSINESS ENGINE (BusinessGrowthEngine) ----------------
+# Keep engine models in `khataapp/core_engine/` but register them under the `khataapp` app
+# so migrations and backward-compatibility remain simple.
+from .core_engine.models.engine import BusinessGrowthEngine  # noqa: E402,F401
+from .core_engine.models.logs import EngineEventLog, RewardLedgerEntry  # noqa: E402,F401
+from .core_engine.models.loyalty import LoyaltyAccount, LoyaltyLedgerEntry  # noqa: E402,F401
+from .core_engine.models.referral import ReferralRecord  # noqa: E402,F401
+from .core_engine.models.settings import EngineControlPanelSettings  # noqa: E402,F401
+from .core_engine.models.tasks import DailyTaskCompletion, DailyTaskDefinition  # noqa: E402,F401
 

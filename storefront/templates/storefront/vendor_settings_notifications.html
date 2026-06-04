@@ -1,0 +1,96 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Notifications</div>
+        <div class="va-help">WhatsApp, SMS and Email messaging controls for this store.</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-marketing-campaigns' vendor.subdomain %}">
+          <i class="bi bi-megaphone me-1"></i>Campaigns
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="va-panel p-3 mb-3">
+    <div class="va-section-title mb-1">Quick status</div>
+    <div class="d-flex gap-2 flex-wrap">
+      {% for p in providers %}
+        <span class="badge {% if p.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %}">
+          {{ p.label }}: {% if p.is_active %}ON{% else %}OFF{% endif %}
+        </span>
+      {% endfor %}
+    </div>
+    <div class="va-help mt-2">Provider credentials can be managed per vendor. Actual delivery uses configured platform connectors.</div>
+  </div>
+
+  <form method="post" class="va-panel p-3">
+    {% csrf_token %}
+    <div class="va-section-title mb-2">Provider toggles</div>
+    <div class="row g-3">
+      {% for p in providers %}
+        <div class="col-12 col-lg-4">
+          <div class="border rounded-3 p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="fw-bold">{{ p.label }}</div>
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       name="provider_active_{{ p.key }}" id="prov{{ p.key }}"
+                       {% if p.is_active %}checked{% endif %}>
+              </div>
+            </div>
+            <div class="va-help mt-1">{{ p.help }}</div>
+            <div class="mt-2">
+              {% for f in p.fields %}
+                <label class="form-label va-form-label small">{{ f.label }}</label>
+                <input class="form-control form-control-sm mb-2" name="cfg_{{ p.key }}__{{ f.key }}" value="{{ f.value }}">
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Save</button>
+      </div>
+    </div>
+  </form>
+
+  <form method="post" class="va-panel p-3 mt-3">
+    {% csrf_token %}
+    <input type="hidden" name="_action" value="test_send">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+      <div>
+        <div class="va-section-title">Test send</div>
+        <div class="va-help">Send a single test message to verify your provider config.</div>
+      </div>
+    </div>
+
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Channel</label>
+        <select class="form-select form-select-sm" name="test_channel">
+          <option value="whatsapp">WhatsApp</option>
+          <option value="sms">SMS</option>
+          <option value="email">Email</option>
+        </select>
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Destination</label>
+        <input class="form-control form-control-sm" name="test_destination" placeholder="91xxxxxxxxxx / email@example.com" required>
+      </div>
+      <div class="col-12 col-lg-5">
+        <label class="form-label va-form-label">Message</label>
+        <input class="form-control form-control-sm" name="test_message" placeholder="Test message" required>
+      </div>
+      <div class="col-12 d-flex justify-content-end">
+        <button class="btn btn-sm btn-outline-primary" type="submit">
+          <i class="bi bi-send me-1"></i>Send test
+        </button>
+      </div>
+    </div>
+  </form>
+{% endblock %}

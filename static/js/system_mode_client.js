@@ -60,6 +60,13 @@
 
   function init() {
     if (!document.body) return;
+
+    // Desktop EXE mode does not run ASGI/channels; `/ws/system-mode/` will 404 and cause retry loops.
+    // Avoid hammering the server (and SQLite sessions) in desktop mode.
+    try {
+      var mode = String(document.body.dataset.systemMode || "").toUpperCase();
+      if (mode.indexOf("DESKTOP") !== -1) return;
+    } catch (e) {}
     connectModeSocket();
   }
 

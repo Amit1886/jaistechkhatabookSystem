@@ -5,11 +5,11 @@ from django.utils import timezone
 from datetime import timedelta
 import random
 from django.contrib.auth.models import AbstractUser, Group, Permission
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.db.models import Sum
 from django.utils.text import slugify
 from decimal import Decimal
+import secrets
+from django.apps import apps
  
 
 
@@ -73,6 +73,13 @@ class LedgerEntry(models.Model):
         ordering = ['date', 'id']
 
     def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            update_fields_set = set(update_fields)
+            # Prevent infinite recursion/perf issues when only updating computed balance.
+            if update_fields_set and update_fields_set.issubset({"balance"}):
+                return super().save(*args, **kwargs)
+
         # auto fill credit/debit from txn_type
         if self.txn_type == "credit":
             self.credit = self.amount
@@ -93,14 +100,14 @@ class LedgerEntry(models.Model):
         entries = LedgerEntry.objects.filter(
             account=self.account,
             party=self.party
-        ).order_by("date", "id")
+        ).order_by("date", "id").only("id", "credit", "debit", "balance")
 
-        running = 0
+        running = Decimal("0.00")
         for e in entries:
             running += (e.credit - e.debit)
             if e.balance != running:
-                e.balance = running
-                e.save(update_fields=["balance"])
+                # Avoid calling model.save() inside the loop (prevents recursion and speeds up).
+                LedgerEntry.objects.filter(id=e.id).update(balance=running)
 
     def __str__(self):
         return f"{self.party.name} – {self.txn_type.upper()} ₹{self.amount}"
@@ -124,15 +131,107 @@ def _gen_otp():
 
 
 # ----------------- CUSTOM USER MODEL -----------------
+class SaaSRole(models.TextChoices):
+    SUPER_ADMIN = "super_admin", "SuperAdmin"
+    STATE_ADMIN = "state_admin", "StateAdmin"
+    DISTRICT_ADMIN = "district_admin", "DistrictAdmin"
+    AREA_ADMIN = "area_admin", "AreaAdmin"
+    SUPER_AGENT = "super_agent", "SuperAgent"
+    AGENT = "agent", "Agent"
+    CUSTOMER = "customer", "Customer"
+
+
+class BillingAccessLevel(models.TextChoices):
+    ADMIN = "admin", "Admin"
+    USER = "user", "User"
+
+
+class BillingRoleType(models.TextChoices):
+    SUB_USER = "sub_user", "Sub User"
+    SUPPLIER = "supplier", "Supplier"
+    VENDOR = "vendor", "Vendor"
+    CUSTOMER = "customer", "Customer"
+    FIELD_AGENT = "field_agent", "Field Agent"
+    AI_AGENT = "ai_agent", "AI Agent"
+
+
 class User(AbstractUser):
     username = models.CharField(max_length=150, blank=True, null=True)
     mobile = models.CharField(max_length=15, unique=True, blank=True, null=True)
     email = models.EmailField(unique=True)
+    role = models.CharField(max_length=40, choices=SaaSRole.choices, blank=True, default="", db_index=True)
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="children",
+        help_text="Downline/upline hierarchy. Optional for backward compatibility.",
+        db_index=True,
+    )
+    referral_code = models.CharField(max_length=24, unique=True, blank=True, null=True, default=None, db_index=True)
+    referred_by = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="referred_users",
+        help_text="Referral attribution. May be same as parent in simple setups.",
+    )
 
     email_verified = models.BooleanField(default=False)
     mobile_verified = models.BooleanField(default=False)
     is_social_login = models.BooleanField(default=False)
     is_otp_verified = models.BooleanField(default=False)
+
+    # ---------------- SaaS extensions (Phase A safe) ----------------
+    class StoreType(models.TextChoices):
+        B2B = "b2b", "B2B"
+        B2C = "b2c", "B2C"
+        HYBRID = "hybrid", "Hybrid"
+
+    store_type = models.CharField(max_length=12, choices=StoreType.choices, default=StoreType.HYBRID, db_index=True)
+    primary_role = models.CharField(
+        max_length=30,
+        blank=True,
+        default="",
+        db_index=True,
+        help_text="owner/manager/billing/warehouse/accounts/vendor/staff/custom",
+    )
+    permissions_json = models.JSONField(default=dict, blank=True)
+    seller = models.ForeignKey(
+        "vendors.Vendor",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="seller_users",
+        help_text="Phase A: link user to Vendor. Phase B: replace with tenant FK.",
+    )
+
+    # ---------------- Billing Model Hierarchy (RBAC) ----------------
+    billing_access_level = models.CharField(
+        max_length=10,
+        choices=BillingAccessLevel.choices,
+        blank=True,
+        default="",
+        db_index=True,
+        help_text="Admin/User access layer for billing model hierarchy.",
+    )
+    billing_role_type = models.CharField(
+        max_length=20,
+        choices=BillingRoleType.choices,
+        blank=True,
+        default="",
+        db_index=True,
+        help_text="Role type within billing hierarchy (sub_user/supplier/vendor/customer/field_agent/ai_agent).",
+    )
+    billing_child_role = models.CharField(
+        max_length=30,
+        blank=True,
+        default="",
+        db_index=True,
+        help_text="Optional child role within selected billing_role_type (stored as key).",
+    )
 
 
     groups = models.ManyToManyField(
@@ -152,6 +251,111 @@ class User(AbstractUser):
 
     USERNAME_FIELD = "email"  # login by email
     REQUIRED_FIELDS = ["username", "mobile"]
+
+    def save(self, *args, **kwargs):
+        was_creating = self._state.adding
+        if not self.referral_code:
+            # Short, URL-safe code (no PII). Retry on the extremely rare collision.
+            for _ in range(8):
+                candidate = secrets.token_urlsafe(9).replace("-", "").replace("_", "")[:12].upper()
+                if not User.objects.filter(referral_code=candidate).exists():
+                    self.referral_code = candidate
+                    break
+        super().save(*args, **kwargs)
+
+        # Replace signals with creation lifecycle hook.
+        if was_creating:
+            try:
+                LoyaltyProgram = apps.get_model("accounts", "LoyaltyProgram")
+                LoyaltyPoints = apps.get_model("accounts", "LoyaltyPoints")
+                MembershipTier = apps.get_model("accounts", "MembershipTier")
+                program = LoyaltyProgram.objects.filter(is_active=True).first()
+                if program:
+                    default_tier = MembershipTier.objects.filter(is_active=True).order_by("min_points_required").first()
+                    LoyaltyPoints.objects.get_or_create(
+                        user=self,
+                        program=program,
+                        defaults={"current_tier": default_tier},
+                    )
+            except Exception:
+                pass
+
+    def has_permission(self, key: str) -> bool:
+        """
+        JSON-based RBAC (Phase A).
+        """
+        if not self.is_active:
+            return False
+        if self.is_superuser or self.is_staff:
+            return True
+        if (self.primary_role or "").strip().lower() == "owner":
+            return True
+
+        k = (key or "").strip()
+        if not k:
+            return False
+
+        # Allow dotted permission keys in code (`order.create`) while storing canonical keys
+        # as slugs (`order_create`). Feature keys (`feature.<key>`) are handled separately.
+        canonical = k
+        if not (k.startswith("feature.") or k.startswith("feature:")) and "." in k:
+            canonical = k.replace(".", "_")
+
+        # Subscription feature gate (Phase A):
+        # Use explicit feature-keys to avoid accidentally gating normal RBAC permissions.
+        #
+        # Convention:
+        # - `feature.<key>` or `feature:<key>` -> checks billing.FeatureRegistry key `<key>`
+        if k.startswith("feature.") or k.startswith("feature:"):
+            feature_key = k.split(".", 1)[1] if k.startswith("feature.") else k.split(":", 1)[1]
+            feature_key = (feature_key or "").strip()
+            if not feature_key:
+                return False
+            try:
+                from billing.services import user_has_feature
+
+                if not user_has_feature(self, feature_key):
+                    return False
+            except Exception:
+                # If billing module isn't ready during migrations, don't hard-fail.
+                pass
+
+        try:
+            blob = self.permissions_json or {}
+            if isinstance(blob, dict):
+                v = blob.get(canonical) if canonical != k else blob.get(k)
+                if v in {True, 1, "1", "true", "yes", "on"}:
+                    return True
+                if v in {False, 0, "0", "false", "no", "off"}:
+                    return False
+        except Exception:
+            pass
+
+        role = (self.primary_role or "").strip().lower()
+        role_defaults = {
+            "billing": {"create_order", "create_invoice"},
+            "warehouse": {"stock_inward", "stock_outward", "stock_adjust"},
+            "accounts": {"ledger_view", "ledger_post", "payment_record"},
+            "manager": {"approve_request", "view_reports"},
+            "vendor": {"vendor_access", "store_settings"},
+            "staff": set(),
+        }
+        if role in role_defaults and (canonical in role_defaults[role] or k in role_defaults[role]):
+            return True
+
+        # APGS (Advanced Permission Graph System) check (Phase A safe).
+        try:
+            from saas.utils.apgs import apgs_has_permission
+
+            if apgs_has_permission(self, canonical):
+                return True
+        except Exception:
+            pass
+
+        try:
+            return bool(super().has_perm(canonical) or self.groups.filter(name=canonical).exists())
+        except Exception:
+            return False
 
     def __str__(self):
         return self.username or self.email or str(self.mobile)
@@ -217,6 +421,34 @@ class UserProfile(models.Model):
         blank=True,
         related_name='user_profiles'
     )
+    country = models.ForeignKey(
+        "location.Country",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="account_user_profiles",
+    )
+    state = models.ForeignKey(
+        "location.State",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="account_user_profiles",
+    )
+    district = models.ForeignKey(
+        "location.District",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="account_user_profiles",
+    )
+    pincode = models.ForeignKey(
+        "location.Pincode",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="account_user_profiles",
+    )
 
     full_name = models.CharField(max_length=150)
     mobile = models.CharField(max_length=15)
@@ -240,10 +472,10 @@ class UserProfile(models.Model):
 
 
 # ----------------- AUTO CREATE PROFILE ON USER CREATION -----------------
-@receiver(post_save, sender=User)
+# @receiver(post_save, sender=User)  # signals removed (Phase A)
 def create_staff_profile(sender, instance, created, **kwargs):
     # Disabled – handled by khataapp
-    pass
+    return None
 
 class DailySummary(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -311,6 +543,20 @@ class ExpenseCategory(models.Model):
         return self.name
 
 class Expense(models.Model):
+    class PaymentMode(models.TextChoices):
+        CASH = "cash", "Cash"
+        UPI = "upi", "UPI"
+        CARD = "card", "Card"
+        BANK = "bank", "Bank Transfer"
+        CREDIT = "credit", "Credit"
+        OTHER = "other", "Other"
+
+    class ApprovalStatus(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        SUBMITTED = "submitted", "Submitted"
+        APPROVED = "approved", "Approved"
+        REJECTED = "rejected", "Rejected"
+
     expense_number = models.CharField(max_length=20, unique=True)
     expense_date = models.DateField()
 
@@ -323,6 +569,15 @@ class Expense(models.Model):
 
     description = models.TextField(blank=True)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
+    vendor_name = models.CharField(max_length=160, blank=True, default="")
+    invoice_number = models.CharField(max_length=80, blank=True, default="")
+    payment_mode = models.CharField(max_length=20, choices=PaymentMode.choices, default=PaymentMode.CASH)
+    gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    receipt_file = models.FileField(upload_to="expense_receipts/", blank=True, null=True)
+    ocr_status = models.CharField(max_length=30, blank=True, default="")
+    ocr_text = models.TextField(blank=True, default="")
+    ocr_payload = models.JSONField(default=dict, blank=True)
+    approval_status = models.CharField(max_length=20, choices=ApprovalStatus.choices, default=ApprovalStatus.SUBMITTED)
 
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -561,13 +816,6 @@ class SpecialOffer(models.Model):
 
 
 # ----------------- AUTO CREATE LOYALTY ACCOUNT -----------------
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+# @receiver(post_save, sender=settings.AUTH_USER_MODEL)  # signals removed (Phase A)
 def create_loyalty_account(sender, instance, created, **kwargs):
-    if created:
-        program = LoyaltyProgram.objects.filter(is_active=True).first()
-        if program:
-            LoyaltyPoints.objects.get_or_create(
-                user=instance,
-                program=program,
-                defaults={'current_tier': MembershipTier.objects.filter(is_active=True).order_by('min_points_required').first()}
-            )
+    return None

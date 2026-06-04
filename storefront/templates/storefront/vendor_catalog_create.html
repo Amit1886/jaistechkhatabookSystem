@@ -1,0 +1,76 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Catalogs</div>
+        <div class="va-section-title">New catalog</div>
+        <div class="va-help mt-1">Create a catalog and then include/exclude products.</div>
+      </div>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-catalogs' vendor.subdomain %}">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+    </div>
+  </div>
+
+  <form method="post" class="va-panel p-3">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-12 col-lg-8">
+        <label class="form-label va-form-label">Title</label>
+        <input class="form-control" name="title" placeholder="Retail catalog" maxlength="255" required>
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Status</label>
+        <select class="form-select" name="is_active">
+          <option value="1" selected>Active</option>
+          <option value="0">Inactive</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <label class="form-label va-form-label">Markets (comma separated)</label>
+        <input class="form-control" name="markets" placeholder="India, UAE">
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Currency</label>
+        <input class="form-control" name="currency" value="INR">
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Auto include new products</label>
+        <select class="form-select" name="auto_include_new_products">
+          <option value="1" selected>Yes</option>
+          <option value="0">No</option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <div class="va-section-title mb-2">Pricing</div>
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Price adjustment (%)</label>
+        <input class="form-control" name="price_adjustment_percent" value="0" placeholder="0">
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Direction</label>
+        <select class="form-select" name="price_adjustment_direction">
+          <option value="decrease" selected>Decrease</option>
+          <option value="increase">Increase</option>
+        </select>
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Include compare-at price</label>
+        <select class="form-select" name="include_compare_at_price">
+          <option value="0" selected>No</option>
+          <option value="1">Yes</option>
+        </select>
+      </div>
+
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Create</button>
+      </div>
+    </div>
+  </form>
+{% endblock %}
+

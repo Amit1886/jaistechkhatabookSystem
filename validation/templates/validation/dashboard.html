@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Smart Alerts{% endblock %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+
+  <div class="container-fluid py-2 unified-list-screen">
+    <div class="unified-list-card">
+      <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <h3>Smart Alerts</h3>
+          <div class="unified-subtitle">Duplicate invoices, GST mismatches, negative stock, and suspicious transactions.</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a class="btn unified-btn-outline {% if active_status == 'open' %}active{% endif %}" href="?status=open">Open ({{ counts.open }})</a>
+          <a class="btn unified-btn-outline {% if active_status == 'resolved' %}active{% endif %}" href="?status=resolved">Resolved ({{ counts.resolved }})</a>
+          <a class="btn unified-btn-outline {% if active_status == 'ignored' %}active{% endif %}" href="?status=ignored">Ignored ({{ counts.ignored }})</a>
+        </div>
+      </div>
+
+      <div class="unified-list-body">
+        <div class="unified-table-wrap">
+          <table class="table unified-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Type</th>
+                <th>Severity</th>
+                <th>Title</th>
+                <th>Message</th>
+                <th>Ref</th>
+                <th>Status</th>
+                <th>Time</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in alerts %}
+                <tr>
+                  <td>{{ a.id }}</td>
+                  <td>{{ a.alert_type }}</td>
+                  <td>
+                    {% if a.severity == 'high' %}
+                      <span class="badge bg-danger">High</span>
+                    {% elif a.severity == 'medium' %}
+                      <span class="badge bg-warning text-dark">Medium</span>
+                    {% else %}
+                      <span class="badge bg-info text-dark">Low</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ a.title|default:"-" }}</td>
+                  <td style="max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ a.message|default:"-" }}</td>
+                  <td>
+                    {% if a.ref_url %}
+                      <a href="{{ a.ref_url }}">{{ a.reference_type }}#{{ a.reference_id }}</a>
+                    {% else %}
+                      {{ a.reference_type }}#{{ a.reference_id }}
+                    {% endif %}
+                  </td>
+                  <td>{{ a.status }}</td>
+                  <td>{{ a.created_at|date:"d M Y, H:i" }}</td>
+                  <td class="text-end">
+                    {% if a.status == 'open' %}
+                      <form method="post" action="{% url 'validation:action' a.id 'resolve' %}?status={{ active_status }}" style="display:inline;">
+                        {% csrf_token %}
+                        <button class="btn unified-btn-outline btn-sm" type="submit">Resolve</button>
+                      </form>
+                      <form method="post" action="{% url 'validation:action' a.id 'ignore' %}?status={{ active_status }}" style="display:inline;">
+                        {% csrf_token %}
+                        <button class="btn unified-btn-outline btn-sm" type="submit">Ignore</button>
+                      </form>
+                    {% else %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="9" class="text-center text-muted py-4">No alerts.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

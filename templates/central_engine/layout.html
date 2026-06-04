@@ -1,0 +1,15 @@
+{% extends "core/pc_universal.html" %}
+{% load static %}
+
+{% block extra_css %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/central_engine.css' %}">
+{% endblock %}
+
+{% block pc_title %}{% block ce_title %}Central Business Engine{% endblock %}{% endblock %}
+
+{% block pc_content %}
+  {% include "central_engine/_nav.html" %}
+  {% block ce_content %}{% endblock %}
+{% endblock %}
+

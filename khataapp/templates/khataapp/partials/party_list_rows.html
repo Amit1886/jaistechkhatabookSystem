@@ -1,0 +1,62 @@
+{% for party in parties %}
+<tr>
+  <td class="fw-semibold">{{ party.name }}</td>
+  <td>
+    {% if party.party_type == 'customer' %}
+      <span class="badge bg-info">Customer</span>
+    {% else %}
+      <span class="badge bg-primary">Supplier</span>
+    {% endif %}
+  </td>
+  <td>{{ party.mobile|default:"-" }}</td>
+  <td class="text-center">
+    {% if party.party_type == 'customer' %}
+      {% with s=party.credit_score|default:0 %}
+        {% if s >= 80 %}
+          <span class="badge bg-success">{{ s }}</span>
+        {% elif s >= 60 %}
+          <span class="badge bg-warning text-dark">{{ s }}</span>
+        {% elif s >= 40 %}
+          <span class="badge" style="background:#f97316;color:#111827;">{{ s }}</span>
+        {% else %}
+          <span class="badge bg-danger">{{ s }}</span>
+        {% endif %}
+      {% endwith %}
+    {% else %}
+      <span class="text-muted">-</span>
+    {% endif %}
+  </td>
+  <td class="text-end fw-bold">{{ party.balance_amount|default:0 }}</td>
+  <td>{{ party.created_at|date:"d M Y" }}</td>
+  <td>
+    {% if party.is_active %}
+      <span class="badge bg-success">Accepted</span>
+    {% else %}
+      <span class="badge bg-danger">Rejected</span>
+    {% endif %}
+  </td>
+  <td class="text-end">
+    <div class="dropdown">
+      <button class="btn unified-btn-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown">Actions</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{% url 'khataapp:party_view' party.id %}">View</a></li>
+        {% if erp_can_edit %}
+          <li><a class="dropdown-item" href="{% url 'khataapp:edit_party' party.id %}">Edit</a></li>
+        {% endif %}
+        <li><a class="dropdown-item" href="{% url 'commerce:sales_voucher_quick_create' %}?party={{ party.id }}">Create Voucher</a></li>
+        {% if erp_can_delete %}
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <form method="post" action="{% url 'khataapp:delete_party' party.id %}" data-confirm data-confirm-title="Delete Party" data-confirm-message="Delete this party? This action cannot be undone." data-confirm-ok-text="Delete" style="margin:0;">
+              {% csrf_token %}
+              <button type="submit" class="dropdown-item text-danger">Delete</button>
+            </form>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="8" class="text-center text-muted py-4">No parties found.</td></tr>
+{% endfor %}

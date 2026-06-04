@@ -1,0 +1,123 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Lead</div>
+        <div class="va-section-title">{{ lead.name|default:"(no name)" }}</div>
+        <div class="va-help mt-1">
+          {{ lead.mobile|default:"-" }}{% if lead.email %} · {{ lead.email }}{% endif %}
+          · Status: <span class="fw-semibold">{{ lead.status }}</span>
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-marketing-leads' vendor.subdomain %}">
+          <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-marketing-campaigns' vendor.subdomain %}">
+          <i class="bi bi-bullseye me-1"></i>Campaigns
+        </a>
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-settings-notifications' vendor.subdomain %}">
+          <i class="bi bi-bell me-1"></i>Notifications
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-5">
+      <div class="va-panel p-3 h-100">
+        <div class="va-section-title mb-2">Update</div>
+        <form method="post" action="{% url 'vendor-marketing-lead-update' vendor.subdomain lead.id %}">
+          {% csrf_token %}
+          <div class="mb-2">
+            <label class="form-label va-form-label">Status</label>
+            <select class="form-select form-select-sm" name="status">
+              <option value="">Keep</option>
+              <option value="new">New</option>
+              <option value="hot">Hot</option>
+              <option value="warm">Warm</option>
+              <option value="cold">Cold</option>
+              <option value="contacted">Contacted</option>
+              <option value="qualified">Qualified</option>
+              <option value="won">Won</option>
+              <option value="lost">Lost</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label va-form-label">Next follow-up (optional)</label>
+            <input class="form-control form-control-sm" name="followup_at" placeholder="YYYY-MM-DD HH:MM">
+            <div class="va-help mt-1">Current: {{ lead.next_followup_at|default:"-" }}</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label va-form-label">Note (optional)</label>
+            <textarea class="form-control form-control-sm" rows="2" name="note" placeholder="Add a quick note..."></textarea>
+          </div>
+          <div class="d-flex justify-content-end gap-2">
+            <button class="btn btn-sm btn-outline-secondary" type="submit" name="clear_followup" value="1">Clear follow-up</button>
+            <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-save me-1"></i>Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-7">
+      <div class="va-panel p-3 h-100">
+        <div class="va-section-title mb-2">Send message (1-by-1)</div>
+        <div class="va-help mb-2">WhatsApp uses global provider config. SMS uses your SMS settings. Email uses server email backend.</div>
+        <form method="post" action="{% url 'vendor-marketing-lead-send' vendor.subdomain lead.id %}">
+          {% csrf_token %}
+          <div class="row g-2">
+            <div class="col-12 col-md-4">
+              <label class="form-label va-form-label">Channel</label>
+              <select class="form-select form-select-sm" name="channel">
+                <option value="whatsapp">WhatsApp</option>
+                <option value="sms">SMS</option>
+                <option value="email">Email</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-8">
+              <label class="form-label va-form-label">Message</label>
+              <input class="form-control form-control-sm" name="message" placeholder="Hi! Thanks for your interest..." required>
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+              <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-send me-1"></i>Send</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="va-panel p-3 mt-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <div class="va-section-title">Activity</div>
+      <div class="va-help">Notes + messages</div>
+    </div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Note</th>
+            <th>When</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in activities %}
+            <tr>
+              <td><span class="badge text-bg-light border">{{ a.activity_type }}</span></td>
+              <td class="va-help" style="white-space:pre-wrap;">{{ a.note|default:"-" }}</td>
+              <td class="va-help">{{ a.created_at }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3" class="va-help">No activity yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

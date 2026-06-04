@@ -78,6 +78,11 @@
       </div>
 
       <div class="card-body">
+        {% if db_not_ready %}
+          <div class="alert alert-warning no-print mb-3">
+            Ledger database tables are not ready yet. Run <code>python manage.py migrate</code> once, then refresh this report.
+          </div>
+        {% endif %}
         {% if rows %}
           <div class="table-responsive">
             <table class="table table-striped align-middle">

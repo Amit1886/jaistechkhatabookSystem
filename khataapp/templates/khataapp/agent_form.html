@@ -1,53 +1,298 @@
 {% extends "accounts/base.html" %}
 
-{% block title %}Field Agent{% endblock %}
+{% block title %}{% if mode == "edit" %}Agent Control Center{% else %}Create Agent{% endif %}{% endblock %}
 
 {% block content %}
-<div class="p-6 space-y-6">
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-semibold">
-        {% if mode == "edit" %}Edit Agent{% else %}Create Agent{% endif %}
-      </h1>
-      <p class="text-sm text-gray-500">Assign parties and set role permissions.</p>
-    </div>
-    <a href="{% url 'khataapp:field_agent_list' %}" class="summary-modern-btn summary-modern-btn-ghost">Back</a>
-  </div>
+<style>
+  .agent-shell { padding: 24px; background: #f6f8fb; min-height: calc(100vh - 80px); }
+  .agent-hero { background: linear-gradient(135deg, #0f172a 0%, #164e63 52%, #2563eb 100%); color: #fff; border-radius: 18px; padding: 24px; box-shadow: 0 18px 50px rgba(15, 23, 42, .20); }
+  .agent-hero h1 { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 800; letter-spacing: 0; }
+  .agent-hero p { margin: 8px 0 0; color: rgba(255,255,255,.78); }
+  .agent-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .agent-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 9px 14px; border-radius: 10px; border: 1px solid #d8e0ea; background: #fff; color: #0f172a; font-weight: 700; font-size: 13px; text-decoration: none; cursor: pointer; }
+  .agent-btn.primary { background: #0f172a; border-color: #0f172a; color: #fff; }
+  .agent-btn.light { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.28); color: #fff; }
+  .agent-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr); gap: 18px; margin-top: 18px; }
+  .agent-card { background: #fff; border: 1px solid #e4e9f0; border-radius: 14px; box-shadow: 0 12px 28px rgba(15, 23, 42, .06); overflow: hidden; }
+  .agent-card-head { padding: 16px 18px; border-bottom: 1px solid #eef2f6; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  .agent-card-title { font-size: 15px; font-weight: 800; color: #101827; }
+  .agent-card-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+  .agent-card-body { padding: 18px; }
+  .agent-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .agent-field.full { grid-column: 1 / -1; }
+  .agent-label { display: block; font-size: 12px; font-weight: 800; color: #334155; margin-bottom: 7px; text-transform: uppercase; letter-spacing: .03em; }
+  .agent-input { width: 100%; border: 1px solid #d9e2ec; border-radius: 10px; min-height: 42px; padding: 9px 11px; background: #fff; color: #0f172a; outline: none; }
+  .agent-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, .12); }
+  .agent-multi { min-height: 230px; }
+  .agent-check { width: 18px; height: 18px; accent-color: #2563eb; }
+  .agent-tabs { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px; background: #eef3f8; border-radius: 12px; margin-bottom: 14px; }
+  .agent-tab { border: 0; border-radius: 9px; padding: 9px 12px; background: transparent; color: #475569; font-weight: 800; font-size: 13px; cursor: pointer; }
+  .agent-tab.active { background: #fff; color: #0f172a; box-shadow: 0 6px 18px rgba(15, 23, 42, .08); }
+  .agent-pane { display: none; }
+  .agent-pane.active { display: block; }
+  .agent-search { width: 100%; border: 1px solid #d9e2ec; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+  .toggle-list { display: grid; gap: 9px; max-height: 460px; overflow: auto; padding-right: 4px; }
+  .toggle-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 12px; border: 1px solid #e8edf3; border-radius: 12px; background: #fbfdff; }
+  .toggle-title { font-size: 13px; font-weight: 800; color: #111827; }
+  .toggle-key { font-size: 11px; color: #64748b; margin-top: 2px; word-break: break-word; }
+  .switch { position: relative; width: 44px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; border-radius: 999px; transition: .18s; }
+  .slider:before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .18s; box-shadow: 0 1px 4px rgba(15,23,42,.25); }
+  .switch input:checked + .slider { background: #2563eb; }
+  .switch input:checked + .slider:before { transform: translateX(20px); }
+  .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .metric { border: 1px solid #e8edf3; border-radius: 12px; padding: 12px; background: #fbfdff; }
+  .metric b { display: block; font-size: 20px; color: #0f172a; }
+  .metric span { font-size: 12px; color: #64748b; }
+  .agent-error { color: #b91c1c; font-size: 12px; margin-top: 6px; }
+  @media (max-width: 980px) { .agent-grid, .agent-fields { grid-template-columns: 1fr; } .agent-hero { border-radius: 14px; } }
+</style>
 
-  <form method="post" class="bg-white border rounded-lg p-6 space-y-4">
+<div class="agent-shell">
+  <form method="post" id="agentControlForm">
     {% csrf_token %}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium mb-1">User</label>
-        {{ form.user }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-1">Role</label>
-        {{ form.role }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-1">Mobile</label>
-        {{ form.mobile }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-1">Active</label>
-        {{ form.is_active }}
+
+    <div class="agent-hero">
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1>{% if mode == "edit" %}Agent Control Center{% else %}Create Agent Control Center{% endif %}</h1>
+          <p>Agent profile, assigned parties, login status, permissions, features, and linked-user controls in one dashboard.</p>
+        </div>
+        <div class="agent-actions">
+          <a href="{% url 'khataapp:field_agent_list' %}" class="agent-btn light">Back</a>
+          {% if selected_member and selected_member.parent_id == request.user.id %}
+            <a href="{% url 'billing:users_edit' selected_member.id %}" class="agent-btn light">Linked User Center</a>
+          {% endif %}
+          <button type="submit" class="agent-btn primary">{% if mode == "edit" %}Save Agent{% else %}Create Agent{% endif %}</button>
+        </div>
       </div>
     </div>
 
-    <div>
-      <label class="block text-sm font-medium mb-1">Assigned Parties</label>
-      {{ form.assigned_parties }}
-    </div>
+    {% if form.non_field_errors %}
+      <div class="agent-card mt-4"><div class="agent-card-body agent-error">{{ form.non_field_errors }}</div></div>
+    {% endif %}
 
-    <div>
-      <label class="block text-sm font-medium mb-1">Notes</label>
-      {{ form.notes }}
-    </div>
+    <div class="agent-grid">
+      <div class="space-y-4">
+        <div class="agent-card">
+          <div class="agent-card-head">
+            <div>
+              <div class="agent-card-title">Identity & Role</div>
+              <div class="agent-card-sub">Choose the linked user and define how this agent works.</div>
+            </div>
+          </div>
+          <div class="agent-card-body">
+            <div class="agent-fields">
+              <div class="agent-field">
+                <label class="agent-label">User</label>
+                {{ form.user }}
+                {% if form.user.errors %}<div class="agent-error">{{ form.user.errors }}</div>{% endif %}
+              </div>
+              <div class="agent-field">
+                <label class="agent-label">Role</label>
+                {{ form.role }}
+                {% if form.role.errors %}<div class="agent-error">{{ form.role.errors }}</div>{% endif %}
+              </div>
+              <div class="agent-field">
+                <label class="agent-label">Mobile</label>
+                {{ form.mobile }}
+                {% if form.mobile.errors %}<div class="agent-error">{{ form.mobile.errors }}</div>{% endif %}
+              </div>
+              <div class="agent-field">
+                <label class="agent-label">Login Status</label>
+                <div class="toggle-row">
+                  <div>
+                    <div class="toggle-title">Agent active</div>
+                    <div class="toggle-key">Controls FieldAgent and linked user login state.</div>
+                  </div>
+                  {{ form.is_active }}
+                </div>
+                {% if form.is_active.errors %}<div class="agent-error">{{ form.is_active.errors }}</div>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <button type="submit" class="summary-modern-btn">
-      {% if mode == "edit" %}Update Agent{% else %}Create Agent{% endif %}
-    </button>
+        <div class="agent-card">
+          <div class="agent-card-head">
+            <div>
+              <div class="agent-card-title">Work Assignment</div>
+              <div class="agent-card-sub">Map customers/suppliers for collection and follow-up workflows.</div>
+            </div>
+          </div>
+          <div class="agent-card-body">
+            <div class="agent-field full">
+              <label class="agent-label">Assigned Parties</label>
+              {{ form.assigned_parties }}
+              {% if form.assigned_parties.errors %}<div class="agent-error">{{ form.assigned_parties.errors }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="agent-card">
+          <div class="agent-card-head">
+            <div>
+              <div class="agent-card-title">Internal Notes</div>
+              <div class="agent-card-sub">Private operating notes for admin reference.</div>
+            </div>
+          </div>
+          <div class="agent-card-body">
+            <label class="agent-label">Notes</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}<div class="agent-error">{{ form.notes.errors }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div class="agent-card">
+          <div class="agent-card-head">
+            <div>
+              <div class="agent-card-title">Access Summary</div>
+              <div class="agent-card-sub">Live control matrix for this linked user.</div>
+            </div>
+          </div>
+          <div class="agent-card-body">
+            <div class="metric-row">
+              <div class="metric"><b>{{ perm_enabled_count }}</b><span>Permissions on</span></div>
+              <div class="metric"><b>{{ feature_enabled_count }}</b><span>Features on</span></div>
+              <div class="metric"><b>{{ form.assigned_parties.value|length|default:"0" }}</b><span>Assigned parties</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="agent-card">
+          <div class="agent-card-head">
+            <div>
+              <div class="agent-card-title">Permissions & Settings</div>
+              <div class="agent-card-sub">Same linked-user access engine, embedded here.</div>
+            </div>
+          </div>
+          <div class="agent-card-body">
+            <div class="agent-tabs" role="tablist">
+              <button class="agent-tab active" type="button" data-pane="permissionsPane">Permissions</button>
+              <button class="agent-tab" type="button" data-pane="featuresPane">Features</button>
+              <button class="agent-tab" type="button" data-pane="presetsPane">Quick Setup</button>
+            </div>
+
+            <div id="permissionsPane" class="agent-pane active">
+              <input class="agent-search" data-filter-target="permRows" placeholder="Search permissions...">
+              <div id="permRows" class="toggle-list">
+                {% for p in permission_toggles %}
+                  <label class="toggle-row" data-search="{{ p.label|lower }} {{ p.key|lower }}">
+                    <div>
+                      <div class="toggle-title">{{ p.label }}</div>
+                      <div class="toggle-key">{{ p.key }}</div>
+                    </div>
+                    <span class="switch">
+                      <input type="checkbox" name="perm__{{ p.key }}" {% if p.enabled %}checked{% endif %}>
+                      <span class="slider"></span>
+                    </span>
+                  </label>
+                {% empty %}
+                  <div class="toggle-key">No permission controls configured.</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div id="featuresPane" class="agent-pane">
+              <input class="agent-search" data-filter-target="featureRows" placeholder="Search features...">
+              <div id="featureRows" class="toggle-list">
+                {% for f in feature_rows %}
+                  <label class="toggle-row" data-search="{{ f.label|lower }} {{ f.key|lower }} {{ f.group|lower }}">
+                    <div>
+                      <div class="toggle-title">{{ f.label }} {% if f.recommended %}<span class="toggle-key">recommended</span>{% endif %}</div>
+                      <div class="toggle-key">{{ f.group }} - {{ f.key }}</div>
+                    </div>
+                    <span class="switch">
+                      <input type="checkbox" name="feature__{{ f.id }}" data-feature-key="{{ f.key }}" {% if f.effective %}checked{% endif %} {% if f.key == "field.agents" %}disabled{% endif %}>
+                      <span class="slider"></span>
+                    </span>
+                    {% if f.key == "field.agents" %}<input type="hidden" name="feature__{{ f.id }}" value="on">{% endif %}
+                  </label>
+                {% empty %}
+                  <div class="toggle-key">Feature registry is empty or unavailable.</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div id="presetsPane" class="agent-pane">
+              <div class="toggle-list">
+                <button class="agent-btn" type="button" data-preset="collector">Collector Basic</button>
+                <button class="agent-btn" type="button" data-preset="staff">Staff Operations</button>
+                <button class="agent-btn" type="button" data-preset="readonly">Read Only</button>
+              </div>
+              <div class="toggle-key mt-3">Preset apply karne ke baad top Save button press karein.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </form>
 </div>
+
+<script>
+  (function () {
+    const tabs = document.querySelectorAll(".agent-tab");
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        tabs.forEach((t) => t.classList.remove("active"));
+        document.querySelectorAll(".agent-pane").forEach((p) => p.classList.remove("active"));
+        tab.classList.add("active");
+        const pane = document.getElementById(tab.dataset.pane);
+        if (pane) pane.classList.add("active");
+      });
+    });
+
+    document.querySelectorAll("[data-filter-target]").forEach((input) => {
+      input.addEventListener("input", () => {
+        const list = document.getElementById(input.dataset.filterTarget);
+        const term = input.value.trim().toLowerCase();
+        if (!list) return;
+        list.querySelectorAll("[data-search]").forEach((row) => {
+          row.style.display = row.dataset.search.includes(term) ? "" : "none";
+        });
+      });
+    });
+
+    const setFeature = (key, checked) => {
+      document.querySelectorAll(`[data-feature-key="${key}"]`).forEach((input) => {
+        if (!input.disabled) input.checked = checked;
+      });
+    };
+    const setPerm = (key, checked) => {
+      const input = document.querySelector(`[name="perm__${key}"]`);
+      if (input) input.checked = checked;
+    };
+
+    document.querySelectorAll("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const preset = button.dataset.preset;
+        document.querySelectorAll('[name^="perm__"]').forEach((input) => input.checked = false);
+        document.querySelectorAll('[name^="feature__"]').forEach((input) => { if (!input.disabled) input.checked = false; });
+        setPerm("billing.role.field_agent", true);
+        setFeature("field.agents", true);
+
+        if (preset === "collector") {
+          setPerm("portal.make_payments", true);
+          setFeature("portal.payments", true);
+          setFeature("communication.whatsapp", true);
+        }
+        if (preset === "staff") {
+          setPerm("portal.view_invoices", true);
+          setPerm("portal.view_reports", true);
+          setPerm("billing.user.view_reports", true);
+          setFeature("commerce.orders", true);
+          setFeature("commerce.inventory", true);
+          setFeature("reports.account_summary", true);
+        }
+        if (preset === "readonly") {
+          setPerm("portal.view_invoices", true);
+          setPerm("portal.view_reports", true);
+        }
+      });
+    });
+  })();
+</script>
 {% endblock %}

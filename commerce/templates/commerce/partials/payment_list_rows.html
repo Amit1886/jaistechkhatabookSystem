@@ -1,0 +1,35 @@
+{% for payment in payments %}
+<tr>
+  <td>{{ forloop.counter }}</td>
+  <td>{{ payment.invoice.number }}</td>
+  <td>#{{ payment.invoice.order.id }}</td>
+  <td>{{ payment.invoice.order.party.name }}</td>
+  <td><span class="badge bg-light text-dark">{{ payment.method|default:'-' }}</span></td>
+  <td class="text-end fw-bold">{{ payment.amount }}</td>
+  <td>{{ payment.reference|default:'-' }}</td>
+  <td>{{ payment.created_at|date:"d M Y" }}</td>
+  <td class="text-end">
+    <div class="dropdown">
+      <button type="button" class="btn unified-btn-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown">Actions</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{% url 'commerce:payment_view' payment.id %}">View</a></li>
+        <li><a class="dropdown-item" href="{% url 'ledger:receipt' %}?reference_type=commerce.Payment&reference_id={{ payment.id }}" target="_blank" rel="noopener">Receipt</a></li>
+        {% if erp_can_edit %}
+          <li><a class="dropdown-item" href="{% url 'commerce:payment_edit' payment.id %}">Edit</a></li>
+        {% endif %}
+        {% if erp_can_delete %}
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <form method="post" action="{% url 'commerce:payment_delete' payment.id %}" data-confirm data-confirm-title="Delete Payment" data-confirm-message="Delete this payment? This will also remove its accounting entry." data-confirm-ok-text="Delete" style="margin:0;">
+              {% csrf_token %}
+              <button type="submit" class="dropdown-item text-danger">Delete</button>
+            </form>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="9" class="text-center text-muted py-4">No payments found.</td></tr>
+{% endfor %}

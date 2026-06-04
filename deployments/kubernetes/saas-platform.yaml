@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: erp-api
+  template:
+    metadata:
+      labels:
+        app: erp-api
+    spec:
+      containers:
+        - name: django
+          image: registry.example.com/erp/api:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: erp-secrets
+            - configMapRef:
+                name: erp-config
+          readinessProbe:
+            httpGet:
+              path: /api/gateway/health/
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-worker
+  template:
+    metadata:
+      labels:
+        app: erp-worker
+    spec:
+      containers:
+        - name: celery
+          image: registry.example.com/erp/api:latest
+          command: ["celery", "-A", "khatapro", "worker", "-l", "info", "-Q", "default,notifications,reports,ai,ocr,exports,integrations"]
+          envFrom:
+            - secretRef:
+                name: erp-secrets
+            - configMapRef:
+                name: erp-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-api
+spec:
+  selector:
+    app: erp-api
+  ports:
+    - port: 80
+      targetPort: 8000
+

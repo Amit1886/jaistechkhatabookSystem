@@ -1,69 +1,96 @@
 {% extends "accounts/base.html" %}
 {% load static %}
 
-
 {% block content %}
-<div class="container mt-4">
-  <h4> Business Snapshot (Today)</h4>
-
-  <div class="row g-3 mt-3">
-
-    <div class="col-md-3">
-      <div class="card shadow">
-        <div class="card-body">
-          <h6> Sales</h6>
-          <h4> {{ snapshot.sales_amount }}</h4>
-          <small>{{ snapshot.sales_orders }} Orders</small>
-        </div>
+<div class="container-fluid py-2 unified-report-screen" data-export-scope>
+  <div class="unified-report-card">
+    <div class="unified-report-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Business Snapshot</h3>
+        <div class="unified-subtitle">Daily summary for {{ selected_date|date:"d M Y" }}</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#snapshotTable" data-export-name="business_snapshot">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#snapshotTable" data-export-name="business_snapshot">Excel</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#snapshotTable">PDF</button>
       </div>
     </div>
 
-    <div class="col-md-3">
-      <div class="card shadow">
-        <div class="card-body">
-          <h6> Purchase</h6>
-          <h4> {{ snapshot.purchase_amount }}</h4>
-          <small>{{ snapshot.purchase_orders }} Orders</small>
+    <div class="unified-report-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" method="get">
+        <div style="min-width:220px;">
+          <label class="unified-label" for="snapDate">Date</label>
+          <input id="snapDate" name="date" type="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <a class="btn unified-btn-outline" href="{% url 'accounts:business_snapshot' %}">Reset</a>
+        </div>
+      </form>
+
+      <div class="report-summary-grid">
+        <div class="report-summary-card">
+          <div class="label">Sales</div>
+          <div class="value">{{ snapshot.sales_amount }}</div>
+          <div class="meta">Orders: {{ snapshot.sales_orders }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Purchase</div>
+          <div class="value">{{ snapshot.purchase_amount }}</div>
+          <div class="meta">Orders: {{ snapshot.purchase_orders }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Received</div>
+          <div class="value">{{ snapshot.payment_received }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Given</div>
+          <div class="value">{{ snapshot.payment_given }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Receivable</div>
+          <div class="value">{{ snapshot.receivable_amount }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Payable</div>
+          <div class="value">{{ snapshot.payable_amount }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Net Position</div>
+          <div class="value">{{ snapshot.net_position }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Profit/Loss</div>
+          <div class="value">{{ snapshot.profit_loss|default:"0.00" }}</div>
         </div>
       </div>
-    </div>
 
-    <div class="col-md-3">
-      <div class="card shadow">
-        <div class="card-body">
-          <h6> Received</h6>
-          <h4> {{ snapshot.payment_received }}</h4>
-        </div>
+      <div class="unified-table-wrap mt-2">
+        <table class="table unified-table" id="snapshotTable">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th class="text-end">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Sales Amount</td><td class="text-end fw-bold">{{ snapshot.sales_amount }}</td></tr>
+            <tr><td>Sales Orders</td><td class="text-end">{{ snapshot.sales_orders }}</td></tr>
+            <tr><td>Purchase Amount</td><td class="text-end fw-bold">{{ snapshot.purchase_amount }}</td></tr>
+            <tr><td>Purchase Orders</td><td class="text-end">{{ snapshot.purchase_orders }}</td></tr>
+            <tr><td>Payment Received</td><td class="text-end fw-bold">{{ snapshot.payment_received }}</td></tr>
+            <tr><td>Payment Given</td><td class="text-end fw-bold">{{ snapshot.payment_given }}</td></tr>
+            <tr><td>Receivable Amount</td><td class="text-end fw-bold">{{ snapshot.receivable_amount }}</td></tr>
+            <tr><td>Payable Amount</td><td class="text-end fw-bold">{{ snapshot.payable_amount }}</td></tr>
+            <tr><td>Net Position</td><td class="text-end fw-bold">{{ snapshot.net_position }}</td></tr>
+            <tr><td>Profit/Loss</td><td class="text-end fw-bold">{{ snapshot.profit_loss|default:"0.00" }}</td></tr>
+          </tbody>
+        </table>
       </div>
-    </div>
 
-    <div class="col-md-3">
-      <div class="card shadow">
-        <div class="card-body">
-          <h6> Given</h6>
-          <h4> {{ snapshot.payment_given }}</h4>
-        </div>
-      </div>
+      {% include "core/includes/document_action_bar.html" %}
     </div>
-
-    <div class="col-md-3">
-      <div class="card shadow">
-        <div class="card-body">
-          <h6> Receivable</h6>
-          <h4 class="text-success"> {{ snapshot.receivable_amount }}</h4>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-md-3">
-      <div class="card shadow">
-        <div class="card-body">
-          <h6> Payable</h6>
-          <h4 class="text-danger"> {{ snapshot.payable_amount }}</h4>
-        </div>
-      </div>
-    </div>
-
   </div>
 </div>
 {% endblock %}
+

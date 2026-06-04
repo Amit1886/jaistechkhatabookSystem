@@ -1,0 +1,58 @@
+{% extends "storefront/store_shell.html" %}
+{% block content %}
+  <div class="store-hero p-4 mb-4 shadow-soft">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="opacity-75">Order tracking</div>
+        <h3 class="fw-bold mb-0">{{ order.order_number }}</h3>
+      </div>
+      <div class="text-end">
+        <div class="opacity-75">Status</div>
+        <div class="fw-bold">{{ order.status }}</div>
+        <div class="opacity-75 mt-1">Payment</div>
+        <div class="fw-bold">{{ order.payment_status }}</div>
+        {% if order.payment_status != "paid" %}
+          <div class="mt-2">
+            <a class="btn btn-brand btn-sm" href="{{ payment_url }}"><i class="bi bi-credit-card me-1"></i>Pay now</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-7">
+      <div class="card product-card shadow-soft">
+        <div class="card-body">
+          <div class="fw-bold mb-2">Items</div>
+          {% for it in order.items.all %}
+            <div class="d-flex justify-content-between border-bottom py-2">
+              <div>{{ it.product.name }} × {{ it.qty }}</div>
+              <div class="fw-bold">₹{{ it.line_total }}</div>
+            </div>
+          {% endfor %}
+          <div class="d-flex justify-content-between mt-3">
+            <div class="fw-bold">Total</div>
+            <div class="fw-bold">₹{{ order.total_amount }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-5">
+      <div class="card product-card shadow-soft">
+        <div class="card-body">
+          <div class="fw-bold mb-2">Timeline</div>
+          {% for ev in order.status_events.all %}
+            <div class="small border-bottom py-2">
+              <div class="fw-semibold">{{ ev.status }}</div>
+              <div class="muted">{{ ev.note }}</div>
+              <div class="muted">{{ ev.created_at }}</div>
+            </div>
+          {% empty %}
+            <div class="muted">No updates yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{
+  "info": {
+    "name": "Billentra Enterprise Dynamic API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "base_url", "value": "http://127.0.0.1:8080/fastapi"},
+    {"key": "access_token", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {"method": "GET", "url": "{{base_url}}/health"}
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": "{{base_url}}/auth/login",
+        "body": {"mode": "raw", "raw": "{\"identifier\":\"superadmin@gmail.com\",\"password\":\"your_password\"}"}
+      }
+    },
+    {
+      "name": "Metadata Models",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/metadata/models"
+      }
+    },
+    {
+      "name": "Dynamic CRUD Users",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/crud/accounts.user"
+      }
+    },
+    {
+      "name": "Mobile Bootstrap",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/mobile/bootstrap"
+      }
+    }
+  ]
+}

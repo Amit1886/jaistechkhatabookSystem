@@ -11,6 +11,7 @@
   let rowTemplate = null;
   const stockCache = new Map();
   let billSundryLines = [];
+  let smartKhataCreditSeq = 0;
 
   function isPcBusyMode() {
     return (
@@ -68,6 +69,9 @@
 
     const label = document.getElementById("pcZoomValue");
     if (label) label.textContent = `${safePercent}%`;
+
+    // When zoom changes, row height changes; re-fill blank rows for the viewport.
+    queueEnsureRowsFillViewport();
   }
 
   function adjustZoom(delta) {
@@ -258,8 +262,13 @@
     ensureSingleRowControls(rowTemplate);
     clearRow(rowTemplate);
 
-    // Clear first row for initial entry (do this only once).
-    clearRow(firstRow);
+    // Clear first row for initial entry (do this only once), but do not wipe prefilled rows
+    // (e.g., quotation -> order conversion / edit flows).
+    const firstSelectValue = firstRow.querySelector(".product")?.value || "";
+    const firstSearchValue = firstRow.querySelector(".product-search")?.value?.trim() || "";
+    const firstPriceValue = firstRow.querySelector(".price")?.value || "";
+    const hasPrefill = Boolean(firstSelectValue || firstSearchValue || String(firstPriceValue || "").trim());
+    if (!hasPrefill) clearRow(firstRow);
   }
 
   function addBlankRow() {
@@ -288,6 +297,104 @@
     // Normalize all rows (safe).
     tbody.querySelectorAll("tr.item-row").forEach((row) => ensureSingleRowControls(row));
     updateSerialNumbers();
+  }
+
+  function ensureRowsFillViewport() {
+    // Fill visible table area with blank rows to avoid an empty "gap" under the last row.
+    // (Busy/Tally-like voucher grid: always shows many entry lines.)
+    const fallback = 12;
+    ensureRowTemplate();
+    const container = document.querySelector("#step-2 .table-responsive");
+    const table = document.getElementById("orderTable");
+    const tbody = document.getElementById("orderBody");
+    if (!container || !table || !tbody) return ensureRows(fallback);
+
+    const thead = table.querySelector("thead");
+    const headerH = thead?.getBoundingClientRect?.().height || 0;
+    const containerH = container.getBoundingClientRect?.().height || container.clientHeight || 0;
+
+    const firstRow = tbody.querySelector("tr.item-row");
+    let rowH = firstRow?.getBoundingClientRect?.().height || 28;
+    rowH = clampNumber(rowH, 22, 64);
+
+    const usable = Math.max(0, containerH - headerH - 10);
+    const visibleRows = rowH > 0 ? Math.floor(usable / rowH) : fallback;
+    // Allow more rows for large viewports / low browser zoom (e.g., Chrome at 33%).
+    const desired = Math.max(28, clampNumber(visibleRows + 2, fallback, 220));
+    ensureRows(desired);
+
+    // If our estimated row height was off, keep adding rows until the grid looks "filled".
+    // (No blank white gap at the bottom of the table viewport.)
+    try {
+      let guard = 0;
+      while (guard < 60) {
+        const bodyH = tbody.getBoundingClientRect?.().height || 0;
+        if (bodyH >= usable) break;
+        const count = tbody.querySelectorAll("tr.item-row").length;
+        if (count >= 220) break;
+        addBlankRow();
+        guard += 1;
+      }
+      // Normalize + serial numbers after adding.
+      tbody.querySelectorAll("tr.item-row").forEach((row) => ensureSingleRowControls(row));
+      updateSerialNumbers();
+    } catch (e) {}
+  }
+
+  let _fillRowsTimer = null;
+  function queueEnsureRowsFillViewport() {
+    if (_fillRowsTimer) window.clearTimeout(_fillRowsTimer);
+    _fillRowsTimer = window.setTimeout(() => {
+      _fillRowsTimer = null;
+      window.requestAnimationFrame(() => ensureRowsFillViewport());
+    }, 50);
+  }
+
+  function focusFinishAction() {
+    const helpBtn = document.querySelector(".busy-bottom-bar button[data-action='help']");
+    // User flow: after finishing item entry, focus should land on F1 (Help) first,
+    // then user navigates with arrow keys to other function buttons (e.g., F8 Sundry).
+    if (helpBtn) {
+      helpBtn.scrollIntoView?.({ block: "nearest" });
+      helpBtn.focus();
+      return true;
+    }
+
+    // Keep narration reachable even if bottom bar isn't mounted for some reason.
+    const narration = document.getElementById("pcNarration");
+    if (narration) {
+      narration.scrollIntoView?.({ block: "nearest" });
+      narration.focus();
+      return true;
+    }
+
+    // Keep top-strip fields reachable if bottom bar isn't mounted for some reason.
+    const reference = document.querySelector('input[name="reference"]');
+    if (reference) {
+      reference.scrollIntoView?.({ block: "nearest" });
+      reference.focus();
+      return true;
+    }
+
+    const primarySubmit = document.querySelector('#orderForm button[type="submit"]');
+    if (primarySubmit) {
+      primarySubmit.scrollIntoView?.({ block: "nearest" });
+      primarySubmit.focus();
+      return true;
+    }
+    const nextStepBtn = document.getElementById("nextStep");
+    if (nextStepBtn) {
+      nextStepBtn.scrollIntoView?.({ block: "nearest" });
+      nextStepBtn.focus();
+      return true;
+    }
+    const saveBtn = document.querySelector(".busy-bottom-bar button[data-action='save']");
+    if (saveBtn) {
+      saveBtn.scrollIntoView?.({ block: "nearest" });
+      saveBtn.focus();
+      return true;
+    }
+    return false;
   }
 
   function updateSerialNumbers() {
@@ -414,6 +521,38 @@
     }
   }
 
+  function ensureGstHiddenInputs() {
+    const form = document.getElementById("orderForm");
+    if (!form) return { enabled: null, rate: null };
+
+    let enabled = form.querySelector('input[name="gst_enabled"]');
+    if (!enabled) {
+      enabled = document.createElement("input");
+      enabled.type = "hidden";
+      enabled.name = "gst_enabled";
+      enabled.id = "pcGstEnabledHidden";
+      form.appendChild(enabled);
+    }
+
+    let rate = form.querySelector('input[name="gst_rate"]');
+    if (!rate) {
+      rate = document.createElement("input");
+      rate.type = "hidden";
+      rate.name = "gst_rate";
+      rate.id = "pcGstRateHidden";
+      form.appendChild(rate);
+    }
+
+    return { enabled, rate };
+  }
+
+  function syncGstHiddenInputs(gstEnabled, gstRate) {
+    const inputs = ensureGstHiddenInputs();
+    if (!inputs.enabled || !inputs.rate) return;
+    inputs.enabled.value = gstEnabled ? "1" : "0";
+    inputs.rate.value = String(Number.isFinite(gstRate) ? gstRate : 0);
+  }
+
   function calculateTotals() {
     const tbody = document.getElementById("orderBody");
     if (!tbody) return;
@@ -429,6 +568,8 @@
     const tax = gstEnabled ? (subtotal * gstRate) / 100 : 0;
     const sundry = getBillSundryTotal();
     const grand = subtotal + tax + sundry;
+
+    syncGstHiddenInputs(gstEnabled, gstRate);
 
     // Some templates contain duplicated IDs; update all occurrences safely.
     document.querySelectorAll("#subTotal").forEach((el) => (el.textContent = subtotal.toFixed(2)));
@@ -969,7 +1110,10 @@
     const el = document.getElementById("pcVoucherInfoBody");
     if (!el) return;
 
-    const partyName = document.getElementById("partySearch")?.value?.trim() || "-";
+    const partyName =
+      document.getElementById("partySearch")?.value?.trim() ||
+      document.getElementById("partySelect")?.selectedOptions?.[0]?.textContent?.trim() ||
+      "-";
     const now = new Date();
 
     const itemsCount = Array.from(document.querySelectorAll("#orderBody tr.item-row")).filter((row) => {
@@ -992,6 +1136,66 @@
     lines.push(`Grand Total: ₹${grand.toFixed(2)}`);
 
     el.textContent = lines.join("\n");
+  }
+
+  function updateSmartKhataCreditInfo() {
+    const wrap = document.getElementById("smartKhataCreditInfo");
+    const badge = document.getElementById("smartKhataCreditBadge");
+    const meta = document.getElementById("smartKhataCreditMeta");
+    const warn = document.getElementById("smartKhataCreditWarn");
+    if (!wrap || !badge || !meta || !warn) return;
+
+    const orderType = (document.getElementById("orderType")?.value || "").toLowerCase();
+    const partyId = (document.getElementById("partySelect")?.value || "").trim();
+
+    // Only show for Sales orders where party is a customer.
+    if (!partyId || orderType !== "sale") {
+      wrap.style.display = "none";
+      warn.style.display = "none";
+      return;
+    }
+
+    const seq = ++smartKhataCreditSeq;
+    badge.className = "badge bg-light text-dark";
+    badge.textContent = "Credit Score: Loading...";
+    meta.textContent = "";
+    warn.style.display = "none";
+    wrap.style.display = "";
+
+    fetch(`/api/customer-credit-score/?party_id=${encodeURIComponent(partyId)}`, { headers: { "Accept": "application/json" } })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((data) => {
+        if (seq !== smartKhataCreditSeq) return;
+        const score = Number.parseInt(String(data?.credit_score ?? "0"), 10) || 0;
+        const level = String(data?.level || "").trim() || "-";
+        const totalDue = String(data?.total_due ?? "");
+        const avgDelay = Number.parseInt(String(data?.average_payment_delay ?? "0"), 10) || 0;
+
+        // Badge color
+        if (score >= 80) badge.className = "badge bg-success";
+        else if (score >= 60) badge.className = "badge bg-warning text-dark";
+        else if (score >= 40) badge.className = "badge text-dark";
+        else badge.className = "badge bg-danger";
+
+        if (score >= 40 && score < 60) badge.style.background = "#f97316";
+        else badge.style.background = "";
+
+        badge.textContent = `Credit Score: ${score}`;
+        meta.textContent = `Level: ${level} • Due: ₹${totalDue || "0.00"} • Avg Delay: ${avgDelay}d`;
+
+        if (score < 40) {
+          warn.textContent = `Warning: This customer has a credit score of ${score} (High Risk).`;
+          warn.style.display = "";
+        } else {
+          warn.style.display = "none";
+        }
+      })
+      .catch(() => {
+        if (seq !== smartKhataCreditSeq) return;
+        // Not a customer / API not available; hide to avoid confusing UI.
+        wrap.style.display = "none";
+        warn.style.display = "none";
+      });
   }
 
   function updateItemPanel(row) {
@@ -1055,6 +1259,43 @@
       const btn = e.target.closest("button[data-action]");
       if (!btn) return;
       handleAction(btn.dataset.action);
+    });
+
+    // Bottom bar keyboard UX:
+    // - Arrow keys move between buttons
+    // - Enter/Space activates the focused button (opens Sundry/Discount/etc)
+    bar.addEventListener("keydown", (e) => {
+      const active = document.activeElement;
+      if (!active || active.tagName !== "BUTTON" || !active.classList.contains("bb-btn")) return;
+
+      const buttons = Array.from(bar.querySelectorAll("button.bb-btn")).filter((b) => !b.disabled);
+      if (!buttons.length) return;
+
+      const idx = buttons.indexOf(active);
+      if (idx < 0) return;
+
+      const prev = () => buttons[(idx - 1 + buttons.length) % buttons.length];
+      const next = () => buttons[(idx + 1) % buttons.length];
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        e.stopPropagation();
+        prev().focus();
+        return;
+      }
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        e.stopPropagation();
+        next().focus();
+        return;
+      }
+
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        const action = active.dataset.action;
+        if (action) handleAction(action);
+      }
     });
   }
 
@@ -1494,7 +1735,7 @@
               </table>
             </div>
           </div>
-          <div class="busy-modal-hint">[ Esc - Quit ]  [ F2 - Done ]  [ Enter/↓ - Next Row ]</div>
+          <div class="busy-modal-hint">[ Esc - Quit ]  [ F2 - Done ]  [ ↓ - Next Row ]  [ Enter (Amount) - Done ]</div>
         </div>
         <div class="busy-modal-actions">
           <button type="button" class="busy-modal-btn primary" data-action="apply">Done (F2)</button>
@@ -1521,7 +1762,36 @@
       if (!row) return;
 
       const col = field.dataset.col || "";
-      if (e.key === "ArrowDown" || e.key === "Enter") {
+
+      const rowIsEmpty = (r) => {
+        if (!r) return true;
+        const inputs = Array.from(r.querySelectorAll("input,select,textarea"));
+        return inputs.every((el) => String(el.value || "").trim() === "");
+      };
+
+      const rowHasAnyData = (r) => {
+        if (!r) return false;
+        const inputs = Array.from(r.querySelectorAll("input,select,textarea"));
+        return inputs.some((el) => String(el.value || "").trim() !== "");
+      };
+
+      if (e.key === "Enter") {
+        // Quick exit: if user is on Amount column and next row is blank, treat Enter as Done.
+        if (col === "amount" && rowHasAnyData(row)) {
+          const nextRow = row.nextElementSibling;
+          if (!nextRow || rowIsEmpty(nextRow)) {
+            e.preventDefault();
+            applyBillSundryFromModal();
+            return;
+          }
+        }
+
+        e.preventDefault();
+        focusSundryField(row, col, 1);
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
         e.preventDefault();
         focusSundryField(row, col, 1);
       }
@@ -1661,6 +1931,8 @@
     closeBillSundryModal();
     calculateTotals();
     updatePrintPreview();
+    // After applying, move focus to the bottom function-key bar (F1 first) for keyboard-only flow.
+    setTimeout(() => focusFinishAction(), 0);
   }
 
   function getOrderSnapshot() {
@@ -2002,7 +2274,7 @@
       if (typeof window.showKeyboardHelp === "function") window.showKeyboardHelp();
       return;
     }
-    if (action === "party") return focusFirstVisible("#partySearch");
+    if (action === "party") return focusFirstVisible("#partySearch, #partySelect");
     if (action === "item") return focusFirstVisible("#orderBody .item-row .product-search");
     if (action === "addRow") return ensureRows(document.querySelectorAll("#orderBody tr.item-row").length + 1);
     if (action === "discount") return openDiscountModal();
@@ -2174,17 +2446,18 @@
         return;
       }
 
-      if (e.ctrlKey && (e.key === "+" || e.key === "=" || e.code === "NumpadAdd")) {
+      // Don't hijack browser zoom shortcuts (Ctrl +/- / 0). Use Ctrl+Alt instead for UI zoom.
+      if (e.ctrlKey && e.altKey && (e.key === "+" || e.key === "=" || e.code === "NumpadAdd")) {
         e.preventDefault();
         adjustZoom(5);
         return;
       }
-      if (e.ctrlKey && (e.key === "-" || e.code === "NumpadSubtract")) {
+      if (e.ctrlKey && e.altKey && (e.key === "-" || e.code === "NumpadSubtract")) {
         e.preventDefault();
         adjustZoom(-5);
         return;
       }
-      if (e.ctrlKey && (e.key === "0" || e.code === "Numpad0")) {
+      if (e.ctrlKey && e.altKey && (e.key === "0" || e.code === "Numpad0")) {
         e.preventDefault();
         applyZoom(100);
         return;
@@ -2221,6 +2494,14 @@
       if (e.key === "F9") {
         e.preventDefault();
         handleAction("discount");
+      }
+      if (e.key === "F10") {
+        e.preventDefault();
+        focusFinishAction();
+      }
+      if (e.ctrlKey && e.key === "Enter") {
+        e.preventDefault();
+        handleAction("save");
       }
 
       // Delete key on focused sundry button
@@ -2369,6 +2650,34 @@
     const tbody = document.getElementById("orderBody");
     if (!tbody) return;
 
+    tbody.addEventListener("change", (e) => {
+      const row = e.target.closest("tr.item-row");
+      if (!row) return;
+
+      if (e.target.classList && e.target.classList.contains("product")) {
+        const select = e.target;
+        const selected = select.selectedOptions?.[0];
+
+        const productSearch = row.querySelector(".product-search");
+        if (productSearch && selected) productSearch.value = selected.textContent?.trim() || "";
+
+        const unit = (selected?.dataset?.unit || "").trim();
+        const unitInput = row.querySelector(".unit");
+        if (unitInput) unitInput.value = unit;
+
+        const priceInput = row.querySelector(".price");
+        const currentPrice = parseMoney(priceInput?.value);
+        const autoPrice = parseMoney(selected?.dataset?.price);
+        if (priceInput && autoPrice && (!currentPrice || currentPrice <= 0)) {
+          priceInput.value = autoPrice.toFixed(2);
+        }
+
+        hideDropdown(row);
+        calculateTotals();
+        updateItemPanel(row);
+      }
+    });
+
     tbody.addEventListener("click", (e) => {
       const btn = e.target.closest(".remove-btn");
       if (btn) {
@@ -2406,6 +2715,13 @@
       if (!row) return;
 
       if (e.target.classList.contains("product-search")) {
+        if (e.ctrlKey && e.key === "Enter") {
+          e.preventDefault();
+          e.stopPropagation();
+          handleAction("save");
+          return;
+        }
+
         const dd = row.querySelector(".product-dropdown");
         const open = dd && dd.style.display !== "none" && dd.innerHTML.trim().length > 0;
 
@@ -2451,6 +2767,13 @@
             hideDropdown(row);
             if (nextFocus === "nextRow") focusNextRowProduct(row);
             else row.querySelector(".qty")?.focus();
+            return;
+          }
+
+          // If user pressed Enter on an empty row, treat it as "finish entries" (keyboard-only flow).
+          if (e.key === "Enter" && String(e.target.value || "").trim() === "") {
+            hideDropdown(row);
+            focusFinishAction();
             return;
           }
 
@@ -2509,6 +2832,13 @@
       }
 
       if (e.target.classList.contains("amount")) {
+        if (e.ctrlKey && e.key === "Enter") {
+          e.preventDefault();
+          e.stopPropagation();
+          handleAction("save");
+          return;
+        }
+
         if (e.key === "ArrowDown" || e.key === "ArrowUp") {
           e.preventDefault();
           focusRowFieldByClass(row, "amount", e.key === "ArrowDown" ? 1 : -1);
@@ -2588,9 +2918,91 @@
     keepSingleElementById("orderType");
     keepSingleElementById("partySearch");
 
+    // If the template pre-selects a party (e.g. via query params), reflect it in the search input.
+    try {
+      const partySelect = document.getElementById("partySelect");
+      const partySearch = document.getElementById("partySearch");
+      if (partySelect && partySearch && !partySearch.value.trim()) {
+        const opt = partySelect.selectedOptions?.[0];
+        if (opt && opt.value) partySearch.value = (opt.textContent || "").trim();
+      }
+    } catch (e) {}
+
+    // Remove/hide sections that create extra blank space in PC Busy layout.
+    document.querySelectorAll(".sundry-section-inline").forEach((el) => {
+      el.style.display = "none";
+    });
+    const footer = document.querySelector("#mainOrderCard > .card-footer");
+    if (footer) footer.style.display = "none";
+
     mountPcControls();
     mountSidePanels();
     mountBottomBar();
+
+    // Ensure core recalculation works even if the template doesn't include legacy summary-card markup.
+    document.getElementById("pcGstEnabled")?.addEventListener("change", calculateTotals);
+    document.getElementById("pcGstRate")?.addEventListener("change", calculateTotals);
+    document.getElementById("orderType")?.addEventListener("change", calculateTotals);
+    document.getElementById("orderType")?.addEventListener("change", updateSmartKhataCreditInfo);
+    document.getElementById("partySelect")?.addEventListener("change", () => {
+      updateVoucherPanel();
+      updateSmartKhataCreditInfo();
+    });
+    // Initial render (template may preselect party/order type)
+    updateSmartKhataCreditInfo();
+    const step1 = document.getElementById("step-1");
+    if (step1) {
+      step1.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+        const target = e.target;
+        if (!target) return;
+
+        // In busy top strip, treat Enter like Tab for text/date/number/select inputs.
+        const tag = (target.tagName || "").toLowerCase();
+        const type = (target.getAttribute && target.getAttribute("type")) ? String(target.getAttribute("type")).toLowerCase() : "";
+        const isFocusableField =
+          tag === "select" ||
+          tag === "textarea" ||
+          (tag === "input" && !["checkbox", "radio", "button", "submit", "hidden"].includes(type));
+
+        if (!isFocusableField) return;
+
+        const focusables = Array.from(
+          step1.querySelectorAll(
+            'button:not([disabled]), a[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        ).filter((el) => el.offsetParent !== null);
+
+        if (!focusables.length) return;
+        const idx = focusables.indexOf(target);
+        const nextIdx = idx >= 0 ? Math.min(focusables.length - 1, idx + 1) : 0;
+        const next = focusables[nextIdx];
+        if (!next || next === target) return;
+
+        e.preventDefault();
+        next.focus();
+      });
+    }
+
+    // In PC Busy layout, wizard "Next/Previous" would switch to hidden steps.
+    // Repurpose it as a keyboard-friendly "finish entries" jump.
+    const nextStepBtn = document.getElementById("nextStep");
+    if (nextStepBtn) {
+      nextStepBtn.type = "button";
+      nextStepBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        focusFinishAction();
+      });
+    }
+    const prevStepBtn = document.getElementById("prevStep");
+    if (prevStepBtn) {
+      prevStepBtn.type = "button";
+      prevStepBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        handleAction("party");
+      });
+    }
     createDiscountModal();
     createPrintModal();
     loadBillSundryFromStorage();
@@ -2679,18 +3091,46 @@
     const partiesIndex = collectPartiesFromDom();
     normalizePcTableColumns();
     removePcAddRowButton();
-    ensureRows(12);
+
+    // Restore PC preferences
+    const storedZoom = getStoredInt(ZOOM_STORAGE_KEY, 100);
+    const normalizedZoom = storedZoom >= 95 && storedZoom <= 105 ? storedZoom : 100;
+    applyZoom(normalizedZoom);
+    if (normalizedZoom !== storedZoom) localStorage.setItem(ZOOM_STORAGE_KEY, String(normalizedZoom));
+    applyFullWidth(getStoredInt(FULLWIDTH_STORAGE_KEY, 0) === 1);
+
+    ensureRowsFillViewport();
+    window.addEventListener("resize", queueEnsureRowsFillViewport);
+    window.setTimeout(queueEnsureRowsFillViewport, 200);
+
     wireTableInteractions(productsIndex);
     wirePartyPicker(partiesIndex);
     installKeyboardShortcuts();
     calculateTotals();
 
-    // Restore PC preferences
-    applyZoom(getStoredInt(ZOOM_STORAGE_KEY, 100));
-    applyFullWidth(getStoredInt(FULLWIDTH_STORAGE_KEY, 0) === 1);
+    // Top strip: show weekday label (matches classic busy UI).
+    function syncOrderDayLabel() {
+      const input = document.querySelector('input[name="order_date"]');
+      const out = document.getElementById("orderDayLabel");
+      if (!input || !out) return;
+      const raw = String(input.value || "").trim();
+      if (!raw) {
+        out.textContent = "-";
+        return;
+      }
+      const d = new Date(raw + "T00:00:00");
+      if (Number.isNaN(d.getTime())) {
+        out.textContent = "-";
+        return;
+      }
+      const day = d.toLocaleDateString(undefined, { weekday: "short" });
+      out.textContent = day || "-";
+    }
+    document.querySelector('input[name="order_date"]')?.addEventListener("change", syncOrderDayLabel);
+    syncOrderDayLabel();
 
     // Focus Party first like Busy.
-    setTimeout(() => focusFirstVisible("#partySearch"), 50);
+    setTimeout(() => focusFirstVisible("#partySearch, #partySelect"), 50);
   }
 
   if (document.readyState === "loading") {

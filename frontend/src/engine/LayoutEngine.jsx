@@ -1,6 +1,7 @@
 import React from "react";
 
 import ModeSwitchControl from "../components/ModeSwitchControl";
+import EnterpriseUIEngine from "./EnterpriseUIEngine";
 import { useSystemMode } from "../hooks/useSystemMode";
 import AdminSuperLayout from "../layouts/AdminSuperLayout";
 import DesktopLayout from "../layouts/DesktopLayout";
@@ -27,9 +28,14 @@ function pickLayout(mode) {
 export default function LayoutEngine() {
   const { modeState, resolvedMode, loading } = useSystemMode();
   const CurrentLayout = pickLayout(resolvedMode);
+  const enterpriseEnabled = new URLSearchParams(window.location.search).get("enterprise") === "1";
 
   if (loading) {
     return <div className="p-6 text-sm text-slate-500">Loading system mode...</div>;
+  }
+
+  if (enterpriseEnabled) {
+    return <EnterpriseUIEngine />;
   }
 
   return (

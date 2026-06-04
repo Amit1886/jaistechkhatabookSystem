@@ -1,0 +1,27 @@
+{% extends "central_engine/layout.html" %}
+
+{% block ce_title %}Feature Unlock Panel{% endblock %}
+
+{% block ce_content %}
+  <div class="card ce-soft mb-3">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <div class="fw-bold">Current Plan</div>
+          <div class="text-muted small">{{ plan.name|default:"Free" }}</div>
+        </div>
+        <a class="btn btn-primary" href="{% url 'billing:upgrade_plan' %}">Upgrade Plan</a>
+      </div>
+    </div>
+  </div>
+
+  <h6 class="fw-bold">Locked Features</h6>
+  <ul class="mb-0">
+    {% for k in locked %}
+      <li class="small"><code>{{ k }}</code></li>
+    {% empty %}
+      <li class="small text-muted">No locked engine features.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
+

@@ -1,0 +1,157 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+{% block vendor_content %}
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+      <div class="muted small">Order</div>
+      <h3 class="fw-bold m-0">{{ order.order_number }}</h3>
+      <div class="muted small mt-1">
+        Status: <span class="fw-semibold">{{ order.status }}</span> · Payment: <span class="fw-semibold">{{ order.payment_status }}</span>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'vendor-orders' vendor.subdomain %}">Back</a>
+      <a class="btn btn-outline-primary btn-sm" href="{% url 'store-track' vendor.subdomain order.public_token %}" target="_blank" rel="noopener">
+        Customer tracking
+      </a>
+      <a class="btn btn-outline-secondary btn-sm" href="/commerce/orders/sales/?q={{ order.order_number|urlencode }}&source=Online%20Store" target="_blank" rel="noopener">
+        Open in Billing
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-7">
+      <div class="card product-card shadow-soft">
+        <div class="card-body">
+          <div class="fw-bold mb-2">Items</div>
+          {% for it in order.items.all %}
+            <div class="d-flex justify-content-between border-bottom py-2">
+              <div>{{ it.product.name }} &times; {{ it.qty }}</div>
+              <div class="fw-bold">&#8377;{{ it.line_total }}</div>
+            </div>
+          {% endfor %}
+          <div class="d-flex justify-content-between mt-3">
+            <div class="fw-bold">Total</div>
+            <div class="fw-bold">&#8377;{{ order.total_amount }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card product-card shadow-soft mt-3">
+        <div class="card-body">
+          <div class="fw-bold mb-2">Customer</div>
+          <div class="muted small">{{ order.customer.email }}</div>
+          {% if order.address %}
+            <div class="muted small mt-2">
+              {{ order.address.line1 }}{% if order.address.line2 %}, {{ order.address.line2 }}{% endif %},
+              {{ order.address.pincode }}{% if order.address.state %}, {{ order.address.state }}{% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+      <div class="card product-card shadow-soft">
+        <div class="card-body">
+          <div class="fw-bold mb-2">Order actions</div>
+
+          {% if not order.commerce_order_id %}
+            <form method="post" action="{% url 'vendor-order-sync-billing' vendor.subdomain order.id %}" class="d-grid gap-2 mb-2">
+              {% csrf_token %}
+              <button class="btn btn-outline-primary" type="submit">
+                <i class="bi bi-arrow-repeat me-1"></i>Create Billing Order
+              </button>
+            </form>
+          {% else %}
+            <a class="btn btn-outline-primary w-100 mb-2" href="/commerce/view-order/{{ order.commerce_order_id }}/" target="_blank" rel="noopener">
+              <i class="bi bi-box-arrow-up-right me-1"></i>Open Billing Order
+            </a>
+          {% endif %}
+
+          {% with co=order.commerce_order %}
+            {% if co and co.status == "pending" %}
+              <form method="post" action="{% url 'vendor-order-accept' vendor.subdomain order.id %}" class="d-grid gap-2">
+                {% csrf_token %}
+                <button class="btn btn-success" type="submit"><i class="bi bi-check2-circle me-1"></i>Accept in Billing</button>
+              </form>
+              <form method="post" action="{% url 'vendor-order-reject' vendor.subdomain order.id %}" class="d-grid gap-2 mt-2">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger" type="submit"><i class="bi bi-x-circle me-1"></i>Reject in Billing</button>
+              </form>
+            {% elif not co and order.status == "pending" %}
+              <div class="alert alert-warning mb-0">Billing order not created yet. Use “Create Billing Order”.</div>
+            {% else %}
+              <div class="alert alert-info mb-0">Billing status: <strong>{{ co.status|default:order.status }}</strong></div>
+            {% endif %}
+          {% endwith %}
+
+          <hr>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="fw-bold">Shipping (Shiprocket)</div>
+            {% if order.shipment %}
+              <span class="pill small">{{ order.shipment.status }}</span>
+            {% endif %}
+          </div>
+
+          {% if order.shipment %}
+            <div class="mt-2">
+              <div class="muted small">Provider</div>
+              <div class="fw-semibold">{{ order.shipment.provider }}</div>
+            </div>
+            <div class="mt-2">
+              <div class="muted small">Tracking number</div>
+              <div class="fw-semibold">{{ order.shipment.tracking_number|default:"-" }}</div>
+            </div>
+            {% if order.shipment.courier_name %}
+              <div class="mt-2">
+                <div class="muted small">Courier</div>
+                <div class="fw-semibold">{{ order.shipment.courier_name }}</div>
+              </div>
+            {% endif %}
+            {% if order.shipment.last_tracked_at %}
+              <div class="mt-2 muted small">Last tracked: {{ order.shipment.last_tracked_at }}</div>
+            {% endif %}
+          {% else %}
+            <div class="muted small mt-2">No shipment created yet.</div>
+          {% endif %}
+
+          <div class="d-grid gap-2 mt-3">
+            <form method="post" action="{% url 'vendor-order-shipping-create' vendor.subdomain order.id %}">
+              {% csrf_token %}
+              <input type="hidden" name="provider" value="shiprocket">
+              <button class="btn btn-outline-primary btn-sm" type="submit">
+                <i class="bi bi-box-seam me-1"></i>Create shipment
+              </button>
+            </form>
+
+            <form method="post" action="{% url 'vendor-order-shipping-track' vendor.subdomain order.id %}">
+              {% csrf_token %}
+              <button class="btn btn-outline-secondary btn-sm" type="submit">
+                <i class="bi bi-geo-alt me-1"></i>Refresh tracking
+              </button>
+            </form>
+          </div>
+
+          <div class="d-flex gap-2 flex-wrap mt-2">
+            <a class="btn btn-sm btn-outline-secondary" href="/api/shipping/shiprocket_label_download/?vendor_id={{ vendor.id }}&order_id={{ order.id }}" target="_blank" rel="noopener">
+              Label PDF
+            </a>
+            <a class="btn btn-sm btn-outline-secondary" href="/api/shipping/shiprocket_manifest_download/?vendor_id={{ vendor.id }}&order_id={{ order.id }}" target="_blank" rel="noopener">
+              Manifest PDF
+            </a>
+          </div>
+
+          <form method="post" action="{% url 'vendor-order-shipping-pickup' vendor.subdomain order.id %}" class="mt-2">
+            {% csrf_token %}
+            <div class="input-group input-group-sm">
+              <input class="form-control" name="pickup_date" placeholder="Pickup date (YYYY-MM-DD optional)">
+              <button class="btn btn-outline-secondary" type="submit">Request pickup</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

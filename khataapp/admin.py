@@ -17,13 +17,22 @@ from .models import (
     CreditSettings, CreditAccount, CreditEntry,
     EMI, Penalty, ContactMessage,
     LoginLink, ReminderLog, FieldAgent, CollectorVisit,
-    OfflineMessage
+    OfflineMessage, SupplierPayment, StockLedger
 )
 
 from .utils.credit_report import (
     generate_credit_report_pdf,
     generate_credit_report_pdf_for_party
 )
+
+# Central Business Engine (admin visibility)
+from solo.admin import SingletonModelAdmin
+from khataapp.core_engine.models.engine import BusinessGrowthEngine
+from khataapp.core_engine.models.logs import EngineEventLog, RewardLedgerEntry
+from khataapp.core_engine.models.loyalty import LoyaltyAccount, LoyaltyLedgerEntry
+from khataapp.core_engine.models.referral import ReferralRecord
+from khataapp.core_engine.models.settings import EngineControlPanelSettings
+from khataapp.core_engine.models.tasks import DailyTaskCompletion, DailyTaskDefinition
 
 # ====
 # PARTY
@@ -118,6 +127,8 @@ class PartyAdmin(admin.ModelAdmin):
         base_email = None
         if party.mobile:
             base_email = f"{party.mobile}@party.local"
+
+
         else:
             safe = slugify(party.name) or f"party{party.id}"
             base_email = f"{safe}.{party.id}@party.local"
@@ -288,8 +299,8 @@ class TransactionAdmin(admin.ModelAdmin):
 
 @admin.register(CompanySettings)
 class CompanySettingsAdmin(admin.ModelAdmin):
-    list_display = ('company_name', 'enable_auto_whatsapp', 'enable_monthly_email', 'whatsapp_number')
-    list_editable = ('enable_auto_whatsapp', 'enable_monthly_email')
+    list_display = ('company_name', 'auto_sms_send', 'enable_auto_whatsapp', 'enable_monthly_email', 'whatsapp_number')
+    list_editable = ('auto_sms_send', 'enable_auto_whatsapp', 'enable_monthly_email')
 
 
 @admin.register(UserProfile)
@@ -329,7 +340,37 @@ class PenaltyAdmin(admin.ModelAdmin):
 
 @admin.register(ContactMessage)
 class ContactMessageAdmin(admin.ModelAdmin):
-    list_display = ("name", "mobile", "email", "created_at", "assigned_to")
+    list_display = ("lead_status", "name", "mobile", "email", "created_at", "assigned_to", "forwarded_to_admin")
+    list_filter = ("forwarded_to_admin", "assigned_to", "created_at")
+    search_fields = ("name", "mobile", "email", "message")
+    ordering = ("forwarded_to_admin", "-created_at")
+    date_hierarchy = "created_at"
+    actions = ("mark_selected_reviewed", "mark_selected_new")
+
+    def lead_status(self, obj):
+        if obj.forwarded_to_admin:
+            return format_html(
+                '<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#ecfdf5;color:#047857;font-weight:700;">'
+                '<span style="font-size:14px;">✓</span> Seen</span>'
+            )
+        return format_html(
+            '<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#fff7ed;color:#c2410c;font-weight:800;border:1px solid #fed7aa;">'
+            '<span style="font-size:14px;">🔔</span> New Lead</span>'
+        )
+
+    lead_status.short_description = "Lead"
+
+    def mark_selected_reviewed(self, request, queryset):
+        queryset.update(forwarded_to_admin=True)
+        self.message_user(request, f"{queryset.count()} lead(s) marked as reviewed.")
+
+    mark_selected_reviewed.short_description = "Mark selected leads as reviewed"
+
+    def mark_selected_new(self, request, queryset):
+        queryset.update(forwarded_to_admin=False)
+        self.message_user(request, f"{queryset.count()} lead(s) marked as new.")
+
+    mark_selected_new.short_description = "Mark selected leads as new"
 
 
 # ====
@@ -438,3 +479,98 @@ class CollectorVisitAdmin(admin.ModelAdmin):
     list_display = ("party", "agent", "visit_date", "expected_amount", "collected_amount", "status")
     list_filter = ("status", "visit_date")
     search_fields = ("party__name", "agent__user__email", "agent__user__mobile")
+
+
+@admin.register(SupplierPayment)
+class SupplierPaymentAdmin(admin.ModelAdmin):
+    list_display = ("supplier", "order", "amount", "payment_mode", "payment_date", "reference")
+    list_filter = ("payment_mode", "payment_date")
+    search_fields = ("supplier__name", "order__invoice_number", "reference")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(StockLedger)
+class StockLedgerAdmin(admin.ModelAdmin):
+    list_display = ("product", "order", "ledger_type", "quantity", "remaining_quantity", "unit_price", "created_at")
+    list_filter = ("ledger_type", "created_at")
+    search_fields = ("product__name", "product__sku", "order__invoice_number")
+    readonly_fields = ("created_at",)
+
+
+# ====
+# CENTRAL BUSINESS ENGINE (BusinessGrowthEngine)
+# ====
+
+
+@admin.register(EngineControlPanelSettings)
+class EngineControlPanelSettingsAdmin(SingletonModelAdmin):
+    pass
+
+
+@admin.register(BusinessGrowthEngine)
+class BusinessGrowthEngineAdmin(admin.ModelAdmin):
+    list_display = (
+        "owner",
+        "level",
+        "daily_task_streak",
+        "total_rewards",
+        "reward_points",
+        "referral_earnings",
+        "payment_commission_earned",
+        "whatsapp_credits",
+        "loyalty_points",
+        "updated_at",
+    )
+    search_fields = ("owner__email", "owner__username", "referral_code")
+    list_filter = ("level",)
+    readonly_fields = ("created_at", "updated_at", "last_reward_update")
+
+
+@admin.register(RewardLedgerEntry)
+class RewardLedgerEntryAdmin(admin.ModelAdmin):
+    list_display = ("owner", "source", "coins_delta", "points_delta", "amount_reference", "created_at")
+    list_filter = ("source",)
+    search_fields = ("owner__email", "owner__username")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(ReferralRecord)
+class ReferralRecordAdmin(admin.ModelAdmin):
+    list_display = ("referrer", "referred", "status", "commission_amount", "created_at", "paid_at")
+    list_filter = ("status",)
+    search_fields = ("referrer__email", "referred__email", "referrer__username", "referred__username")
+
+
+@admin.register(LoyaltyAccount)
+class LoyaltyAccountAdmin(admin.ModelAdmin):
+    list_display = ("owner", "party", "points", "cashback_total", "updated_at")
+    search_fields = ("owner__email", "party__name")
+
+
+@admin.register(LoyaltyLedgerEntry)
+class LoyaltyLedgerEntryAdmin(admin.ModelAdmin):
+    list_display = ("owner", "source", "points_delta", "cashback_delta", "created_at")
+    list_filter = ("source",)
+    search_fields = ("owner__email",)
+
+
+@admin.register(DailyTaskDefinition)
+class DailyTaskDefinitionAdmin(admin.ModelAdmin):
+    list_display = ("key", "title", "is_active", "coins_reward", "points_reward", "sort_order")
+    list_filter = ("is_active",)
+    search_fields = ("key", "title")
+
+
+@admin.register(DailyTaskCompletion)
+class DailyTaskCompletionAdmin(admin.ModelAdmin):
+    list_display = ("owner", "task", "day", "completed_at")
+    list_filter = ("day",)
+    search_fields = ("owner__email", "owner__username", "task__key")
+
+
+@admin.register(EngineEventLog)
+class EngineEventLogAdmin(admin.ModelAdmin):
+    list_display = ("owner", "category", "level", "event_key", "created_at")
+    list_filter = ("category", "level")
+    search_fields = ("owner__email", "event_key", "message")
+    readonly_fields = ("created_at",)

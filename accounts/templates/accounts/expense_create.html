@@ -1,864 +1,681 @@
 {% extends "accounts/base.html" %}
 {% load static %}
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/modern-app.css' %}">
+
+{% block title %}Add Expense{% endblock %}
+
+{% block pc_badges %}
+  <span class="badge bg-warning text-dark fw-bold">Expenses</span>
+{% endblock %}
+
+{% block pc_actions %}
+  <a class="btn btn-outline-light btn-lg fw-bold" href="{% url 'accounts:expense_list' %}" accesskey="l" title="Alt+L">Expenses</a>
+  <button type="button" class="btn btn-outline-light btn-lg fw-bold" data-bs-toggle="modal" data-bs-target="#voiceAccountingModal" title="Voice Accounting">
+    <i class="bi bi-mic"></i> Voice
+  </button>
+  <button type="button" class="btn btn-warning btn-lg fw-bold" onclick="showKeyboardHelp()" title="F1">Shortcuts</button>
 {% endblock %}
 
 {% block content %}
+  {% include "core/includes/messages.html" %}
+  {% include "core/includes/keyboard_help_common.html" %}
 
-<link rel="stylesheet" href="{% static 'css/add_order.css' %}">
-<script src="{% static 'js/add_order_enhanced.js' %}" defer></script>
-
-<!-- KEYBOARD SHORTCUTS HELP MODAL -->
-<div id="keyboardHelp" class="keyboard-help-modal">
-  <div class="keyboard-help-content">
-
-    <h3 class="fw-bold text-primary mb-4"> Keyboard Shortcuts (PC Mode)</h3>
-
-    <h3 class="fw-bold text-primary mb-4">⌨️ Keyboard Shortcuts (PC Mode)</h3>
-
-    <div class="shortcuts-grid">
-      <div class="shortcut-item"><kbd class="fw-bold">F1</kbd> <span>Show Help</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F2</kbd> <span>Expense Date</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F3</kbd> <span>Amount Field</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F4</kbd> <span>Next Step</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F5</kbd> <span>Save Expense</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F6</kbd> <span>Save Draft</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">F7</kbd> <span>Print Receipt</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Tab</kbd> <span>Next Field</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Shift+Tab</kbd> <span>Previous Field</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Ctrl+S</kbd> <span>Quick Save</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Esc</kbd> <span>Cancel/Close</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Ctrl+Z</kbd> <span>Undo Last Action</span></div>
-      <div class="shortcut-item"><kbd class="fw-bold">Ctrl+Y</kbd> <span>Redo Last Action</span></div>
-    </div>
-    <div class="text-center mt-4">
-      <button class="btn btn-danger btn-lg fw-bold px-4" onclick="hideKeyboardHelp()">Close (Esc)</button>
-    </div>
-  </div>
-</div>
-
-<!-- SUCCESS POPUP MODAL -->
-<div id="successModal" class="modal fade" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content bg-success text-white">
-      <div class="modal-body text-center p-5">
-        <div class="mb-3">
-          <i class="fas fa-check-circle fa-4x text-white"></i>
-        </div>
-        <h3 class="fw-bold mb-3">Expense Added Successfully!</h3>
-        <p class="mb-4">Your expense has been recorded and processed.</p>
-        <button type="button" class="btn btn-light btn-lg fw-bold px-4" onclick="$('#successModal').modal('hide')">Continue</button>
+  <div class="expense-shell">
+    <div class="expense-hero">
+      <div>
+        <div class="expense-eyebrow">Expense Control</div>
+        <h1>Add Business Expense</h1>
+        <p>Capture bills, scan invoices, attach proof, and keep accounting data clean from one place.</p>
       </div>
-    </div>
-  </div>
-</div>
-
-<div class="container-fluid py-4 unified-screen busy-unified-add">
-  <div class="card shadow-lg border-0 order-card" id="mainExpenseCard">
-
-    <!-- HEADER WITH MODE SWITCHER -->
-    <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center flex-wrap">
-      <div class="d-flex align-items-center gap-3">
-
-        <h2 class="mb-0 fw-bold text-shadow"> Smart Expense Manager</h2>
-        <span class="badge bg-light text-warning fw-bold pulse-badge">AI Ready</span>
-        <button type="button" class="btn btn-light btn-lg fw-bold shadow-lg" onclick="showKeyboardHelp()" title="F1">
-           Shortcuts
-
-        <h2 class="mb-0 fw-bold text-shadow">💸 Smart Expense Manager</h2>
-        <span class="badge bg-light text-warning fw-bold pulse-badge">AI Ready</span>
-        <button type="button" class="btn btn-light btn-lg fw-bold shadow-lg" onclick="showKeyboardHelp()" title="F1">
-          ⌨️ Shortcuts
-
-        </button>
-      </div>
-
-      <!-- MODE SWITCHER -->
-      <div class="mode-switcher d-flex gap-3">
-        <button type="button" class="btn btn-xl btn-outline-light active fw-bold shadow-lg pulse-button" data-mode="pc" id="pcMode">
-
-           PC Mode
-        </button>
-        <button type="button" class="btn btn-xl btn-outline-light fw-bold shadow-lg" data-mode="pos" id="posMode">
-           POS Mode
-        </button>
-        <button type="button" class="btn btn-xl btn-outline-light fw-bold shadow-lg" data-mode="mobile" id="mobileMode">
-           Mobile Mode
-
-          💻 PC Mode
-        </button>
-        <button type="button" class="btn btn-xl btn-outline-light fw-bold shadow-lg" data-mode="pos" id="posMode">
-          🏪 POS Mode
-        </button>
-        <button type="button" class="btn btn-xl btn-outline-light fw-bold shadow-lg" data-mode="mobile" id="mobileMode">
-          📱 Mobile Mode
-
-        </button>
-      </div>
-
-      <!-- THEME SELECTOR -->
-      <div class="theme-selector">
-        <select id="themeSelect" class="form-select form-select-lg fw-bold rainbow-border" aria-label="Theme Selector">
-
-          <option value="default"> Default Theme</option>
-          <option value="dark"> Dark Theme</option>
-          <option value="blue"> Blue Theme</option>
-          <option value="green"> Green Theme</option>
-          <option value="red"> Red Theme</option>
-          <option value="rainbow"> Rainbow Theme</option>
-          <option value="neon"> Neon Theme</option>
-
-          <option value="default">🎨 Default Theme</option>
-          <option value="dark">🌙 Dark Theme</option>
-          <option value="blue">🔵 Blue Theme</option>
-          <option value="green">🟢 Green Theme</option>
-          <option value="red">🔴 Red Theme</option>
-          <option value="rainbow">🌈 Rainbow Theme</option>
-          <option value="neon">⚡ Neon Theme</option>
-
-        </select>
+      <div class="expense-hero-actions">
+        <a href="{% url 'accounts:expense_list' %}" class="btn btn-light fw-bold">
+          <i class="bi bi-list-ul"></i> Expense List
+        </a>
       </div>
     </div>
 
-    <!-- STEP WIZARD INDICATOR -->
-    <div class="wizard-steps bg-gradient-light p-3 border-bottom border-3">
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="step-indicator d-flex align-items-center gap-2">
-          <span class="step step-circle active fw-bold" data-step="1">
-            <span class="step-number">1</span>
-            <span class="step-text">Expense Details</span>
-          </span>
-
-          <span class="step-arrow fw-bold text-primary"></span>
-
-          <span class="step-arrow fw-bold text-primary">→</span>
-
-          <span class="step step-circle fw-bold" data-step="2">
-            <span class="step-number">2</span>
-            <span class="step-text">Category & Amount</span>
-          </span>
-
-          <span class="step-arrow fw-bold text-primary"></span>
-
-          <span class="step-arrow fw-bold text-primary">→</span>
-
-          <span class="step step-circle fw-bold" data-step="3">
-            <span class="step-number">3</span>
-            <span class="step-text">Review & Save</span>
-          </span>
-        </div>
-        <div class="step-navigation">
-          <button type="button" class="btn btn-outline-primary btn-lg fw-bold shadow" id="prevStep" disabled>
-
-             Previous
-          </button>
-          <button type="button" class="btn btn-primary btn-lg fw-bold shadow pulse-button" id="nextStep">
-            Next 
-
-            ⬅️ Previous
-          </button>
-          <button type="button" class="btn btn-primary btn-lg fw-bold shadow pulse-button" id="nextStep">
-            Next ➡️
-
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <form method="POST" enctype="multipart/form-data" action="{% url 'accounts:expense_create' %}">
+    <form method="post" enctype="multipart/form-data" action="{% url 'accounts:expense_create' %}" id="expenseCreateForm">
       {% csrf_token %}
 
-      <!-- STEP 1: Expense Details -->
-      <div class="card-body step-content" id="step-1">
-        <div class="step-header text-center mb-4">
+      <div class="expense-layout">
+        <section class="expense-panel expense-main-panel">
+          <div class="section-head">
+            <div>
+              <h2>Expense Details</h2>
+              <p>Basic information used for reports, ledgers, and approvals.</p>
+            </div>
+            <span class="soft-pill">Required</span>
+          </div>
 
-          <h4 class="fw-bold text-primary"> Step 1: Expense Details</h4>
+          <div class="expense-grid">
+            <div class="field span-6">
+              <label for="expense_date">Expense Date</label>
+              <input type="date" id="expense_date" name="expense_date" class="form-control form-control-lg" value="{{ today }}" required data-kb-primary="1" autofocus>
+            </div>
 
-          <h4 class="fw-bold text-primary">📝 Step 1: Expense Details</h4>
-
-          <p class="text-muted">Enter the basic expense information</p>
-        </div>
-
-        <!-- EXPENSE NUMBER (AUTO-GENERATED) -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <div class="card border-primary">
-              <div class="card-body">
-
-                <label class="form-label fw-bold"> Expense Number</label>
-
-                <label class="form-label fw-bold">🔢 Expense Number</label>
-
-                <input type="text" class="form-control form-control-lg fw-bold" value="Auto Generated" disabled readonly>
-                <small class="text-muted">Automatically generated when saved</small>
+            <div class="field span-6">
+              <label for="amount_paid">Amount Paid</label>
+              <div class="input-group input-group-lg">
+                <span class="input-group-text">Rs</span>
+                <input type="number" id="amount_paid" name="amount_paid" step="0.01" min="0" class="form-control" placeholder="0.00" required>
               </div>
             </div>
-          </div>
 
-          <div class="col-md-6">
-            <div class="card border-success">
-              <div class="card-body">
-
-                <label for="expense_date" class="form-label fw-bold"> Expense Date (F2)</label>
-
-                <label for="expense_date" class="form-label fw-bold">📅 Expense Date (F2)</label>
-
-                <input type="date" name="expense_date" id="expense_date" class="form-control form-control-lg fw-bold" value="{{ today }}" required title="Expense Date" aria-label="Expense Date">
-                <small class="text-muted">Select the date when expense occurred</small>
+            <div class="field span-6">
+              <label for="gst_amount">GST / Tax Amount</label>
+              <div class="input-group input-group-lg">
+                <span class="input-group-text">Rs</span>
+                <input type="number" id="gst_amount" name="gst_amount" step="0.01" min="0" class="form-control" placeholder="0.00">
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- EXPENSE DESCRIPTION -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-12">
-            <div class="card border-info">
-              <div class="card-body">
+            <div class="field span-6">
+              <label for="payment_mode">Payment Mode</label>
+              <select id="payment_mode" name="payment_mode" class="form-select form-select-lg">
+                {% for value, label in payment_modes %}
+                  <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
 
-                <label for="description" class="form-label fw-bold"> Expense Description</label>
+            <div class="field span-6">
+              <label for="vendor_name">Vendor / Supplier</label>
+              <input type="text" id="vendor_name" name="vendor_name" class="form-control form-control-lg" placeholder="e.g. Bharat Petroleum, Office Depot">
+            </div>
 
-                <label for="description" class="form-label fw-bold">📝 Expense Description</label>
+            <div class="field span-6">
+              <label for="invoice_number">Invoice / Bill Number</label>
+              <input type="text" id="invoice_number" name="invoice_number" class="form-control form-control-lg" placeholder="e.g. INV-2048">
+            </div>
 
-                <textarea name="description" id="description" class="form-control fw-bold" rows="4" placeholder="Describe the expense in detail... (e.g., Office stationery purchase from ABC Store, electricity bill for March 2024, etc.)" title="Expense Description" aria-label="Expense Description"></textarea>
-                <small class="text-muted">Provide detailed description of what the expense was for</small>
-              </div>
+            <div class="field span-6">
+              <label for="category">Category</label>
+              <select id="category" name="category" class="form-select form-select-lg">
+                <option value="">Select category</option>
+                {% for c in categories %}
+                  <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="field span-6">
+              <label for="new_category">New Category</label>
+              <input type="text" id="new_category" name="new_category" class="form-control form-control-lg" placeholder="Fuel, Tea, Stationery">
+            </div>
+
+            <div class="quick-category-row span-12" aria-label="Quick categories">
+              <button type="button" data-category-text="Fuel" class="quick-chip">Fuel</button>
+              <button type="button" data-category-text="Food" class="quick-chip">Food</button>
+              <button type="button" data-category-text="Travel" class="quick-chip">Travel</button>
+              <button type="button" data-category-text="Office" class="quick-chip">Office</button>
+              <button type="button" data-category-text="Maintenance" class="quick-chip">Maintenance</button>
+            </div>
+
+            <div class="field span-12">
+              <label for="description">Description</label>
+              <textarea id="description" name="description" rows="4" class="form-control" placeholder="What was this expense for? Add project, staff, vehicle, or branch details." required></textarea>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- EXPENSE ATTACHMENT -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <div class="card border-warning">
-              <div class="card-body">
+        <aside class="expense-panel upload-panel">
+          <div class="section-head">
+            <div>
+              <h2>Scan / Upload Invoice</h2>
+              <p>Attach bill proof. Images and PDFs are supported.</p>
+            </div>
+            <span class="soft-pill success">OCR Ready</span>
+          </div>
 
-                <label for="expense_receipt" class="form-label fw-bold"> Receipt/Proof (Optional)</label>
+          <label class="upload-zone" for="receipt_file" id="uploadZone">
+            <input type="file" id="receipt_file" name="receipt_file" accept="image/*,.pdf" capture="environment">
+            <span class="upload-icon"><i class="bi bi-cloud-arrow-up"></i></span>
+            <strong>Drop invoice here or click to upload</strong>
+            <small>PDF, JPG, PNG up to 10 MB. Mobile camera scan supported.</small>
+          </label>
 
-                <label for="expense_receipt" class="form-label fw-bold">📎 Receipt/Proof (Optional)</label>
+          <div class="scan-tools">
+            <button type="button" class="tool-btn" id="cameraHintBtn">
+              <i class="bi bi-camera"></i>
+              <span>Camera Scan</span>
+            </button>
+            <button type="button" class="tool-btn" id="clearFileBtn">
+              <i class="bi bi-x-circle"></i>
+              <span>Clear</span>
+            </button>
+          </div>
 
-                <input type="file" id="expense_receipt" name="expense_receipt" class="form-control form-control-lg fw-bold" accept="image/*,application/pdf" title="Upload Receipt" aria-label="Expense Receipt">
-                <small class="text-muted">Upload bill, receipt, or proof document</small>
-              </div>
+          <div class="file-preview" id="filePreview" hidden>
+            <div class="file-thumb" id="fileThumb"><i class="bi bi-file-earmark-text"></i></div>
+            <div>
+              <strong id="fileName">No file selected</strong>
+              <div class="small text-muted" id="fileMeta">Ready to attach</div>
             </div>
           </div>
 
-          <div class="col-md-6">
-            <div class="card border-secondary">
-              <div class="card-body">
-
-                <label class="form-label fw-bold"> Quick Actions</label>
-                <div class="d-flex gap-2 flex-wrap">
-                  <button type="button" class="btn btn-outline-primary btn-sm" onclick="scanReceipt()">
-                     Scan Receipt
-                  </button>
-                  <button type="button" class="btn btn-outline-success btn-sm" onclick="autoCategorize()">
-                     Auto-Categorize
-
-                <label class="form-label fw-bold">🔍 Quick Actions</label>
-                <div class="d-flex gap-2 flex-wrap">
-                  <button type="button" class="btn btn-outline-primary btn-sm" onclick="scanReceipt()">
-                    📱 Scan Receipt
-                  </button>
-                  <button type="button" class="btn btn-outline-success btn-sm" onclick="autoCategorize()">
-                    🤖 Auto-Categorize
-
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div class="smart-note">
+            <strong>Smart extraction:</strong>
+            <span>Server will try to read supplier, invoice number, date, and total from the uploaded invoice. If OCR is not configured, file still saves safely as proof.</span>
           </div>
-        </div>
 
-        <!-- AI SUGGESTIONS -->
-        <div class="ai-suggestions-section mb-4">
-          <div class="ai-suggestions">
-            <div class="suggestion-item fw-bold">
-
-               <strong>AI Assistant:</strong> Based on your description, I'll suggest the most appropriate category and help categorize similar expenses automatically!
-
-              🤖 <strong>AI Assistant:</strong> Based on your description, I'll suggest the most appropriate category and help categorize similar expenses automatically!
-
-            </div>
+          <div class="summary-box">
+            <div class="summary-row"><span>Amount</span><strong id="previewAmount">Rs 0.00</strong></div>
+            <div class="summary-row"><span>GST / Tax</span><strong id="previewGst">Rs 0.00</strong></div>
+            <div class="summary-row total"><span>Total Capture</span><strong id="previewTotal">Rs 0.00</strong></div>
           </div>
-        </div>
+        </aside>
       </div>
 
-      <!-- STEP 2: Category & Amount -->
-      <div class="card-body step-content" id="step-2" style="display: none;">
-        <div class="step-header text-center mb-4">
-
-          <h4 class="fw-bold text-success"> Step 2: Category & Amount</h4>
-
-          <h4 class="fw-bold text-success">🏷️ Step 2: Category & Amount</h4>
-
-          <p class="text-muted">Select category and enter expense amount</p>
+      <div class="submit-bar">
+        <div>
+          <strong>Ready to save?</strong>
+          <span>Expense will be saved with proof, category, payment mode, and OCR metadata.</span>
         </div>
-
-        <!-- CATEGORY SELECTION -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <div class="card border-warning">
-              <div class="card-body">
-
-                <label for="category" class="form-label fw-bold"> Select Category</label>
-
-                <label for="category" class="form-label fw-bold">📂 Select Category</label>
-
-                <select name="category" id="category" class="form-select form-select-lg fw-bold" title="Expense Category" aria-label="Expense Category">
-                  <option value="">-- Select Existing Category --</option>
-                  {% for cat in categories %}
-                  <option value="{{ cat.id }}">{{ cat.name }}</option>
-                  {% endfor %}
-                </select>
-                <small class="text-muted">Choose from existing categories</small>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="card border-info">
-              <div class="card-body">
-
-                <label for="new_category" class="form-label fw-bold"> Or Create New Category</label>
-
-                <label for="new_category" class="form-label fw-bold">➕ Or Create New Category</label>
-
-                <input type="text" name="new_category" id="new_category" class="form-control form-control-lg fw-bold" placeholder="e.g. Office Rent, Electricity, Marketing" title="New Category Name" aria-label="New Category">
-                <small class="text-muted">Create a new category if needed</small>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- AMOUNT INPUT -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <div class="card border-success">
-              <div class="card-body">
-
-                <label for="amount_paid" class="form-label fw-bold"> Amount Paid (F3)</label>
-                <div class="input-group">
-                  <span class="input-group-text fw-bold"></span>
-
-                <label for="amount_paid" class="form-label fw-bold">💰 Amount Paid (F3)</label>
-                <div class="input-group">
-                  <span class="input-group-text fw-bold">₹</span>
-
-                  <input type="number" step="0.01" name="amount_paid" id="amount_paid" class="form-control form-control-lg fw-bold" placeholder="0.00" required title="Expense Amount" aria-label="Expense Amount">
-                </div>
-                <small class="text-muted">Enter the total amount spent</small>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="card border-primary">
-              <div class="card-body">
-
-                <label class="form-label fw-bold"> Expense Summary</label>
-
-                <label class="form-label fw-bold">📊 Expense Summary</label>
-
-                <div id="expenseSummary" class="text-muted">
-                  <p>Enter amount to see breakdown</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PAYMENT METHOD -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <div class="card border-danger">
-              <div class="card-body">
-
-                <label for="payment_method" class="form-label fw-bold"> Payment Method</label>
-                <select id="payment_method" name="payment_method" class="form-select form-select-lg fw-bold" title="Payment Method" aria-label="Payment Method">
-                  <option value="">Select Method</option>
-                  <option value="cash"> Cash</option>
-                  <option value="card"> Credit/Debit Card</option>
-                  <option value="upi"> UPI</option>
-                  <option value="bank_transfer"> Bank Transfer</option>
-                  <option value="cheque"> Cheque</option>
-                  <option value="wallet"> Digital Wallet</option>
-
-                <label for="payment_method" class="form-label fw-bold">💳 Payment Method</label>
-                <select id="payment_method" name="payment_method" class="form-select form-select-lg fw-bold" title="Payment Method" aria-label="Payment Method">
-                  <option value="">Select Method</option>
-                  <option value="cash">💵 Cash</option>
-                  <option value="card">💳 Credit/Debit Card</option>
-                  <option value="upi">📱 UPI</option>
-                  <option value="bank_transfer">🏦 Bank Transfer</option>
-                  <option value="cheque">📄 Cheque</option>
-                  <option value="wallet">📱 Digital Wallet</option>
-
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="card border-secondary">
-              <div class="card-body">
-
-                <label for="reference" class="form-label fw-bold"> Reference/Transaction ID</label>
-
-                <label for="reference" class="form-label fw-bold">🔖 Reference/Transaction ID</label>
-
-                <input type="text" id="reference" name="reference" class="form-control form-control-lg fw-bold" placeholder="Enter reference number" title="Payment Reference" aria-label="Payment Reference">
-                <small class="text-muted">Transaction ID, Receipt No, etc.</small>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- EXPENSE TAGS -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-12">
-            <div class="card border-info">
-              <div class="card-body">
-
-                <label for="expense_tags" class="form-label fw-bold"> Expense Tags (Optional)</label>
-
-                <label for="expense_tags" class="form-label fw-bold">🏷️ Expense Tags (Optional)</label>
-
-                <input type="text" id="expense_tags" name="expense_tags" class="form-control form-control-lg fw-bold" placeholder="e.g. urgent, recurring, business, personal" title="Expense Tags" aria-label="Expense Tags">
-                <small class="text-muted">Add tags to categorize and filter expenses (comma-separated)</small>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- STEP 3: Review & Confirm -->
-      <div class="card-body step-content" id="step-3" style="display: none;">
-        <div class="step-header text-center mb-4">
-
-          <h4 class="fw-bold text-warning"> Step 3: Review & Confirm</h4>
-
-          <h4 class="fw-bold text-warning">🔍 Step 3: Review & Confirm</h4>
-
-          <p class="text-muted">Review expense details before saving</p>
-        </div>
-
-        <!-- EXPENSE SUMMARY -->
-        <div class="row mb-4">
-          <div class="col-md-6">
-            <div class="card border-info">
-
-              <div class="card-header bg-info text-white fw-bold"> Expense Details</div>
-
-              <div class="card-header bg-info text-white fw-bold">📄 Expense Details</div>
-
-              <div class="card-body">
-                <p><strong>Date:</strong> <span id="reviewDate" class="fw-bold text-primary">-</span></p>
-                <p><strong>Description:</strong> <span id="reviewDescription" class="fw-bold text-success">-</span></p>
-                <p><strong>Category:</strong> <span id="reviewCategory" class="fw-bold text-warning">-</span></p>
-                <p><strong>Payment Method:</strong> <span id="reviewMethod" class="fw-bold text-danger">-</span></p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card border-success">
-
-              <div class="card-header bg-success text-white fw-bold"> Expense Summary</div>
-              <div class="card-body">
-                <p><strong>Amount:</strong> <span id="reviewAmount" class="fw-bold">-</span></p>
-
-              <div class="card-header bg-success text-white fw-bold">💰 Expense Summary</div>
-              <div class="card-body">
-                <p><strong>Amount:</strong> ₹<span id="reviewAmount" class="fw-bold">-</span></p>
-
-                <p><strong>Reference:</strong> <span id="reviewReference" class="fw-bold">-</span></p>
-                <p><strong>Tags:</strong> <span id="reviewTags" class="fw-bold">-</span></p>
-                <p><strong>Receipt:</strong> <span id="reviewReceipt" class="fw-bold">-</span></p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ADDITIONAL NOTES -->
-        <div class="card border-warning">
-
-          <div class="card-header bg-warning text-dark fw-bold"> Additional Notes (Optional)</div>
-
-          <div class="card-header bg-warning text-dark fw-bold">📝 Additional Notes (Optional)</div>
-
-          <div class="card-body">
-            <textarea name="additional_notes" class="form-control fw-bold" rows="3" placeholder="Add any additional notes or remarks..."></textarea>
-          </div>
-        </div>
-      </div>
-
-      <!-- ENHANCED FOOTER ACTIONS -->
-      <div class="card-footer bg-light d-flex flex-wrap gap-2 justify-content-between align-items-center">
-
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-warning px-4">
-
-             Save Expense
-          </button>
-          <button type="button" id="saveDraftFooter" class="btn btn-outline-secondary">
-             Save Draft
-
-            💾 Save Expense
-          </button>
-          <button type="button" id="saveDraftFooter" class="btn btn-outline-secondary">
-            📝 Save Draft
-
+        <div class="submit-actions">
+          <a id="kbCancel" data-kb-cancel href="{% url 'accounts:expense_list' %}" class="btn btn-outline-secondary btn-lg fw-bold">Back</a>
+          <button type="submit" class="btn btn-success btn-lg fw-bold" data-kb-submit>
+            <i class="bi bi-check2-circle"></i> Save Expense
           </button>
         </div>
-
-        <div class="d-flex flex-wrap gap-2">
-
-          <button type="button" onclick="window.print()" class="btn btn-secondary"> Print Receipt</button>
-          <button type="button" id="downloadPDFFooter" class="btn btn-danger"> PDF Receipt</button>
-          <button type="button" id="downloadExcelFooter" class="btn btn-success"> Excel Export</button>
-          <button type="button" id="shareWhatsAppFooter" class="btn btn-success"> WhatsApp</button>
-          <button type="button" id="shareEmailFooter" class="btn btn-warning"> Email Receipt</button>
-          <button type="button" id="shareSMSFooter" class="btn btn-info"> SMS Receipt</button>
-
-          <button type="button" onclick="window.print()" class="btn btn-secondary">🖨 Print Receipt</button>
-          <button type="button" id="downloadPDFFooter" class="btn btn-danger">⬇ PDF Receipt</button>
-          <button type="button" id="downloadExcelFooter" class="btn btn-success">📊 Excel Export</button>
-          <button type="button" id="shareWhatsAppFooter" class="btn btn-success">📤 WhatsApp</button>
-          <button type="button" id="shareEmailFooter" class="btn btn-warning">📧 Email Receipt</button>
-          <button type="button" id="shareSMSFooter" class="btn btn-info">💬 SMS Receipt</button>
-
-        </div>
-
       </div>
-
     </form>
   </div>
-</div>
 
-<script>
-// Global variables
-let currentStep = 1;
-const totalSteps = 3;
+  <div class="modal fade" id="voiceAccountingModal" tabindex="-1" aria-labelledby="voiceAccountingLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="voiceAccountingLabel">Voice Accounting</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="small text-muted mb-2">Try: <code>expense diesel 500</code></div>
+          <textarea id="voiceText" class="form-control" rows="3" placeholder="Voice command will appear here..."></textarea>
+          <div id="voiceResult" class="mt-2 small"></div>
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <button id="voiceStartBtn" type="button" class="btn btn-outline-secondary">Start Mic</button>
+          <button id="voiceRunBtn" type="button" class="btn btn-primary">Create Entry</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    initializeExpenseForm();
-    setupKeyboardShortcuts();
-    setupModeSwitcher();
-    setupThemeSelector();
-});
-
-// Initialize expense form
-function initializeExpenseForm() {
-    // Amount input handler
-    document.getElementById('amount_paid').addEventListener('input', function() {
-        updateExpenseSummary();
-    });
-
-    // Category selection handler
-    document.getElementById('category').addEventListener('change', function() {
-        if (this.value) {
-            document.getElementById('new_category').value = '';
-        }
-    });
-
-    document.getElementById('new_category').addEventListener('input', function() {
-        if (this.value.trim()) {
-            document.getElementById('category').value = '';
-        }
-    });
-
-    // Step navigation
-    document.getElementById('nextStep').addEventListener('click', nextStep);
-    document.getElementById('prevStep').addEventListener('click', prevStep);
-}
-
-// Update expense summary
-function updateExpenseSummary() {
-    const amount = document.getElementById('amount_paid').value;
-    const summary = document.getElementById('expenseSummary');
-
-    if (amount && parseFloat(amount) > 0) {
-        const numAmount = parseFloat(amount);
-        summary.innerHTML = `
-
-            <p><strong>Total Amount:</strong> ${numAmount.toFixed(2)}</p>
-            <p><strong>Tax Estimate:</strong> ${(numAmount * 0.18).toFixed(2)} (18% GST)</p>
-            <p><strong>Net Amount:</strong> ${(numAmount * 1.18).toFixed(2)}</p>
-
-            <p><strong>Total Amount:</strong> ₹${numAmount.toFixed(2)}</p>
-            <p><strong>Tax Estimate:</strong> ₹${(numAmount * 0.18).toFixed(2)} (18% GST)</p>
-            <p><strong>Net Amount:</strong> ₹${(numAmount * 1.18).toFixed(2)}</p>
-
-        `;
-    } else {
-        summary.innerHTML = '<p>Enter amount to see breakdown</p>';
-    }
-}
-
-// Step navigation functions
-function nextStep() {
-    if (currentStep < totalSteps) {
-        // Validate current step
-        if (!validateStep(currentStep)) {
-            return;
-        }
-
-        // Hide current step
-        document.getElementById(`step-${currentStep}`).style.display = 'none';
-
-        // Update step indicator
-        document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
-        currentStep++;
-
-        // Show next step
-        document.getElementById(`step-${currentStep}`).style.display = 'block';
-
-        // Update step indicator
-        document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
-
-        // Update navigation buttons
-        updateNavigationButtons();
-
-        // Update review if on step 3
-        if (currentStep === 3) {
-            updateReview();
-        }
-    }
-}
-
-function prevStep() {
-    if (currentStep > 1) {
-        // Hide current step
-        document.getElementById(`step-${currentStep}`).style.display = 'none';
-
-        // Update step indicator
-        document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
-        currentStep--;
-
-        // Show previous step
-        document.getElementById(`step-${currentStep}`).style.display = 'block';
-
-        // Update step indicator
-        document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
-
-        // Update navigation buttons
-        updateNavigationButtons();
-    }
-}
-
-function updateNavigationButtons() {
-    const prevBtn = document.getElementById('prevStep');
-    const nextBtn = document.getElementById('nextStep');
-
-    prevBtn.disabled = currentStep === 1;
-    nextBtn.disabled = currentStep === totalSteps;
-
-    if (currentStep === totalSteps) {
-
-        nextBtn.innerHTML = 'Save Expense ';
-        nextBtn.onclick = function() { document.querySelector('form').submit(); };
-    } else {
-        nextBtn.innerHTML = 'Next ';
-
-        nextBtn.innerHTML = 'Save Expense 💾';
-        nextBtn.onclick = function() { document.querySelector('form').submit(); };
-    } else {
-        nextBtn.innerHTML = 'Next ➡️';
-
-        nextBtn.onclick = nextStep;
-    }
-}
-
-function validateStep(step) {
-    if (step === 1) {
-        const date = document.getElementById('expense_date').value;
-        const description = document.getElementById('description').value.trim();
-
-        if (!date) {
-            alert('Please select an expense date');
-            return false;
-        }
-        if (!description) {
-            alert('Please enter expense description');
-            return false;
-        }
-    } else if (step === 2) {
-        const amount = document.getElementById('amount_paid').value;
-        const category = document.getElementById('category').value;
-        const newCategory = document.getElementById('new_category').value.trim();
-
-        if (!amount || parseFloat(amount) <= 0) {
-            alert('Please enter a valid expense amount');
-            return false;
-        }
-        if (!category && !newCategory) {
-            alert('Please select a category or create a new one');
-            return false;
-        }
-    }
-    return true;
-}
-
-function updateReview() {
-    // Update expense details
-    document.getElementById('reviewDate').textContent = document.getElementById('expense_date').value || '-';
-    document.getElementById('reviewDescription').textContent = document.getElementById('description').value || '-';
-
-    // Category
-    const categorySelect = document.getElementById('category');
-    const newCategory = document.getElementById('new_category').value.trim();
-    if (newCategory) {
-        document.getElementById('reviewCategory').textContent = newCategory + ' (New)';
-    } else if (categorySelect.value) {
-        const option = categorySelect.options[categorySelect.selectedIndex];
-        document.getElementById('reviewCategory').textContent = option ? option.text : '-';
-    } else {
-        document.getElementById('reviewCategory').textContent = '-';
+  <style>
+    .expense-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 8px 0 24px;
     }
 
-    // Payment method
-    const methodSelect = document.getElementById('payment_method');
-    document.getElementById('reviewMethod').textContent = methodSelect.options[methodSelect.selectedIndex].text || '-';
+    .expense-hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 22px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #0f766e, #155e75);
+      color: #fff;
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16);
+      margin-bottom: 16px;
+    }
 
-    // Amount and other details
-    document.getElementById('reviewAmount').textContent = document.getElementById('amount_paid').value || '-';
-    document.getElementById('reviewReference').textContent = document.getElementById('reference').value || '-';
-    document.getElementById('reviewTags').textContent = document.getElementById('expense_tags').value || '-';
+    .expense-eyebrow {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      font-weight: 800;
+      opacity: 0.82;
+      margin-bottom: 5px;
+    }
 
-    // Receipt
-    const receipt = document.getElementById('expense_receipt').files[0];
-    document.getElementById('reviewReceipt').textContent = receipt ? receipt.name : 'No receipt uploaded';
-}
+    .expense-hero h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
 
-// Keyboard shortcuts
-function setupKeyboardShortcuts() {
-    document.addEventListener('keydown', function(e) {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
-            return; // Don't interfere with form inputs
+    .expense-hero p {
+      margin: 6px 0 0;
+      max-width: 640px;
+      opacity: 0.92;
+      font-size: 14px;
+    }
+
+    .expense-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .expense-panel {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    .section-head p {
+      margin: 4px 0 0;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .soft-pill {
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .soft-pill.success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .expense-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .field label {
+      color: #334155;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .span-6 { grid-column: span 6; }
+    .span-12 { grid-column: span 12; }
+
+    .expense-shell .form-control,
+    .expense-shell .form-select,
+    .expense-shell .input-group-text {
+      border-color: #cbd5e1;
+      border-radius: 8px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .expense-shell .input-group .form-control {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    .expense-shell textarea.form-control {
+      min-height: 118px;
+      resize: vertical;
+    }
+
+    .quick-category-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .quick-chip {
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .quick-chip:hover {
+      border-color: #0f766e;
+      color: #0f766e;
+      background: #ecfdf5;
+    }
+
+    .upload-zone {
+      min-height: 220px;
+      border: 2px dashed #94a3b8;
+      border-radius: 8px;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 8px;
+      padding: 18px;
+      cursor: pointer;
+      transition: border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragging {
+      border-color: #0f766e;
+      background: #ecfdf5;
+    }
+
+    .upload-zone input {
+      display: none;
+    }
+
+    .upload-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f766e;
+      color: #ffffff;
+      font-size: 28px;
+    }
+
+    .upload-zone strong {
+      color: #0f172a;
+      font-size: 15px;
+    }
+
+    .upload-zone small,
+    .smart-note,
+    .submit-bar span {
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .scan-tools {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .tool-btn {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+      min-height: 42px;
+      border-radius: 8px;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 7px;
+      font-weight: 800;
+    }
+
+    .tool-btn:hover {
+      border-color: #0f766e;
+      color: #0f766e;
+    }
+
+    .file-preview {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+      background: #ffffff;
+    }
+
+    .file-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .file-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .smart-note {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .summary-box {
+      margin-top: 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #475569;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .summary-row:last-child {
+      border-bottom: 0;
+    }
+
+    .summary-row.total {
+      background: #0f172a;
+      color: #ffffff;
+    }
+
+    .submit-bar {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .submit-bar strong,
+    .submit-bar span {
+      display: block;
+    }
+
+    .submit-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 1000px) {
+      .expense-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .expense-hero,
+      .submit-bar,
+      .section-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .expense-hero h1 {
+        font-size: 23px;
+      }
+
+      .span-6 {
+        grid-column: span 12;
+      }
+
+      .submit-actions {
+        justify-content: stretch;
+      }
+
+      .submit-actions .btn {
+        flex: 1 1 160px;
+      }
+    }
+  </style>
+
+  <script>
+    (function () {
+      const form = document.getElementById("expenseCreateForm");
+      const newCategory = document.getElementById("new_category");
+      const categorySelect = document.getElementById("category");
+      const fileInput = document.getElementById("receipt_file");
+      const uploadZone = document.getElementById("uploadZone");
+      const filePreview = document.getElementById("filePreview");
+      const fileName = document.getElementById("fileName");
+      const fileMeta = document.getElementById("fileMeta");
+      const fileThumb = document.getElementById("fileThumb");
+      const amountInput = document.getElementById("amount_paid");
+      const gstInput = document.getElementById("gst_amount");
+      const previewAmount = document.getElementById("previewAmount");
+      const previewGst = document.getElementById("previewGst");
+      const previewTotal = document.getElementById("previewTotal");
+
+      function money(value) {
+        const number = Number.parseFloat(value || "0");
+        return `Rs ${Number.isFinite(number) ? number.toFixed(2) : "0.00"}`;
+      }
+
+      function updateSummary() {
+        const amount = Number.parseFloat(amountInput.value || "0") || 0;
+        const gst = Number.parseFloat(gstInput.value || "0") || 0;
+        previewAmount.textContent = money(amount);
+        previewGst.textContent = money(gst);
+        previewTotal.textContent = money(amount + gst);
+      }
+
+      function syncCategory() {
+        const hasNew = (newCategory.value || "").trim().length > 0;
+        categorySelect.required = !hasNew;
+        newCategory.required = false;
+      }
+
+      function setFilePreview(file) {
+        if (!file) {
+          filePreview.hidden = true;
+          fileName.textContent = "No file selected";
+          fileMeta.textContent = "Ready to attach";
+          fileThumb.innerHTML = '<i class="bi bi-file-earmark-text"></i>';
+          return;
         }
-
-        switch(e.key) {
-            case 'F1':
-                e.preventDefault();
-                showKeyboardHelp();
-                break;
-            case 'F2':
-                e.preventDefault();
-                document.getElementById('expense_date').focus();
-                break;
-            case 'F3':
-                e.preventDefault();
-                document.getElementById('amount_paid').focus();
-                break;
-            case 'F4':
-                e.preventDefault();
-                nextStep();
-                break;
-            case 'F5':
-                e.preventDefault();
-                document.querySelector('form').submit();
-                break;
-            case 'F6':
-                e.preventDefault();
-                // Save draft functionality
-                break;
-            case 'F7':
-                e.preventDefault();
-                window.print();
-                break;
-            case 'Escape':
-                e.preventDefault();
-                // Cancel/close functionality
-                break;
+        filePreview.hidden = false;
+        fileName.textContent = file.name;
+        fileMeta.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB - ${file.type || "document"}`;
+        fileThumb.innerHTML = '<i class="bi bi-file-earmark-text"></i>';
+        if (file.type && file.type.startsWith("image/")) {
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            fileThumb.innerHTML = `<img src="${event.target.result}" alt="Receipt preview">`;
+          };
+          reader.readAsDataURL(file);
         }
-    });
-}
+      }
 
-// Mode switcher
-function setupModeSwitcher() {
-    const modes = ['pc', 'pos', 'mobile'];
-    modes.forEach(mode => {
-        document.getElementById(`${mode}Mode`).addEventListener('click', function() {
-            // Remove active class from all
-            modes.forEach(m => document.getElementById(`${m}Mode`).classList.remove('active'));
-            // Add active class to clicked
-            this.classList.add('active');
-            // Apply mode-specific styling
-            applyModeStyling(mode);
+      if (newCategory && categorySelect) {
+        newCategory.addEventListener("input", syncCategory);
+        syncCategory();
+      }
+
+      document.querySelectorAll("[data-category-text]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          newCategory.value = button.dataset.categoryText || "";
+          syncCategory();
+          newCategory.focus();
         });
-    });
-}
+      });
 
-function applyModeStyling(mode) {
-    const card = document.getElementById('mainExpenseCard');
-    card.classList.remove('pc-mode', 'pos-mode', 'mobile-mode');
-    card.classList.add(`${mode}-mode`);
-}
+      [amountInput, gstInput].forEach(function (input) {
+        input.addEventListener("input", updateSummary);
+      });
+      updateSummary();
 
-// Theme selector
-function setupThemeSelector() {
-    document.getElementById('themeSelect').addEventListener('change', function() {
-        const theme = this.value;
-        applyTheme(theme);
-    });
-}
+      fileInput.addEventListener("change", function () {
+        setFilePreview(fileInput.files && fileInput.files[0]);
+      });
 
-function applyTheme(theme) {
-    const body = document.body;
-    // Remove existing theme classes
-    body.classList.remove('theme-dark', 'theme-blue', 'theme-green', 'theme-red', 'theme-rainbow', 'theme-neon');
-    // Add new theme class
-    if (theme !== 'default') {
-        body.classList.add(`theme-${theme}`);
-    }
-}
+      ["dragenter", "dragover"].forEach(function (eventName) {
+        uploadZone.addEventListener(eventName, function (event) {
+          event.preventDefault();
+          uploadZone.classList.add("dragging");
+        });
+      });
 
-// Utility functions
-function showKeyboardHelp() {
-    document.getElementById('keyboardHelp').style.display = 'block';
-}
+      ["dragleave", "drop"].forEach(function (eventName) {
+        uploadZone.addEventListener(eventName, function (event) {
+          event.preventDefault();
+          uploadZone.classList.remove("dragging");
+        });
+      });
 
-function hideKeyboardHelp() {
-    document.getElementById('keyboardHelp').style.display = 'none';
-}
+      uploadZone.addEventListener("drop", function (event) {
+        const files = event.dataTransfer && event.dataTransfer.files;
+        if (!files || !files.length) return;
+        fileInput.files = files;
+        setFilePreview(files[0]);
+      });
 
-function scanReceipt() {
-    // Receipt scanning functionality
-    alert('Receipt scanning feature coming soon!');
-}
+      document.getElementById("clearFileBtn").addEventListener("click", function () {
+        fileInput.value = "";
+        setFilePreview(null);
+      });
 
-function autoCategorize() {
-    // Auto-categorization functionality
-    const description = document.getElementById('description').value.toLowerCase();
+      document.getElementById("cameraHintBtn").addEventListener("click", function () {
+        fileInput.click();
+      });
 
-    // Simple auto-categorization logic
-    if (description.includes('rent') || description.includes('office')) {
-        document.getElementById('new_category').value = 'Office Rent';
-    } else if (description.includes('electricity') || description.includes('power')) {
-        document.getElementById('new_category').value = 'Electricity';
-    } else if (description.includes('internet') || description.includes('broadband')) {
-        document.getElementById('new_category').value = 'Internet';
-    } else if (description.includes('stationery') || description.includes('paper')) {
-        document.getElementById('new_category').value = 'Stationery';
-    } else if (description.includes('travel') || description.includes('petrol')) {
-        document.getElementById('new_category').value = 'Travel';
-    } else {
-        document.getElementById('new_category').value = 'Miscellaneous';
-    }
-
-    // Clear existing category selection
-    document.getElementById('category').value = '';
-}
-
-// Form submission handler
-document.querySelector('form').addEventListener('submit', function(e) {
-    // Show success modal on successful submission
-    setTimeout(() => {
-        $('#successModal').modal('show');
-    }, 1000);
-});
-</script>
-
+      form.addEventListener("submit", function () {
+        const submitButton = form.querySelector("[data-kb-submit]");
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+        }
+      });
+    })();
+  </script>
+  <script src="{% static 'js/voice_accounting.js' %}?v=20260310a" defer></script>
 {% endblock %}

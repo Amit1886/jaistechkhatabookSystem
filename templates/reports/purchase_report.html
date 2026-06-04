@@ -1,29 +1,83 @@
-{% extends 'base.html' %}
-{% block title %}Purchase Report{% endblock %}
+{% extends "base.html" %}
 
 {% block content %}
-<h2>Purchase Report</h2>
+<div class="container-fluid py-2 unified-list-screen" data-export-scope>
+  <div class="unified-list-card">
+    <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Purchase Report</h3>
+        <div class="unified-subtitle">Debit transactions summary</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#purchaseTable" data-export-name="purchase_report">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#purchaseTable" data-export-name="purchase_report">Excel</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#purchaseTable">PDF</button>
+      </div>
+    </div>
 
+    <div class="unified-list-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" method="get">
+        <div style="min-width:160px;">
+          <label class="unified-label" for="fromDate">From</label>
+          <input id="fromDate" name="from" type="date" class="form-control" value="{{ date_from|date:'Y-m-d' }}">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="toDate">To</label>
+          <input id="toDate" name="to" type="date" class="form-control" value="{{ date_to|date:'Y-m-d' }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <a href="{% url 'reports:purchase_report' %}" class="btn unified-btn-outline">Reset</a>
+        </div>
+      </form>
 
-<p><strong>Total Purchase:</strong> {{ total_purchase }}</p>
+      <div class="unified-summary-row d-flex justify-content-between flex-wrap gap-2">
+        <div class="fw-bold">Total Purchase</div>
+        <div class="fw-bold text-end">&#8377; {{ total_purchase }}</div>
+      </div>
 
-<p><strong>Total Purchase:</strong> ₹{{ total_purchase }}</p>
-
-
-<table>
-    <tr>
-        <th>Date</th>
-        <th>Party</th>
-        <th>Amount</th>
-        <th>Mode</th>
-    </tr>
-    {% for purchase in purchases %}
-    <tr>
-        <td>{{ purchase.date }}</td>
-        <td>{{ purchase.party.name }}</td>
-        <td>{{ purchase.amount }}</td>
-        <td>{{ purchase.txn_mode }}</td>
-    </tr>
-    {% endfor %}
-</table>
+      <div class="unified-table-wrap">
+        <table class="table unified-table" id="purchaseTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Party</th>
+              <th class="text-end">Amount</th>
+              <th>Mode</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for purchase in purchases %}
+            <tr>
+              <td>{{ purchase.date|date:"d M Y" }}</td>
+              <td>{{ purchase.party.name }}</td>
+              <td class="text-end fw-bold">{{ purchase.amount }}</td>
+              <td><span class="badge bg-light text-dark">{{ purchase.txn_mode|default:"-" }}</span></td>
+              <td class="text-end">
+                <div class="dropdown">
+                  <button type="button" class="btn unified-btn-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown">Actions</button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{% url 'khataapp:transaction_view' purchase.id %}">View</a></li>
+                    <li><a class="dropdown-item" href="{% url 'khataapp:transaction_edit' purchase.id %}">Edit</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <form method="post" action="{% url 'khataapp:transaction_delete' purchase.id %}" onsubmit="return confirm('Delete this transaction?')" style="margin:0;">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item text-danger">Delete</button>
+                      </form>
+                    </li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No purchases found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

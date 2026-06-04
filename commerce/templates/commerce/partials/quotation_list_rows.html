@@ -1,0 +1,62 @@
+{% for q in quotations %}
+<tr>
+  <td class="fw-semibold">
+    <a href="{% url 'commerce:quotation_detail' q.id %}">{{ q.quotation_number|default:'#' }}{% if not q.quotation_number %}{{ q.id }}{% endif %}</a>
+  </td>
+  <td>{{ q.party.name }}</td>
+  <td>{{ q.date|date:"d M Y" }}</td>
+  <td>{% if q.valid_till %}{{ q.valid_till|date:"d M Y" }}{% else %}-{% endif %}</td>
+  <td class="text-end fw-bold">{{ q.total_amount|default:0 }}</td>
+  <td>
+    {% if q.status|lower == "draft" %}
+      <span class="badge bg-secondary">Draft</span>
+    {% elif q.status|lower == "sent" %}
+      <span class="badge bg-warning text-dark">Sent</span>
+    {% elif q.status|lower == "verified" %}
+      <span class="badge bg-info text-dark">Verified</span>
+    {% elif q.status|lower == "approved" %}
+      <span class="badge bg-success">Approved</span>
+    {% elif q.status|lower == "converted" %}
+      <span class="badge bg-success">Converted</span>
+    {% elif q.status|lower == "rejected" %}
+      <span class="badge bg-danger">Rejected</span>
+    {% else %}
+      <span class="badge bg-secondary">{{ q.status }}</span>
+    {% endif %}
+    {% if q.valid_till and q.valid_till < today %}
+      <span class="badge bg-danger ms-1">Expired</span>
+    {% endif %}
+  </td>
+  <td class="text-end">
+    <div class="dropdown">
+      <button type="button" class="btn unified-btn-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown">Actions</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{% url 'commerce:quotation_detail' q.id %}">View</a></li>
+        {% if q.status|lower != 'converted' and q.status|lower != 'approved' and q.status|lower != 'verified' %}
+          <li><a class="dropdown-item" href="{% url 'commerce:quotation_edit' q.id %}">Edit</a></li>
+        {% endif %}
+        <li><hr class="dropdown-divider"></li>
+        {% if q.status|lower == 'sent' %}
+          <li><a class="dropdown-item text-info" href="{% url 'commerce:quotation_action' q.id 'verify' %}">Verify</a></li>
+        {% endif %}
+        {% if q.status|lower == 'verified' %}
+          <li><a class="dropdown-item text-success" href="{% url 'commerce:quotation_action' q.id 'approve' %}">Approve</a></li>
+        {% endif %}
+        {% if q.status|lower != 'converted' and q.status|lower != 'rejected' %}
+          <li><a class="dropdown-item text-danger" href="{% url 'commerce:quotation_action' q.id 'reject' %}">Reject</a></li>
+        {% endif %}
+        {% if q.status|lower == 'approved' %}
+          <li><a class="dropdown-item text-primary" href="{% url 'commerce:quotation_action' q.id 'convert' %}">Convert to Order</a></li>
+        {% endif %}
+        <li><hr class="dropdown-divider"></li>
+        {% if q.status|lower != 'converted' %}
+          <li><a class="dropdown-item text-danger" href="{% url 'commerce:quotation_action' q.id 'delete' %}">Delete</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="7" class="text-center text-muted py-4">No quotations found.</td></tr>
+{% endfor %}
+

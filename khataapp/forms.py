@@ -12,6 +12,34 @@ class PartyForm(forms.ModelForm):
     class Meta:
         model = Party
         fields = ['name', 'mobile', 'email', 'party_type']
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "form-control form-control-lg fw-bold",
+                    "placeholder": "Party name",
+                    "data-kb-primary": "1",
+                    "autofocus": "autofocus",
+                }
+            ),
+            "mobile": forms.TextInput(
+                attrs={
+                    "class": "form-control form-control-lg fw-bold",
+                    "placeholder": "Mobile number",
+                    "inputmode": "numeric",
+                }
+            ),
+            "email": forms.EmailInput(
+                attrs={
+                    "class": "form-control form-control-lg fw-bold",
+                    "placeholder": "Email (optional)",
+                }
+            ),
+            "party_type": forms.Select(
+                attrs={
+                    "class": "form-select form-select-lg fw-bold",
+                }
+            ),
+        }
 
 
 # ----------------- Transaction Form -----------------
@@ -90,6 +118,33 @@ class SupplierPaymentForm(forms.ModelForm):
                 due_amount__gt=0
             ).select_related('party')
 
+        self.fields["order"].widget.attrs.update(
+            {
+                "class": "form-select form-select-lg fw-bold",
+                "data-kb-primary": "1",
+                "autofocus": "autofocus",
+            }
+        )
+        self.fields["amount"].widget.attrs.update({"class": "form-control form-control-lg fw-bold"})
+        self.fields["payment_mode"].widget.attrs.update({"class": "form-select form-select-lg fw-bold"})
+        self.fields["reference"].widget.attrs.update({"class": "form-control form-control-lg fw-bold"})
+        self.fields["payment_date"].widget.attrs.update({"class": "form-control form-control-lg fw-bold"})
+        self.fields["notes"].widget.attrs.update({"class": "form-control fw-bold"})
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get("amount")
+        if amount is not None and amount <= 0:
+            raise forms.ValidationError("Payment amount must be greater than zero.")
+        return amount
+
+    def clean(self):
+        cleaned = super().clean()
+        order = cleaned.get("order")
+        amount = cleaned.get("amount")
+        if order and amount and amount > (order.due_amount or 0):
+            raise forms.ValidationError("Payment amount cannot be greater than the outstanding amount.")
+        return cleaned
+
 
 # ----------------- Field Agent Form -----------------
 class FieldAgentForm(forms.ModelForm):
@@ -110,8 +165,22 @@ class FieldAgentForm(forms.ModelForm):
 
         if owner:
             qs = qs.exclude(id=owner.id)
+            self.fields["assigned_parties"].queryset = Party.objects.filter(owner=owner).order_by("name")
+
+        if not (self.instance and self.instance.pk):
+            qs = qs.filter(field_agent_profile__isnull=True)
 
         if self.instance and self.instance.pk:
             qs = qs | User.objects.filter(id=self.instance.user_id)
 
         self.fields["user"].queryset = qs.distinct()
+
+        for name, field in self.fields.items():
+            base = "agent-input"
+            if name == "is_active":
+                field.widget.attrs.update({"class": "agent-check"})
+            elif name == "assigned_parties":
+                field.widget.attrs.update({"class": f"{base} agent-multi", "size": 10})
+            else:
+                current = field.widget.attrs.get("class", "")
+                field.widget.attrs["class"] = f"{current} {base}".strip()

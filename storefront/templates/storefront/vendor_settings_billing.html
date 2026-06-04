@@ -1,0 +1,48 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Billing</div>
+        <div class="va-help">Invoices, ledger sync and ERP dashboards.</div>
+      </div>
+      <div class="va-help">
+        Vendor: <span class="fw-semibold">{{ vendor.name }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="va-panel p-3">
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Centralized ERP orders</div>
+        <div class="va-help">All online orders should be visible in a single place for accounting.</div>
+        <div class="mt-3 d-flex gap-2 flex-wrap">
+          <a class="btn btn-sm btn-primary" href="/commerce/orders/sales/">
+            <i class="bi bi-bag-check me-1"></i>Sales Orders (central)
+          </a>
+          <a class="btn btn-sm btn-outline-secondary" href="/billing/commerce-dashboard/">
+            <i class="bi bi-speedometer2 me-1"></i>Commerce dashboard
+          </a>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Ledger & payments</div>
+        <div class="va-help">After accepting orders, payments and ledger entries are tracked here.</div>
+        <div class="mt-3 d-flex gap-2 flex-wrap">
+          <a class="btn btn-sm btn-outline-secondary" href="/ledger/">
+            <i class="bi bi-journal-text me-1"></i>Ledger
+          </a>
+          <a class="btn btn-sm btn-outline-secondary" href="/payments/">
+            <i class="bi bi-credit-card-2-front me-1"></i>Payments
+          </a>
+        </div>
+        {% if not can_access_billing %}
+          <div class="va-help mt-3">Billing dashboard access is disabled for this user.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

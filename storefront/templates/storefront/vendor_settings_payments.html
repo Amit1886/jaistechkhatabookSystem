@@ -1,0 +1,56 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Payments</div>
+        <div class="va-help">Select your gateway provider and enable it for checkout.</div>
+      </div>
+      <div class="va-help">
+        Active: <span class="fw-semibold">{{ active_provider|default:"demo" }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex flex-wrap gap-2">
+      {% for p, label in providers %}
+        <a class="btn btn-sm {% if provider == p %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+           href="{% url 'vendor-settings-payments' vendor.subdomain %}?provider={{ p }}">
+          {{ label }}
+          {% if active_provider == p %}<span class="ms-1 badge text-bg-light">Active</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <form method="post" class="va-panel p-3">
+    {% csrf_token %}
+    <input type="hidden" name="provider" value="{{ provider }}">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <div class="va-section-title">{{ provider|upper }} configuration</div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="is_active" id="isActive"
+               {% if cfg.is_active %}checked{% endif %}>
+        <label class="form-check-label va-form-label" for="isActive">Enable for checkout</label>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      {% for f in provider_fields %}
+        <div class="col-12 col-lg-6">
+          <label class="form-label va-form-label">{{ f.label }}</label>
+          <input class="form-control" name="cfg_{{ f.key }}" value="{{ f.value }}">
+          {% if f.key == "api_base" %}
+            <div class="va-help mt-1">Leave empty for default API base.</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Save</button>
+    </div>
+  </form>
+{% endblock %}

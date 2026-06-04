@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Invoice Print{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2" style="max-width: 960px;">
+  {% if not hide_actions %}
+    <div class="d-print-none d-flex justify-content-end gap-2 mb-2">
+      <a class="btn unified-btn-outline btn-sm fw-bold" href="{% url 'commerce:invoice_view' invoice.id %}">Back</a>
+      <a class="btn unified-btn-outline btn-sm fw-bold" href="{% url 'commerce:invoice_print' invoice.id %}?format=pdf">PDF</a>
+      <button type="button" class="btn unified-btn-primary btn-sm fw-bold" onclick="window.print()">Print</button>
+    </div>
+  {% endif %}
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            {% if company.logo %}
+              <img src="{{ company.logo.url }}" alt="Logo" style="height:34px; width:auto;">
+            {% endif %}
+            <div class="fw-bold" style="font-size:20px;">
+              {{ issuer.business_name|default:company.company_name|default:"KhataPro" }}
+            </div>
+          </div>
+          <div class="text-muted small">{{ issuer.address|default:"" }}</div>
+          {% if issuer.gst_number %}
+            <div class="small"><span class="text-muted">GSTIN:</span> <span class="fw-bold">{{ issuer.gst_number }}</span></div>
+          {% endif %}
+        </div>
+        <div class="text-end">
+          <div class="fw-bold" style="font-size:18px;">TAX INVOICE</div>
+          <div class="small text-muted">Invoice No: <span class="fw-bold text-dark">{{ invoice.number|default:invoice.id }}</span></div>
+          <div class="small text-muted">Date: <span class="fw-bold text-dark">{{ invoice.created_at|date:"d M Y" }}</span></div>
+          <div class="small text-muted">Type: <span class="fw-bold text-dark">{% if is_gst %}GST{% else %}NON-GST{% endif %}</span></div>
+        </div>
+      </div>
+
+      <hr class="my-3">
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="fw-bold mb-1">Bill To</div>
+          <div class="fw-semibold">{{ party.name }}</div>
+          <div class="small text-muted">{{ party.mobile|default:"" }}</div>
+          {% if party.gst %}
+            <div class="small"><span class="text-muted">GSTIN:</span> <span class="fw-bold">{{ party.gst }}</span></div>
+          {% endif %}
+          {% if party.address %}
+            <div class="small text-muted">{{ party.address }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-6">
+          <div class="fw-bold mb-1">Order</div>
+          <div class="small text-muted">Order #: <span class="fw-bold text-dark">{{ order.id }}</span></div>
+          <div class="small text-muted">Status: <span class="fw-bold text-dark">{{ invoice.status|title }}</span></div>
+        </div>
+      </div>
+
+      <div class="table-responsive mt-3">
+        <table class="table table-sm align-middle" style="border:1px solid #e5e7eb;">
+          <thead style="background:#f8fafc;">
+            <tr>
+              <th style="width:5%;">#</th>
+              <th>Description</th>
+              <th style="width:10%;" class="text-end">Qty</th>
+              <th style="width:12%;" class="text-end">Rate</th>
+              <th style="width:12%;" class="text-end">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for it in items %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                  <div class="fw-semibold">{{ it.product.name|default:it.raw_name|default:"-" }}</div>
+                  <div class="small text-muted">
+                    {% if it.product and it.product.hsn_code %}HSN: {{ it.product.hsn_code }}{% endif %}
+                    {% if is_gst and it.product and it.product.gst_rate %}{% if it.product.hsn_code %} • {% endif %}GST: {{ it.product.gst_rate }}%{% endif %}
+                  </div>
+                </td>
+                <td class="text-end">{{ it.qty }}</td>
+                <td class="text-end">{{ it.price }}</td>
+                <td class="text-end fw-bold">{{ it.line_total|floatformat:2 }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center text-muted py-4">No items.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="row g-3 mt-2">
+        <div class="col-md-6">
+          <div class="small text-muted">Notes</div>
+          <div class="small">{{ order.notes|default:"-" }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="border rounded-3 p-3" style="background:#f8fafc;">
+            <div class="d-flex justify-content-between"><div class="text-muted">Subtotal</div><div class="fw-bold">{{ subtotal }}</div></div>
+            <div class="d-flex justify-content-between"><div class="text-muted">Discount</div><div class="fw-bold">{{ discount }}</div></div>
+            <div class="d-flex justify-content-between"><div class="text-muted">Sundry</div><div class="fw-bold">{{ sundry }}</div></div>
+            {% if is_gst %}
+              <div class="d-flex justify-content-between"><div class="text-muted">CGST</div><div class="fw-bold">{{ cgst }}</div></div>
+              <div class="d-flex justify-content-between"><div class="text-muted">SGST</div><div class="fw-bold">{{ sgst }}</div></div>
+              <div class="d-flex justify-content-between"><div class="text-muted">IGST</div><div class="fw-bold">{{ igst }}</div></div>
+            {% else %}
+              <div class="d-flex justify-content-between"><div class="text-muted">Tax</div><div class="fw-bold">0.00</div></div>
+            {% endif %}
+            <hr class="my-2">
+            <div class="d-flex justify-content-between"><div class="fw-bold">Grand Total</div><div class="fw-bold" style="font-size:18px;">{{ total }}</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-end">
+        <div class="small text-muted">This is a computer-generated invoice.</div>
+        <div class="text-end">
+          <div class="small text-muted">For {{ issuer.business_name|default:company.company_name|default:"KhataPro" }}</div>
+          <div style="height:28px;"></div>
+          <div class="fw-bold">Authorized Signatory</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media print {
+    body { background: #fff !important; }
+    .card { box-shadow: none !important; }
+    .topbar, .sidebar, .footer, .d-print-none { display: none !important; }
+    .main-content { margin: 0 !important; }
+    .page-content { padding: 0 !important; }
+  }
+</style>
+{% endblock %}

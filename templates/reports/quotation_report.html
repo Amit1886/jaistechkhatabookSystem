@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-list-screen" data-export-scope>
+  <div class="unified-list-card">
+    <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Quotation Report</h3>
+        <div class="unified-subtitle">Quotations summary (no stock / no ledger impact)</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#quotationTable" data-export-name="quotation_report">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#quotationTable" data-export-name="quotation_report">Excel</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#quotationTable">PDF</button>
+      </div>
+    </div>
+
+    <div class="unified-list-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" method="get">
+        <div style="min-width:160px;">
+          <label class="unified-label" for="fromDate">From</label>
+          <input id="fromDate" name="from" type="date" class="form-control" value="{{ date_from|date:'Y-m-d' }}">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="toDate">To</label>
+          <input id="toDate" name="to" type="date" class="form-control" value="{{ date_to|date:'Y-m-d' }}">
+        </div>
+        <div style="min-width:220px;">
+          <label class="unified-label" for="partySelect">Party</label>
+          <select id="partySelect" name="party" class="form-control">
+            <option value="">All</option>
+            {% for p in parties %}
+              <option value="{{ p.id }}" {% if selected_party|stringformat:"s" == p.id|stringformat:"s" %}selected{% endif %}>{{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="min-width:180px;">
+          <label class="unified-label" for="statusSelect">Status</label>
+          <select id="statusSelect" name="status" class="form-control">
+            <option value="">All</option>
+            {% for val, label in statuses %}
+              <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <a href="{% url 'reports:quotation_report' %}" class="btn unified-btn-outline">Reset</a>
+        </div>
+      </form>
+
+      <div class="unified-summary-row d-flex justify-content-between flex-wrap gap-2">
+        <div class="fw-bold">Total Quotation Amount</div>
+        <div class="fw-bold text-end">&#8377; {{ total_amount }}</div>
+      </div>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" id="quotationTable">
+          <thead>
+            <tr>
+              <th>Quotation No</th>
+              <th>Party</th>
+              <th>Date</th>
+              <th>Valid Till</th>
+              <th>Status</th>
+              <th class="text-end">Total</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for q in quotations %}
+            <tr>
+              <td class="fw-bold">{{ q.quotation_number|default:"-" }}</td>
+              <td>{{ q.party.name }}</td>
+              <td>{{ q.date|date:"d M Y" }}</td>
+              <td>{{ q.valid_till|date:"d M Y"|default:"-" }}</td>
+              <td>
+                <span class="badge bg-light text-dark">{{ q.get_status_display }}</span>
+              </td>
+              <td class="text-end fw-bold">{{ q.total_amount }}</td>
+              <td class="text-end">
+                <a class="btn unified-btn-outline btn-sm" href="{% url 'commerce:quotation_detail' q.id %}">View</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted py-4">No quotations found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

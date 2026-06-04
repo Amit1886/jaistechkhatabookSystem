@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete Category{% endblock %}
+
+{% block pc_badges %}
+  <span class="badge bg-warning text-dark fw-bold">Products</span>
+{% endblock %}
+
+{% block pc_actions %}
+  <a class="btn btn-outline-light btn-lg fw-bold" href="{% url 'commerce:add_category' %}" accesskey="b" title="Alt+B">Back</a>
+{% endblock %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+
+  <div class="card border-danger">
+    <div class="card-header bg-light fw-bold text-danger">Confirm Delete</div>
+    <div class="card-body">
+      <p class="mb-2">Delete category <span class="fw-bold">{{ category.name }}</span>?</p>
+      <p class="text-muted small mb-3">Products linked to this category will keep the category as null (if allowed) or may require reassignment depending on your product flow.</p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="d-flex justify-content-end gap-2">
+          <a class="btn btn-outline-secondary btn-lg fw-bold" href="{% url 'commerce:add_category' %}">Cancel</a>
+          <button type="submit" class="btn btn-danger btn-lg fw-bold">Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+

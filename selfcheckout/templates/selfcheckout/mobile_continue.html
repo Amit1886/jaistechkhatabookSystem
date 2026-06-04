@@ -1,0 +1,33 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Continue Checkout</title>
+  <style>
+    body { margin: 0; min-height: 100vh; font-family: Inter, system-ui, sans-serif; color: #f8fbff; background: #07080d; }
+    .wrap { padding: 18px; display: grid; gap: 14px; }
+    .card { border: 1px solid rgba(255,255,255,.16); border-radius: 18px; padding: 16px; background: rgba(255,255,255,.08); }
+    .row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.1); }
+    .btn { width: 100%; min-height: 52px; border: 0; border-radius: 16px; font-weight: 900; color: #031016; background: linear-gradient(135deg,#42f8ff,#5dffb1); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <h1>Mobile Checkout</h1>
+      <p>Synced with kiosk {{ handoff.session.kiosk_id }}. This link expires automatically.</p>
+    </section>
+    <section class="card">
+      {% for item in cart_state.items %}
+        <div class="row"><span>{{ item.name }} x {{ item.quantity }}</span><strong>Rs {{ item.line_total }}</strong></div>
+      {% empty %}
+        <p>Your cart is empty.</p>
+      {% endfor %}
+      <h2>Total: Rs {{ cart_state.total }}</h2>
+      <button class="btn" type="button">Pay Securely</button>
+    </section>
+  </main>
+</body>
+</html>

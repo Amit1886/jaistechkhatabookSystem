@@ -1,0 +1,18 @@
+groups:
+  - name: erp-saas
+    rules:
+      - alert: ERPHighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: High ERP API error rate
+      - alert: ERPCeleryQueueBacklog
+        expr: celery_queue_length > 1000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Celery queue backlog is growing
+

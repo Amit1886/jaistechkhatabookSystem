@@ -124,8 +124,8 @@ class PaymentAdmin(admin.ModelAdmin):
 
 @admin.register(FeatureRegistry)
 class FeatureRegistryAdmin(admin.ModelAdmin):
-    list_display = ("key", "label", "group", "active")
-    list_filter = ("group", "active")
+    list_display = ("key", "label", "group", "active", "is_advanced")
+    list_filter = ("group", "active", "is_advanced")
     search_fields = ("key", "label")
 
 

@@ -1,0 +1,64 @@
+{% extends "central_engine/layout.html" %}
+
+{% block ce_title %}Referral Center{% endblock %}
+
+{% block ce_content %}
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-lg-6">
+      <div class="card ce-soft">
+        <div class="card-body">
+          <h5 class="fw-bold mb-2">Your Referral Code</h5>
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <code class="px-3 py-2 bg-light rounded">{{ engine.referral_code }}</code>
+            <button class="btn btn-sm btn-outline-primary" type="button" onclick="navigator.clipboard.writeText('{{ engine.referral_code }}')">Copy</button>
+          </div>
+          <div class="small text-muted mt-2">Referral earnings: INR {{ engine.referral_earnings }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="card ce-soft">
+        <div class="card-body">
+          <h5 class="fw-bold mb-2">Apply a Referral Code</h5>
+          <form method="post">
+            {% csrf_token %}
+            <div class="input-group">
+              <input name="referral_code" class="form-control" placeholder="Enter code">
+              <button class="btn btn-primary" type="submit">Apply</button>
+            </div>
+          </form>
+          {% if referred_by %}
+            <div class="small text-muted mt-2">You were referred by user #{{ referred_by.referrer_id }}.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h5 class="fw-bold mb-2">Your Referrals</h5>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Referred User</th>
+          <th>Status</th>
+          <th class="text-end">Commission</th>
+          <th class="text-muted small">Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in referrals %}
+          <tr>
+            <td>{{ r.referred.email|default:r.referred_id }}</td>
+            <td><span class="badge bg-secondary">{{ r.get_status_display }}</span></td>
+            <td class="text-end">INR {{ r.commission_amount }}</td>
+            <td class="text-muted small">{{ r.created_at }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-4">No referrals yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+

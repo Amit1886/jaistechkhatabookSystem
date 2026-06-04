@@ -1,69 +1,110 @@
 {% extends "accounts/auth_base.html" %}
 {% load widget_tweaks %}
+{% load static %}
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-50">
-  <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
-    <h1 class="text-3xl font-bold text-center mb-6">Login to KhataPro</h1>
+<div class="space-y-5">
+  <div class="text-center">
+    <h1 class="text-3xl font-bold text-slate-900">Login to Billentra</h1>
+    <p class="text-sm text-slate-500 mt-2">Access your dashboard and continue where you left off.</p>
+  </div>
 
-    <!-- Normal Login Form -->
-    <form method="post" action="" class="space-y-4">
-      {% csrf_token %}
+  <!-- Normal Login Form -->
+  <form method="post" action="" class="space-y-4">
+    {% csrf_token %}
 
-      <!-- Identifier (Email or Mobile) -->
-      <div>
-        <label class="block text-gray-700 mb-1" for="id_identifier">Email or Mobile</label>
-        <input type="text" name="identifier" id="id_identifier" required
-               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-               value="{{ form.identifier.value|default_if_none:'' }}">
-        {% if form.identifier.errors %}
-          <p class="text-red-500 text-sm mt-1">{{ form.identifier.errors.0 }}</p>
-        {% endif %}
-      </div>
-
-      <!-- Password (optional if OTP) -->
-      <div>
-        <label class="block text-gray-700 mb-1" for="id_password">Password</label>
-        <input type="password" name="password" id="id_password"
-               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-        {% if form.password.errors %}
-          <p class="text-red-500 text-sm mt-1">{{ form.password.errors.0 }}</p>
-        {% endif %}
-      </div>
-
-      <!-- OTP Option -->
-      <div class="flex items-center space-x-2">
-        <input type="checkbox" name="use_otp" id="id_use_otp" {% if form.use_otp.value %}checked{% endif %}>
-        <label class="text-gray-600 text-sm" for="id_use_otp">Login via OTP instead of password</label>
-      </div>
-
-      <button type="submit"
-              class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition">
-        Continue
-      </button>
-    </form>
-
-    <!-- Divider -->
-    <div class="flex items-center my-6">
-      <hr class="flex-grow border-gray-300">
-      <span class="px-3 text-gray-500 text-sm">OR</span>
-      <hr class="flex-grow border-gray-300">
+    <!-- Role Selection -->
+    <div>
+      <label class="block text-slate-700 mb-1" for="id_role">Login as</label>
+      <select name="role" id="id_role"
+              class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+        {% for val,label in form.ROLE_CHOICES %}
+          <option value="{{ val }}" {% if form.role.value == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
     </div>
 
-    <!-- Google Login Button -->
-{% load socialaccount %}
+    <!-- Identifier (Email or Mobile) -->
+    <div>
+      <label class="block text-slate-700 mb-1" for="id_identifier" id="loginIdentifierLabel">Email or Mobile</label>
+      <input type="text" name="identifier" id="id_identifier" required
+             class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+             value="{{ form.identifier.value|default_if_none:'' }}">
+      {% if form.identifier.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.identifier.errors.0 }}</p>
+      {% endif %}
+    </div>
 
+    <!-- Password (optional if OTP) -->
+    <div>
+      <label class="block text-slate-700 mb-1" for="id_password">Password</label>
+      <input type="password" name="password" id="id_password"
+             class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+      {% if form.password.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.password.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <!-- OTP Option -->
+    <div class="flex items-center space-x-2">
+      <input type="checkbox" name="use_otp" id="id_use_otp" {% if form.use_otp.value %}checked{% endif %}>
+      <label class="text-slate-600 text-sm" for="id_use_otp">Login via OTP instead of password</label>
+    </div>
+
+    <button type="submit"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition shadow-sm">
+      Continue
+    </button>
+  </form>
+
+  <!-- Divider -->
+  <div class="flex items-center my-6">
+    <hr class="flex-grow border-gray-300">
+    <span class="px-3 text-gray-500 text-sm">OR</span>
+    <hr class="flex-grow border-gray-300">
+  </div>
+
+  <!-- Google Login Button -->
+{% load socialaccount %}
+{% if google_login_enabled %}
 <a href="{% provider_login_url 'google' %}"
-   class="flex items-center justify-center space-x-2 w-full border py-2 rounded-lg hover:bg-gray-100 transition">
-    <img src="https://www.svgrepo.com/show/355037/google.svg" class="w-5 h-5">
+   class="flex items-center justify-center space-x-2 w-full border border-slate-200 py-3 rounded-xl hover:bg-slate-50 transition bg-white">
+    <img src="{% static 'vendor/notus/img/google.svg' %}" class="w-5 h-5" alt="Google logo">
     <span class="font-medium text-gray-700">Continue with Google</span>
 </a>
-
-    <p class="mt-6 text-center text-sm text-gray-600">
-      New to KhataPro?
-      <a href="{% url 'accounts:signup' %}" class="text-blue-600 font-medium hover:underline">Create an account</a>
-    </p>
-  </div>
+{% else %}
+<div class="text-center text-sm text-gray-500">
+  Google login is not available in this mode.
 </div>
+{% endif %}
+
+  <p class="mt-6 text-center text-sm text-gray-600">
+    New to Billentra?
+    <a href="{% url 'accounts:signup' %}" class="text-blue-600 font-medium hover:underline">Create an account</a>
+  </p>
+</div>
+
+<script>
+  (function() {
+    const roleEl = document.getElementById("id_role");
+    const otpEl = document.getElementById("id_use_otp");
+    const labelEl = document.getElementById("loginIdentifierLabel");
+    function sync() {
+      const role = (roleEl && roleEl.value) ? roleEl.value : "user";
+      if (role === "customer" || role === "supplier") {
+        if (labelEl) labelEl.textContent = "Login ID (Username)";
+        if (otpEl) {
+          otpEl.checked = false;
+          otpEl.disabled = true;
+        }
+      } else {
+        if (labelEl) labelEl.textContent = "Email or Mobile";
+        if (otpEl) otpEl.disabled = false;
+      }
+    }
+    if (roleEl) roleEl.addEventListener("change", sync);
+    sync();
+  })();
+</script>
 {% endblock %}

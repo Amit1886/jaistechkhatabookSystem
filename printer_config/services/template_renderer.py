@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import base64
 import logging
+import re
 from io import BytesIO
 from typing import Any
+from urllib.parse import quote_plus
 
 from django.template import Context, Template, TemplateSyntaxError
 
@@ -210,13 +212,17 @@ def render_template_payload(
         sections.update(template_obj.enabled_sections)
     if user_template and user_template.section_visibility:
         sections.update(user_template.section_visibility)
+    if not sections and isinstance(config.get("sections"), dict):
+        sections = dict(config.get("sections") or {})
     if not sections:
         sections = {"header": True, "items": True, "totals": True, "assets": True, "footer": True}
 
     payload = dict(context)
+    payload.setdefault("document_type", document_type)
     payload.setdefault("sections", sections)
     payload.setdefault("print_mode", print_mode)
     payload.setdefault("theme_mode", config.get("theme_mode", "light"))
+    payload.setdefault("config", config)
     payload.setdefault("header_text", "")
     payload.setdefault("footer_text", "")
     payload.setdefault("qr_value", payload.get("document", {}).get("number", ""))
@@ -252,6 +258,63 @@ def render_template_payload(
         payload.setdefault("stamp_image", "")
         payload.setdefault("qr_image", _generate_qr_data_uri(str(payload.get("qr_value", ""))))
         payload.setdefault("barcode_image", _generate_barcode_data_uri(str(payload.get("barcode_value", ""))))
+
+    # ---- Optional extra QR/link helpers for templates ----
+    custom = payload.get("custom")
+    if not isinstance(custom, dict):
+        custom = {}
+        payload["custom"] = custom
+
+    def _ensure_http_url(value: Any) -> str:
+        if value in (None, ""):
+            return ""
+        s = str(value).strip()
+        if not s:
+            return ""
+        if s.startswith("http://") or s.startswith("https://"):
+            return s
+        return f"https://{s}"
+
+    # Website QR (fallback from company.website)
+    website_link = _ensure_http_url(custom.get("website_link") or payload.get("company", {}).get("website", ""))
+    if website_link:
+        custom.setdefault("website_link", website_link)
+        custom.setdefault("website_qr_image", _generate_qr_data_uri(website_link))
+
+    # WhatsApp QR (fallback from custom.whatsapp_* or company.phone)
+    wa_raw = custom.get("whatsapp_number") or custom.get("whatsapp_no") or custom.get("whatsapp") or payload.get("company", {}).get("phone", "")
+    wa_digits = re.sub(r"\\D", "", str(wa_raw or ""))
+    if wa_digits:
+        if len(wa_digits) == 10 and not wa_digits.startswith("91"):
+            wa_digits = f"91{wa_digits}"
+        wa_link = f"https://wa.me/{wa_digits}"
+        custom.setdefault("whatsapp_link", wa_link)
+        custom.setdefault("whatsapp_qr_image", _generate_qr_data_uri(wa_link))
+
+    # Google Maps QR (map_link or derived from map_query/company.address)
+    map_link = custom.get("map_link") or custom.get("google_map_link")
+    if not map_link:
+        query = custom.get("map_query") or payload.get("company", {}).get("address", "")
+        if query:
+            map_link = f"https://www.google.com/maps/search/?api=1&query={quote_plus(str(query))}"
+    map_link = _ensure_http_url(map_link)
+    if map_link:
+        custom.setdefault("map_link", map_link)
+        custom.setdefault("map_qr_image", _generate_qr_data_uri(map_link))
+
+    # Social links + optional QR set (supports dict `social_links` or individual `*_link` keys)
+    social_links = custom.get("social_links")
+    if not isinstance(social_links, dict):
+        social_links = {}
+    for key in ("instagram", "facebook", "youtube", "twitter", "linkedin"):
+        val = custom.get(f"{key}_link") or social_links.get(key)
+        val = _ensure_http_url(val)
+        if val:
+            social_links[key] = val
+    if social_links:
+        custom["social_links"] = social_links
+        if "social_qr_images" not in custom:
+            custom["social_qr_images"] = {k: _generate_qr_data_uri(v) for k, v in social_links.items() if v}
 
     page_css = _page_css(config=config, print_mode=print_mode)
     final_css = f"{BASE_TEMPLATE_CSS}\n{page_css}\n{css_template}"

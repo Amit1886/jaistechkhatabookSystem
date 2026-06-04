@@ -1,0 +1,10 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+  <li>
+    <a href="{% url 'admin:enterprise_control_mobile_app_connection' %}" class="addlink">
+      Mobile App Live URL Setup
+    </a>
+  </li>
+  {{ block.super }}
+{% endblock %}

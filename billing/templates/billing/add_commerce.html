@@ -2,12 +2,21 @@
 {% load static %}
 
 {% block billing_content %}
-<div class="container mt-4">
-  <h3>Add New Commerce Item</h3>
-  <form method="post">
+  {% include "core/includes/messages.html" %}
+
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h3 class="mb-0">Add New Commerce Item</h3>
+    <button type="button" class="btn btn-warning btn-sm fw-bold" onclick="showKeyboardHelp()" title="F1">Shortcuts</button>
+  </div>
+
+  <form method="post" class="row g-3">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Save</button>
+    <div class="col-12">
+      {{ form.as_p }}
+    </div>
+    <div class="col-12 d-flex justify-content-end gap-2">
+      <a id="kbCancel" data-kb-cancel href="{% url 'billing:dashboard' %}" class="btn btn-outline-secondary">Back</a>
+      <button type="submit" class="btn btn-primary fw-bold" data-kb-submit>Save</button>
+    </div>
   </form>
-</div>
 {% endblock %}

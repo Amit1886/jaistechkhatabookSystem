@@ -1,0 +1,46 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Customer events</div>
+        <div class="va-help">Track activity that can trigger notifications and campaigns.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="va-panel p-3">
+    <div class="va-section-title mb-2">Recent events (orders)</div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in recent_orders %}
+            <tr>
+              <td class="fw-semibold">
+                <a href="{% url 'vendor-order-view' vendor.subdomain o.id %}" style="text-decoration:none;">
+                  {{ o.order_number }}
+                </a>
+              </td>
+              <td><span class="badge text-bg-light border">{{ o.status }}</span></td>
+              <td><span class="badge text-bg-light border">{{ o.payment_status }}</span></td>
+              <td class="va-help">{{ o.created_at }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="va-help">No events yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="va-help mt-2">Phase B will add webhooks, pixel events, and customer journey automations.</div>
+  </div>
+{% endblock %}
+

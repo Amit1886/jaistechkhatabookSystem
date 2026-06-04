@@ -1,0 +1,78 @@
+{% for listing in listings %}
+  <div class="col-6 col-md-4 col-lg-3">
+    <div class="card product-card h-100 shadow-soft">
+      <div class="p-2 position-relative">
+        {% with m=listing.product.media.first %}
+          {% if m and m.media_type == "image" %}
+            <img class="w-100 thumb" loading="lazy" src="{{ m.media.url }}" alt="{{ m.alt_text }}">
+          {% else %}
+            <div class="thumb d-flex align-items-center justify-content-center">
+              <i class="bi bi-image muted" style="font-size: 28px;"></i>
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% if listing.discount_percent %}
+          <span class="badge badge-off position-absolute" style="left: 10px; top: 10px;">
+            {{ listing.discount_percent }}% OFF
+          </span>
+        {% endif %}
+
+        {% if listing.is_featured or listing.product.fast_moving %}
+          <span class="badge text-bg-dark position-absolute" style="left: 10px; top: 44px; opacity:.9;">
+            <i class="bi bi-lightning-charge-fill me-1"></i>Trending
+          </span>
+        {% endif %}
+
+        <div class="position-absolute" style="top:10px; right:10px;">
+          <form method="post" action="{% url 'store-wishlist-toggle' vendor.subdomain %}">
+            {% csrf_token %}
+            <input type="hidden" name="listing_id" value="{{ listing.id }}">
+            {% if listing.id in wishlist_ids %}
+              <button class="btn btn-sm btn-light shadow-soft" type="submit" title="Remove wishlist">
+                <i class="bi bi-heart-fill" style="color:var(--brand);"></i>
+              </button>
+            {% else %}
+              <button class="btn btn-sm btn-light shadow-soft" type="submit" title="Add wishlist">
+                <i class="bi bi-heart" style="color:var(--brand);"></i>
+              </button>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+
+      <div class="card-body pt-2">
+        <div class="fw-semibold line-clamp-2" style="min-height: 40px;">{{ listing.effective_title }}</div>
+        <div class="muted small text-truncate">{{ listing.product.category.name|default:"" }}</div>
+
+        <div class="mt-2 d-flex align-items-center justify-content-between">
+          <div>
+            <div class="price">&#8377;{{ listing.display_price|default:listing.effective_price }}</div>
+            {% if listing.product.mrp and listing.product.mrp > listing.display_price %}
+              <div class="small">
+                <span class="price-mrp">&#8377;{{ listing.product.mrp }}</span>
+                {% if listing.discount_percent %}<span class="muted ms-1">({{ listing.discount_percent }}% off)</span>{% endif %}
+              </div>
+            {% endif %}
+          </div>
+          {% if listing.rating_avg and listing.rating_avg > 0 %}
+            <span class="pill small">
+              <i class="bi bi-star-fill me-1" style="color:#f59e0b;"></i>{{ listing.rating_avg }}
+              <span class="muted">({{ listing.rating_count }})</span>
+            </span>
+          {% endif %}
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+          <a class="btn btn-outline-secondary btn-sm flex-fill" href="{% url 'store-product-detail' vendor.subdomain listing.product.slug %}">View</a>
+          <form method="post" action="{% url 'store-cart-add' vendor.subdomain %}">
+            {% csrf_token %}
+            <input type="hidden" name="listing_id" value="{{ listing.id }}">
+            <input type="hidden" name="qty" value="1">
+            <button class="btn btn-brand btn-sm" type="submit"><i class="bi bi-plus-lg me-1"></i>Add</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}

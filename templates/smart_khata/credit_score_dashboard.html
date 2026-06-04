@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-list-screen">
+  <div class="unified-list-card">
+    <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Customer Credit Score</h3>
+        <div class="unified-subtitle">Smart Khata score (0–100) based on payment behavior</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn unified-btn-outline" href="{% url 'smart_khata:credit_score_dashboard' %}?recalc=1{% if q %}&q={{ q|urlencode }}{% endif %}{% if level %}&level={{ level|urlencode }}{% endif %}">Recalculate (Visible)</a>
+        <a class="btn unified-btn-outline" href="{% url 'khataapp:party_list' %}?type=customer">Customer List</a>
+      </div>
+    </div>
+
+    <div class="unified-list-body">
+      <div class="report-summary-grid">
+        <div class="report-summary-card">
+          <div class="label">Excellent</div>
+          <div class="value"><span class="badge bg-success">{{ summary.excellent|default:"0" }}</span></div>
+          <div class="meta">80–100</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Good</div>
+          <div class="value"><span class="badge bg-warning text-dark">{{ summary.good|default:"0" }}</span></div>
+          <div class="meta">60–79</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Risky</div>
+          <div class="value"><span class="badge" style="background:#f97316;color:#111827;">{{ summary.risky|default:"0" }}</span></div>
+          <div class="meta">40–59</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">High Risk</div>
+          <div class="value"><span class="badge bg-danger">{{ summary.high_risk|default:"0" }}</span></div>
+          <div class="meta">0–39</div>
+        </div>
+      </div>
+
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" method="get">
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="csQ">Search</label>
+          <input id="csQ" name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search name/mobile/email">
+        </div>
+        <div style="min-width:180px;">
+          <label class="unified-label" for="csLevel">Level</label>
+          <select id="csLevel" name="level" class="form-select">
+            <option value="">All</option>
+            <option value="excellent" {% if level == 'excellent' %}selected{% endif %}>Excellent</option>
+            <option value="good" {% if level == 'good' %}selected{% endif %}>Good</option>
+            <option value="risky" {% if level == 'risky' %}selected{% endif %}>Risky</option>
+            <option value="high risk" {% if level == 'high risk' %}selected{% endif %}>High Risk</option>
+          </select>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <a href="{% url 'smart_khata:credit_score_dashboard' %}" class="btn unified-btn-outline">Reset</a>
+        </div>
+      </form>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Mobile</th>
+              <th class="text-end">Total Due</th>
+              <th class="text-center">Score</th>
+              <th>Level</th>
+              <th class="text-center">Avg Delay</th>
+              <th>Last Payment</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in customers %}
+            {% with s=c.credit_score|default:0 %}
+            <tr>
+              <td class="fw-semibold">{{ c.name }}</td>
+              <td>{{ c.mobile|default:"-" }}</td>
+              <td class="text-end fw-bold">{{ c.total_due|default:"0.00" }}</td>
+              <td class="text-center">
+                {% if s >= 80 %}
+                  <span class="badge bg-success">{{ s }}</span>
+                {% elif s >= 60 %}
+                  <span class="badge bg-warning text-dark">{{ s }}</span>
+                {% elif s >= 40 %}
+                  <span class="badge" style="background:#f97316;color:#111827;">{{ s }}</span>
+                {% else %}
+                  <span class="badge bg-danger">{{ s }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if s >= 80 %}Excellent{% elif s >= 60 %}Good{% elif s >= 40 %}Risky{% else %}High Risk{% endif %}
+              </td>
+              <td class="text-center">{{ c.average_payment_delay|default:"0" }}d</td>
+              <td>{{ c.last_payment_date|date:"d M Y"|default:"-" }}</td>
+              <td class="text-end">
+                <a href="{% url 'smart_khata:customer_profile' c.id %}" class="btn unified-btn-outline btn-sm">View</a>
+              </td>
+            </tr>
+            {% endwith %}
+            {% empty %}
+            <tr><td colspan="8" class="text-center text-muted py-4">No customers found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-2">
+        {% include "core/includes/ajax_pagination.html" with page_obj=page_obj %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -22,7 +22,7 @@ def create_default_superadmin(sender, **kwargs):
             email="admin@example.com",
             password="Admin@123"
         )
-        print("✅ Default superadmin created: admin / Admin@123")
+        print("Default superadmin created: admin / Admin@123")
 
 # ------------------------------------------------
 # CREATE USER PROFILE + COMPANY + SUBSCRIPTION

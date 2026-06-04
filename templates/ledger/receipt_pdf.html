@@ -1,0 +1,155 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Receipt - {{ reference_no|default:reference_id }}</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 16mm 12mm 18mm 12mm;
+        @frame footer_frame {
+          -pdf-frame-content: footer_content;
+          left: 12mm;
+          width: 186mm;
+          top: 276mm;
+          height: 12mm;
+        }
+      }
+
+      body { font-family: Arial, sans-serif; font-size: 10.5pt; color: #111827; }
+      .muted { color: #6b7280; }
+      .title { font-size: 16pt; font-weight: bold; margin: 0; }
+      .sub { font-size: 10pt; margin: 3pt 0 0 0; }
+      .header { border-bottom: 1px solid #e5e7eb; padding-bottom: 8pt; margin-bottom: 10pt; }
+
+      table.row { width: 100%; border-collapse: collapse; }
+      td.col { vertical-align: top; }
+
+      .badge {
+        display: inline-block;
+        font-size: 8.5pt;
+        padding: 2pt 6pt;
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+        color: #111827;
+      }
+
+      table.meta { width: 100%; border-collapse: collapse; margin-top: 6pt; }
+      table.meta td { padding: 2pt 0; }
+      .k { width: 22%; color: #6b7280; }
+      .v { width: 28%; }
+
+      table.lines { width: 100%; border-collapse: collapse; margin-top: 10pt; }
+      table.lines th {
+        background: #111827;
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 9pt;
+        padding: 6pt 5pt;
+        text-align: left;
+      }
+      table.lines td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 5pt 5pt;
+        font-size: 9.5pt;
+        vertical-align: top;
+      }
+      .num { text-align: right; }
+
+      table.totals { width: 100%; border-collapse: collapse; margin-top: 10pt; }
+      table.totals td { padding: 6pt 8pt; border: 1px solid #e5e7eb; }
+      table.totals .k2 { color: #6b7280; }
+      table.totals .v2 { font-weight: bold; text-align: right; }
+
+      #footer_content { font-size: 9pt; color: #6b7280; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <table class="row">
+        <tr>
+          <td class="col" style="width:65%;">
+            <div class="title">{{ company.company_name|default:"KhataPro" }}</div>
+            {% if company.email or company.mobile %}
+              <div class="sub muted">
+                {% if company.mobile %}{{ company.mobile }}{% endif %}
+                {% if company.email %}{% if company.mobile %} â€¢ {% endif %}{{ company.email }}{% endif %}
+              </div>
+            {% endif %}
+          </td>
+          <td class="col" style="width:35%; text-align:right;">
+            <div class="title" style="font-size:14pt;">RECEIPT</div>
+            <div class="sub muted">No: <b style="color:#111827;">{{ reference_no|default:reference_id }}</b></div>
+            <div class="sub">
+              <span class="badge">{% if gst_enabled %}GST{% else %}NON-GST{% endif %}</span>
+              {% if voucher_type %}<span class="badge">{{ voucher_type }}</span>{% endif %}
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <table class="meta">
+        <tr>
+          <td class="k">Reference</td>
+          <td colspan="3" class="v"><b>{{ reference_type }}</b> â€¢ <b>#{{ reference_id }}</b></td>
+        </tr>
+        {% if txn %}
+          <tr>
+            <td class="k">Date</td>
+            <td class="v">
+              {% if txn.date %}{{ txn.date|date:"d M Y" }}{% else %}-{% endif %}
+            </td>
+            <td class="k">Narration</td>
+            <td class="v">{{ txn.narration|default:"-" }}</td>
+          </tr>
+        {% endif %}
+      </table>
+    </div>
+
+    <table class="lines">
+      <thead>
+        <tr>
+          <th style="width:6%;">#</th>
+          <th style="width:10%;">DR/CR</th>
+          <th>Account/Party</th>
+          <th>Narration</th>
+          <th style="width:18%;" class="num">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>{{ r.sno }}</td>
+            <td><b>{{ r.dc }}</b></td>
+            <td><b>{{ r.party }}</b></td>
+            <td>{{ r.narration|default:"-" }}</td>
+            <td class="num"><b>{{ r.amount|floatformat:2 }}</b></td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="muted" style="text-align:center; padding:12pt;">No lines.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <table class="totals">
+      <tr>
+        <td class="k2">Total Debit</td>
+        <td class="v2">{{ total_debit|floatformat:2 }}</td>
+        <td class="k2">Total Credit</td>
+        <td class="v2">{{ total_credit|floatformat:2 }}</td>
+      </tr>
+    </table>
+
+    <div id="footer_content">
+      <table style="width:100%; border-collapse:collapse;">
+        <tr>
+          <td>This is a computer-generated receipt.</td>
+          <td style="text-align:right;">Page <pdf:pagenumber /> of <pdf:pagecount /></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

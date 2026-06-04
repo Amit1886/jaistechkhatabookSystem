@@ -1,19 +1,70 @@
-{% extends 'base.html' %}
-{% block title %}Stock Summary{% endblock %}
+{% extends "base.html" %}
 
 {% block content %}
-<h2>Stock Summary</h2>
+<div class="container-fluid py-2 unified-list-screen" data-export-scope>
+  <div class="unified-list-card">
+    <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Stock Summary</h3>
+        <div class="unified-subtitle">Current product stock snapshot</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#stockTable" data-export-name="stock_summary">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#stockTable" data-export-name="stock_summary">Excel</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#stockTable">PDF</button>
+      </div>
+    </div>
 
-<table>
-    <tr>
-        <th>Product</th>
-        <th>Stock</th>
-    </tr>
-    {% for p in products %}
-    <tr>
-        <td>{{ p.name }}</td>
-        <td>{{ p.stock|default:"0" }}</td>
-    </tr>
-    {% endfor %}
-</table>
+    <div class="unified-list-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" method="get">
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="stockQ">Search</label>
+          <input id="stockQ" name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search product name">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <a href="{% url 'reports:stock_summary' %}" class="btn unified-btn-outline">Reset</a>
+        </div>
+      </form>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" id="stockTable">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th class="text-end">Stock</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in products %}
+            <tr>
+              <td class="fw-semibold">{{ p.name }}</td>
+              <td class="text-end fw-bold">{{ p.net_stock|default:p.stock|default:"0" }}</td>
+              <td class="text-end">
+                <div class="dropdown">
+                  <button type="button" class="btn unified-btn-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown">Actions</button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{% url 'commerce:product_detail' p.id %}">View</a></li>
+                    <li><a class="dropdown-item" href="{% url 'commerce:product_edit' p.id %}">Edit</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <form method="post" action="{% url 'commerce:product_delete' p.id %}" onsubmit="return confirm('Delete this product?')" style="margin:0;">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item text-danger">Delete</button>
+                      </form>
+                    </li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-center text-muted py-4">No products found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

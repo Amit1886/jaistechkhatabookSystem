@@ -14,14 +14,16 @@
             <h4>Transaction Details</h4>
 
             <div class="header-actions">
+                <a href="{% url 'ledger:receipt' %}?reference_type=khataapp.Transaction&reference_id={{ txn.id }}" class="btn btn-edit">
+                     Receipt
+                </a>
                 <a href="{% url 'khataapp:transaction_edit' txn.id %}" class="btn btn-edit">
                      Edit
                 </a>
-                <a href="{% url 'khataapp:transaction_delete' txn.id %}"
-                   onclick="return confirm('Delete this transaction?')"
-                   class="btn btn-delete">
-                     Delete
-                </a>
+                <form method="post" action="{% url 'khataapp:transaction_delete' txn.id %}" onsubmit="return confirm('Delete this transaction?')" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-delete">Delete</button>
+                </form>
                 <a href="{% url 'khataapp:transaction_list' %}" class="btn btn-back">
                      Back
                 </a>

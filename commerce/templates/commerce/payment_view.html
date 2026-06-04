@@ -5,10 +5,20 @@
   <div class="unified-card">
     <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div>
-        <h3>Payment View</h3>
-        <div class="unified-subtitle">Payment detail page with summary and print/share actions</div>
+        <h3>Payment Details</h3>
+        <div class="unified-subtitle">{{ payment.invoice.number }} • #{{ payment.invoice.order.id }} • {{ payment.invoice.order.party.name }}</div>
       </div>
-      <a href="{% url 'commerce:payment_list' %}" class="btn unified-btn-outline">Back</a>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'commerce:payment_list' %}" class="btn unified-btn-outline">Back</a>
+        {% if erp_can_edit %}
+          <a href="{% url 'commerce:payment_edit' payment.id %}" class="btn unified-btn-outline">Edit</a>
+        {% endif %}
+        <a href="{% url 'commerce:invoice_view' payment.invoice.id %}" class="btn unified-btn-secondary">View Invoice</a>
+        <a href="{% url 'ledger:receipt' %}?reference_type=commerce.Payment&reference_id={{ payment.id }}" class="btn unified-btn-outline">Receipt</a>
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#paymentInfoTable" data-export-name="payment">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#paymentInfoTable" data-export-name="payment">Excel</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#paymentInfoTable">PDF</button>
+      </div>
     </div>
 
     <div class="unified-body">
@@ -22,37 +32,46 @@
           <div class="value">{{ payment.method|default:'-' }}</div>
         </div>
         <div class="report-summary-card">
-          <div class="label">Reference</div>
-          <div class="value">{{ payment.reference|default:'-' }}</div>
+          <div class="label">Invoice</div>
+          <div class="value">{{ payment.invoice.number }}</div>
+          <div class="meta">Status: {{ payment.invoice.status|title }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Date</div>
+          <div class="value">{{ payment.created_at|date:"d M Y H:i" }}</div>
+          <div class="meta">Ref: {{ payment.reference|default:'-' }}</div>
         </div>
       </div>
 
-      <div class="unified-grid cols-2">
-        <div class="unified-section">
-          <label class="unified-label">Invoice</label>
-          <div>{{ payment.invoice.number }}</div>
-        </div>
-        <div class="unified-section">
-          <label class="unified-label">Order</label>
-          <div>#{{ payment.invoice.order.id }}</div>
-        </div>
-        <div class="unified-section">
-          <label class="unified-label">Party</label>
-          <div>{{ payment.invoice.order.party.name }}</div>
-        </div>
-        <div class="unified-section">
-          <label class="unified-label">Date</label>
-          <div>{{ payment.created_at }}</div>
+      <div class="unified-section mt-2">
+        <h5 class="mb-2">Payment Info</h5>
+        <div class="unified-table-wrap">
+          <table class="table unified-table" id="paymentInfoTable">
+            <tbody>
+              <tr><th style="width:220px;">Invoice</th><td>{{ payment.invoice.number }}</td></tr>
+              <tr><th>Order</th><td>#{{ payment.invoice.order.id }}</td></tr>
+              <tr><th>Party</th><td>{{ payment.invoice.order.party.name }}</td></tr>
+              <tr><th>Amount</th><td>{{ payment.amount }}</td></tr>
+              <tr><th>Method</th><td>{{ payment.method|default:'-' }}</td></tr>
+              <tr><th>Reference</th><td>{{ payment.reference|default:'-' }}</td></tr>
+              <tr><th>Date</th><td>{{ payment.created_at|date:"d M Y H:i" }}</td></tr>
+              <tr><th>Notes</th><td>{{ payment.note|default:'-' }}</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <div class="unified-section">
-        <label class="unified-label">Notes</label>
-        <div>{{ payment.note|default:'-' }}</div>
-      </div>
-
-      {% include 'core/includes/document_action_bar.html' %}
+      {% url 'ledger:receipt' as receipt_base %}
+      {% with receipt_pdf_url=receipt_base|add:"?reference_type=commerce.Payment&reference_id="|add:payment.id|add:"&format=pdf" %}
+        {% include 'core/includes/document_action_bar.html' with receipt_reference_type="commerce.Payment" receipt_reference_id=payment.id doc_title="Payment Receipt" doc_pdf_url=receipt_pdf_url doc_pdf_inline_url=receipt_pdf_url|add:"&inline=1" %}
+      {% endwith %}
     </div>
   </div>
 </div>
+
+{% if auto_print %}
+<script>
+  setTimeout(function () { window.print(); }, 250);
+</script>
+{% endif %}
 {% endblock %}

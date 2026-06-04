@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}OCR Invoice Entry{% endblock %}
+
+{% block content %}
+  {% include "core/includes/messages.html" %}
+
+  <div class="container-fluid py-2 unified-screen">
+    <div class="unified-card">
+      <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <h3 class="mb-0">OCR Invoice Entry</h3>
+          <div class="unified-subtitle">Upload a purchase invoice photo and auto-create a purchase entry.</div>
+        </div>
+      </div>
+
+      <div class="unified-body">
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <h6 class="mb-2">Upload Invoice Image</h6>
+                <form method="post" enctype="multipart/form-data" class="row g-2">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="upload">
+                  <div class="col-12">
+                    {{ upload_form.image }}
+                    {% if upload_form.image.errors %}<div class="text-danger small mt-1">{{ upload_form.image.errors }}</div>{% endif %}
+                  </div>
+                  <div class="col-12 d-flex justify-content-end">
+                    <button class="btn unified-btn-primary" type="submit">Extract</button>
+                  </div>
+                </form>
+
+                <div class="small text-muted mt-2">
+                  Tip: For best results, ensure the invoice is clear and well-lit.
+                  <div class="mt-1">
+                    OCR uses OpenAI Vision. Model: <code>{{ ocr_model }}</code>.
+                    {% if not openai_key_set %}
+                      <div class="text-danger mt-1"><strong>OPENAI_API_KEY</strong> is not set, so OCR will fail. Add it in <code>.env</code> and restart.</div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <h6 class="mb-2">Preview</h6>
+                {% if parsed_preview %}
+                  <div class="mb-2">
+                    <div><strong>Supplier:</strong> {{ parsed_preview.supplier_name|default:"-" }}</div>
+                    <div><strong>Invoice No:</strong> {{ parsed_preview.invoice_no|default:"-" }}</div>
+                    <div><strong>Date:</strong> {{ parsed_preview.invoice_date|default:"-" }}</div>
+                    <div class="small text-muted"><strong>Confidence:</strong> {{ parsed_preview.confidence|default:"-" }}</div>
+                  </div>
+
+                  <div class="unified-table-wrap">
+                    <table class="table unified-table">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th class="text-end">Qty</th>
+                          <th class="text-end">Rate</th>
+                          <th class="text-end">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for it in parsed_preview.items %}
+                          <tr>
+                            <td>{{ it.name|default:it.product|default:"-" }}</td>
+                            <td class="text-end">{{ it.qty|default:"1" }}</td>
+                            <td class="text-end">{{ it.rate|default:"-" }}</td>
+                            <td class="text-end">{{ it.amount|default:"-" }}</td>
+                          </tr>
+                        {% empty %}
+                          <tr><td colspan="4" class="text-center text-muted py-3">No items parsed.</td></tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <form method="post" class="d-flex justify-content-end mt-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_purchase">
+                    <input type="hidden" name="log_id" value="{{ log_id }}">
+                    <button class="btn unified-btn-primary" type="submit">Create Purchase Entry</button>
+                  </form>
+                {% else %}
+                  <div class="text-muted">Upload an image to see the extracted invoice preview.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mt-3">
+          <div class="card-body">
+            <h6 class="mb-2">Recent OCR Logs</h6>
+            <div class="unified-table-wrap">
+              <table class="table unified-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Status</th>
+                    <th>Supplier</th>
+                    <th>Invoice No</th>
+                    <th>Error</th>
+                    <th>Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for l in recent_logs %}
+                    <tr>
+                      <td>{{ l.id }}</td>
+                      <td>
+                        {% if l.status == 'created' %}
+                          <span class="badge bg-success">Created</span>
+                        {% elif l.status == 'failed' %}
+                          <span class="badge bg-danger">Failed</span>
+                        {% else %}
+                          <span class="badge bg-info text-dark">{{ l.status }}</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ l.parsed_data.supplier_name|default:"-" }}</td>
+                      <td>{{ l.parsed_data.invoice_no|default:"-" }}</td>
+                      <td title="{{ l.error|default:'' }}">{{ l.error|default:"-"|truncatechars:80 }}</td>
+                      <td>{{ l.created_at|date:"d M Y, H:i" }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">No logs yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

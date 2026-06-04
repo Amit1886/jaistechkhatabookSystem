@@ -1,0 +1,163 @@
+{% extends "core/pc_universal.html" %}
+{% load static %}
+
+{% block title %}Auto Discount Billing{% endblock %}
+
+{% block pc_content %}
+<div class="p-4 space-y-4">
+  <div class="flex items-start justify-between gap-3 flex-wrap">
+    <div>
+      <h1 class="text-2xl font-semibold">Auto-Discount + No-Loss Billing</h1>
+      <p class="text-sm text-gray-500">Live unit price calculation with profit protection.</p>
+    </div>
+    <a class="px-3 py-2 text-sm rounded-md border bg-white" href="/superadmin/auto_discount/appsettings/1/change/" target="_blank" rel="noopener">Admin Settings</a>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="p-4 rounded-lg border bg-white">
+      <label class="text-xs text-gray-500">Customer</label>
+      <select id="adCustomer" class="form-control mt-1">
+        <option value="">Select customer</option>
+        {% for c in customers %}
+          <option value="{{ c.id }}" data-type="{{ c.customer_type }}">{{ c.name }} ({{ c.customer_type|upper }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="p-4 rounded-lg border bg-white">
+      <label class="text-xs text-gray-500">Product</label>
+      <select id="adProduct" class="form-control mt-1">
+        <option value="">Select product</option>
+        {% for p in products %}
+          <option value="{{ p.id }}">{{ p.name }} • Sell ₹{{ p.selling_price }} • Buy ₹{{ p.purchase_price }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="p-4 rounded-lg border bg-white">
+      <label class="text-xs text-gray-500">Quantity</label>
+      <input id="adQty" type="number" min="1" value="1" class="form-control mt-1" />
+      <div class="text-xs text-gray-400 mt-2">Highest matching slab will be applied automatically.</div>
+    </div>
+  </div>
+
+  <div class="bg-white border rounded-lg overflow-hidden">
+    <div class="px-4 py-3 border-b font-medium">Pricing</div>
+    <div class="p-4 grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <div class="p-3 rounded-lg border bg-white">
+        <div class="text-xs text-gray-500">Base Selling Price</div>
+        <div class="text-xl font-semibold" id="adBase">-</div>
+      </div>
+      <div class="p-3 rounded-lg border bg-white">
+        <div class="text-xs text-gray-500">Auto Discount (%)</div>
+        <div class="text-xl font-semibold" id="adDiscount">-</div>
+      </div>
+      <div class="p-3 rounded-lg border bg-white">
+        <div class="text-xs text-gray-500">Final Unit Price</div>
+        <div class="text-xl font-semibold" id="adFinal">-</div>
+      </div>
+      <div class="p-3 rounded-lg border bg-white">
+        <div class="text-xs text-gray-500">Minimum Profit Price</div>
+        <div class="text-xl font-semibold" id="adMin">-</div>
+      </div>
+      <div class="p-3 rounded-lg border bg-white">
+        <div class="text-xs text-gray-500">Profit Indicator</div>
+        <div class="text-xl font-semibold" id="adIndicator">-</div>
+        <div class="text-xs mt-1" id="adIndicatorSub"></div>
+      </div>
+    </div>
+
+    <div class="px-4 pb-4">
+      <div id="adMsg" class="hidden p-3 rounded-md border text-sm"></div>
+      <div class="text-xs text-gray-500 mt-3">
+        Loss protection is enforced on server-side. Users cannot override to sell below minimum profit price.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    function $(id) { return document.getElementById(id); }
+
+    const customerEl = $("adCustomer");
+    const productEl = $("adProduct");
+    const qtyEl = $("adQty");
+
+    const baseEl = $("adBase");
+    const discountEl = $("adDiscount");
+    const finalEl = $("adFinal");
+    const minEl = $("adMin");
+    const indicatorEl = $("adIndicator");
+    const indicatorSubEl = $("adIndicatorSub");
+    const msgEl = $("adMsg");
+
+    function setMsg(text, variant) {
+      if (!text) {
+        msgEl.classList.add("hidden");
+        msgEl.textContent = "";
+        msgEl.className = "hidden p-3 rounded-md border text-sm";
+        return;
+      }
+      msgEl.classList.remove("hidden");
+      msgEl.textContent = text;
+      msgEl.className = "p-3 rounded-md border text-sm " + (variant || "");
+    }
+
+    async function recalc() {
+      const customerId = customerEl.value;
+      const productId = productEl.value;
+      const qty = parseInt(qtyEl.value || "0", 10) || 0;
+
+      if (!customerId || !productId || qty <= 0) {
+        baseEl.textContent = "-";
+        discountEl.textContent = "-";
+        finalEl.textContent = "-";
+        minEl.textContent = "-";
+        indicatorEl.textContent = "-";
+        indicatorSubEl.textContent = "";
+        setMsg("", "");
+        return;
+      }
+
+      const url = `/ajax/calculate-discount/?product_id=${encodeURIComponent(productId)}&qty=${encodeURIComponent(qty)}&customer_id=${encodeURIComponent(customerId)}`;
+      const res = await fetch(url, { headers: { "Accept": "application/json" } });
+      const data = await res.json();
+      if (!data || !data.ok) {
+        setMsg("Failed to calculate discount. Please try again.", "bg-red-50 text-red-700 border-red-200");
+        return;
+      }
+
+      baseEl.textContent = `₹${data.base_selling_price}`;
+      discountEl.textContent = `${data.applied_discount}%`;
+      finalEl.textContent = `₹${data.final_price}`;
+      minEl.textContent = `₹${data.minimum_profit_price}`;
+
+      if (data.profit_safe) {
+        indicatorEl.textContent = data.near_limit ? "Near limit" : "Safe";
+        indicatorEl.className = "text-xl font-semibold " + (data.near_limit ? "text-yellow-600" : "text-green-600");
+        indicatorSubEl.textContent = data.near_limit ? "Profit margin is close to minimum." : "Profit is protected.";
+        indicatorSubEl.className = "text-xs mt-1 " + (data.near_limit ? "text-yellow-700" : "text-green-700");
+      } else {
+        indicatorEl.textContent = "Blocked";
+        indicatorEl.className = "text-xl font-semibold text-red-600";
+        indicatorSubEl.textContent = "Selling below minimum profit price is not allowed.";
+        indicatorSubEl.className = "text-xs mt-1 text-red-700";
+      }
+
+      if (data.is_adjusted) {
+        setMsg("Discount auto-adjusted to prevent loss.", "bg-yellow-50 text-yellow-800 border-yellow-200");
+      } else {
+        setMsg("", "");
+      }
+    }
+
+    customerEl.addEventListener("change", recalc);
+    productEl.addEventListener("change", recalc);
+    qtyEl.addEventListener("input", recalc);
+
+    recalc();
+  })();
+</script>
+{% endblock %}
+

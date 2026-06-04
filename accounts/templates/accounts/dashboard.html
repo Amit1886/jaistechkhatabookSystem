@@ -7,118 +7,12 @@
 <h1 class="text-2xl font-bold"></h1>
 <div class="dashboard-wrap">
 
-  <!-- HEADER -->
-<div class="page-head-wrapper">
-  <div class="page-head">
-
-    <!-- LEFT TEXT -->
-    <div class="page-head-left">
-      <h1>{{ greeting }}</h1>
-      <div class="muted-text">
-        <strong>{{ profile.full_name|default:profile.user.username }}</strong>
-      </div>
-    </div>
-
-    <!-- RIGHT ' BUTTONS -->
-    <div class="page-head-right">
-      <div class="dashboard-actions">
-        {% feature_allowed 'billing.invoices' as trans_allowed %}
-        <a href="{% if trans_allowed %}{% url 'khataapp:add_transaction' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
-           class="action-btn primary {% if not trans_allowed %}locked-feature{% endif %}"
-           {% if not trans_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
-          <i class="fa fa-plus-circle"></i> Add Transaction
-        </a>
-
-        {% feature_allowed 'commerce.suppliers' as party_allowed %}
-        <a href="{% if party_allowed %}{% url 'khataapp:add_party' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
-           class="action-btn danger {% if not party_allowed %}locked-feature{% endif %}"
-           {% if not party_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
-          <i class="fa fa-user-plus"></i> Add Party
-        </a>
-
-        {% feature_allowed 'settings.advanced' as settings_allowed %}
-        <a href="{% if settings_allowed %}{% url 'core_settings:settings_center' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
-           class="action-btn settings-btn {% if not settings_allowed %}locked-feature{% endif %}"
-           {% if not settings_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
-          <i class="fa fa-cog"></i> Settings
-        </a>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-
-<!-- Dashboard Slider Buttons -->
-<div class="smart-card smart-card-wide">
-  <div class="smart-card-header">
-    <div>
-      <h3>Quick Centers</h3>
-      <p>Jump to settings, profile, upgrades, and usage.</p>
-    </div>
-  </div>
-  <div class="quick-slider">
-    {% feature_allowed 'settings.advanced' as settings_allowed %}
-    <a href="{% if settings_allowed %}{% url 'core_settings:settings_center' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
-       class="quick-slide {% if not settings_allowed %}locked-feature{% endif %}"
-       {% if not settings_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
-       Settings Center
-    </a>
-    <a href="{% url 'accounts:edit_profile' %}" class="quick-slide">
-       Profile Center
-    </a>
-    <a href="{% url 'billing:upgrade_plan' %}" class="quick-slide">
-      Upgrade Plan
-    </a>
-    <a href="{% url 'billing:billing_history' %}" class="quick-slide">
-      Billing History
-    </a>
-    {% if request.user.is_staff or request.user.is_superuser %}
-    <a href="{% url 'khataapp:field_agent_list' %}"
-       class="quick-slide {% if not feature_access|get_item:"field.agents" %}locked-feature{% endif %}"
-       data-upgrade-url="{% url 'billing:upgrade_plan' %}">
-       Field Agents
-    </a>
-    {% endif %}
-    <a href="{% url 'billing:plan_management' %}"
-       class="quick-slide {% if not feature_access|get_item:"reports.advanced" %}locked-feature{% endif %}"
-       data-upgrade-url="{% url 'billing:upgrade_plan' %}">
-       Usage Report
-    </a>
-  </div>
-</div>
-
-<!-- Plan & Usage Cards -->
-<div class="summary-grid">
-  <div class="summary-card status-card">
-    <div class="title">Current Plan</div>
-    <div class="value">{{ subscription.plan.name|default:"Free" }}</div>
-  </div>
-  <div class="summary-card status-card">
-    <div class="title">Locked Features</div>
-    <div class="value">{{ locked_features_count|default:"0" }}</div>
-  </div>
-  <div class="summary-card status-card">
-    <div class="title">Subscription Expiry</div>
-    <div class="value">
-      {% if subscription and subscription.end_date %}
-        {{ subscription.end_date|date:"Y-m-d" }}
-      {% else %}
-        
-      {% endif %}
-    </div>
-  </div>
-  <div class="summary-card status-card">
-    <div class="title">Usage vs Limit</div>
-    <div class="value">{{ usage_summary.usage }}/{{ usage_summary.limit }}</div>
-  </div>
-</div>
-
   <!-- PROFILE CARD -->
-<div class="profile-card" style="margin-top:18px;">
+<div class="profile-card profile-card-first">
 
   <!-- LEFT INFO -->
   <div class="profile-info">
+    <div class="profile-greeting">{{ greeting }}</div>
     <h2 class="profile-name">
       {{ profile.full_name|default:request.user.username }}
     </h2>
@@ -153,6 +47,515 @@
     </a>
   </div>
 
+</div>
+
+<!-- Plan & Usage Cards -->
+<div class="summary-grid plan-usage-row">
+  <div class="summary-card status-card">
+    <div class="title">Current Plan</div>
+    <div class="value">{{ subscription.plan.name|default:"Free" }}</div>
+  </div>
+  <div class="summary-card status-card">
+    <div class="title">Locked Features</div>
+    <div class="value">{{ locked_features_count|default:"0" }}</div>
+  </div>
+  <div class="summary-card status-card">
+    <div class="title">Subscription Expiry</div>
+    <div class="value">
+      {% if subscription and subscription.end_date %}
+        {{ subscription.end_date|date:"Y-m-d" }}
+      {% else %}
+        
+      {% endif %}
+    </div>
+  </div>
+  <div class="summary-card status-card">
+    <div class="title">Usage vs Limit</div>
+    <div class="value">{{ usage_summary.usage }}/{{ usage_summary.limit }}</div>
+  </div>
+</div>
+
+  <div class="summary-grid settings-status-row">
+    <div class="summary-card status-card">
+      <div class="title">Company Config Status</div>
+      <div class="value">{{ settings_status_cards.company_config_status|default:"Missing" }}</div>
+    </div>
+    <div class="summary-card status-card">
+      <div class="title">Tax Setup Status</div>
+      <div class="value">{{ settings_status_cards.tax_setup_status|default:"Missing" }}</div>
+    </div>
+    <div class="summary-card status-card">
+      <div class="title">Printer Ready Status</div>
+      <div class="value">{{ settings_status_cards.printer_ready_status|default:"Not Ready" }}</div>
+    </div>
+    <div class="summary-card status-card">
+      <div class="title">WhatsApp Connected</div>
+      <div class="value">{{ settings_status_cards.whatsapp_connected_status|default:"Not Connected" }}</div>
+    </div>
+  </div>
+
+  <!-- Summary row -->
+  <div class="summary-grid balance-summary-row">
+    <div class="summary-card">
+      <div class="title">Total Credit</div>
+      <div class="value" style="color: #15803d">{{ total_credit|default:"0" }}</div>
+    </div>
+    <div class="summary-card">
+      <div class="title">Total Debit</div>
+      <div class="value" style="color:#dc2626">{{ total_debit|default:"0" }}</div>
+    </div>
+    <div class="summary-card">
+      <div class="title">Net Balance</div>
+      <div class="value" style="color:#075985">{{ net_balance|default:"0" }}</div>
+    </div>
+    {% if loyalty_account %}
+      <div class="summary-card loyalty-card">
+        <div class="title">
+          <i class="fas fa-star"></i> Loyalty Points
+        </div>
+        <div class="value" style="color:#f59e0b">{{ loyalty_account.available_points }}</div>
+        <div class="loyalty-tier">
+          {% if loyalty_account.current_tier %}
+            <span class="tier-badge {{ loyalty_account.current_tier.name }}">{{ loyalty_account.current_tier.display_name }}</span>
+          {% else %}
+            <span class="tier-badge bronze">Bronze</span>
+          {% endif %}
+        </div>
+        <a href="{% url 'accounts:loyalty_dashboard' %}" class="loyalty-link">View Details</a>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if is_demo_test3_dashboard and demo_output_state %}
+  <!-- Demo Test 3 Output Preview -->
+  <div class="smart-card smart-card-wide" style="margin-top: 16px;">
+    <div class="smart-card-header" style="justify-content: space-between; align-items: center;">
+      <div>
+        <h3>Demo Test 3 - Sample Output</h3>
+        <p class="muted-text mb-0">
+          Ye sirf demo/sample result hai. Isse aap dekh sakte hain ki invoice, payment, courier, marketing aur Retail OS modules output kaise dikhayenge.
+        </p>
+      </div>
+      <a class="action-btn primary" href="/addons/demo_center/user-demo/">
+        View Full Demo
+      </a>
+    </div>
+
+    <div class="summary-grid" style="margin-top: 12px;">
+      {% for card in demo_output_state.output_demo.summary_cards %}
+        <div class="summary-card status-card">
+          <div class="title">{{ card.label }}</div>
+          <div class="value">{{ card.value }}</div>
+          <div class="small text-muted">{{ card.hint }}</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-lg-6">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Demo Module</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in demo_output_state.output_demo.business_outputs %}
+                <tr>
+                  <td>
+                    <strong>{{ item.name }}</strong>
+                    <div class="small text-muted">{{ item.detail }}</div>
+                  </td>
+                  <td><span class="badge bg-success">{{ item.status }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Retail OS Module</th>
+                <th class="text-end">Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in demo_output_state.output_demo.retail_os_outputs %}
+                <tr>
+                  <td>
+                    <strong>{{ item.name }}</strong>
+                    <div class="small text-muted">{{ item.detail }}</div>
+                  </td>
+                  <td class="text-end fw-semibold">{{ item.value }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="small text-muted mt-2">
+          Agar count 0 hai, iska matlab us module ka demo data abhi seed/register nahi hua hai.
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- HEADER -->
+<div class="page-head-wrapper">
+  <div class="page-head">
+
+    <!-- RIGHT ' BUTTONS -->
+    <div class="page-head-right">
+      <div class="dashboard-actions">
+        {% feature_allowed 'billing.invoices' as trans_allowed %}
+        <a href="{% if trans_allowed %}{% url 'khataapp:add_transaction' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+           class="action-btn primary {% if not trans_allowed %}locked-feature{% endif %}"
+           {% if not trans_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+          <span class="action-visual"><i class="bi bi-plus-circle"></i></span>
+          <span>Add Transaction</span>
+        </a>
+
+        {% feature_allowed 'commerce.orders' as orders_allowed %}
+        <a href="{% if orders_allowed %}{% url 'commerce:add_order' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+           class="action-btn primary {% if not orders_allowed %}locked-feature{% endif %}"
+           {% if not orders_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+          <span class="action-visual"><i class="bi bi-bag-check"></i></span>
+          <span>Add Order</span>
+        </a>
+
+        <a href="{% if orders_allowed %}{% url 'commerce:sales_voucher_quick_create' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+           class="action-btn success {% if not orders_allowed %}locked-feature{% endif %}"
+           {% if not orders_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+          <span class="action-visual"><i class="bi bi-journal-text"></i></span>
+          <span>Create Voucher</span>
+        </a>
+
+        {% feature_allowed 'commerce.inventory' as products_allowed %}
+        <a href="{% if products_allowed %}{% url 'commerce:add_product' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+           class="action-btn danger {% if not products_allowed %}locked-feature{% endif %}"
+           {% if not products_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+          <span class="action-visual"><i class="bi bi-box-seam"></i></span>
+          <span>Add Product</span>
+        </a>
+
+        <a href="{% if trans_allowed %}{% url 'commerce:add_payment' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+           class="action-btn warning {% if not trans_allowed %}locked-feature{% endif %}"
+           {% if not trans_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+          <span class="action-visual"><i class="bi bi-cash-coin"></i></span>
+          <span>Add Payment</span>
+        </a>
+
+        {% feature_allowed 'commerce.suppliers' as party_allowed %}
+        <a href="{% if party_allowed %}{% url 'khataapp:add_party' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+           class="action-btn danger {% if not party_allowed %}locked-feature{% endif %}"
+           {% if not party_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+          <span class="action-visual"><i class="bi bi-person-plus"></i></span>
+          <span>Add Party</span>
+        </a>
+
+        {% feature_allowed 'settings.advanced' as settings_allowed %}
+        <a href="{% if settings_allowed %}{% url 'core_settings:settings_center' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+           class="action-btn settings-btn {% if not settings_allowed %}locked-feature{% endif %}"
+           {% if not settings_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+          <span class="action-visual"><i class="bi bi-gear"></i></span>
+          <span>Settings</span>
+        </a>
+
+        {% if switch_vendor_dashboard_url %}
+        <a href="{{ switch_vendor_dashboard_url }}" class="action-btn primary">
+          <span class="action-visual"><i class="bi bi-shop-window"></i></span>
+          <span>E-commerce Dashboard</span>
+        </a>
+        {% endif %}
+        {% if switch_store_url %}
+        <a href="{{ switch_store_url }}" class="action-btn success">
+          <span class="action-visual"><i class="bi bi-store"></i></span>
+          <span>Open Storefront</span>
+        </a>
+        {% endif %}
+        <a href="{% url 'commerce:coupon_list' %}" class="action-btn warning">
+          <span class="action-visual"><i class="bi bi-tags"></i></span>
+          <span>Coupons</span>
+        </a>
+        <a href="{% url 'selfcheckout:kiosk' %}" class="action-btn success">
+          <span class="action-visual"><i class="bi bi-upc-scan"></i></span>
+          <span>Self Checkout</span>
+        </a>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+{% if active_festival_campaign %}
+<!-- Smart BI: Festival Sale Banner -->
+<div class="smart-card smart-card-wide">
+  <div class="smart-card-header">
+    <div>
+      <h3>Festival Sale Mode: {{ active_festival_campaign.name }}</h3>
+      <p class="muted-text mb-0">
+        {% if active_festival_campaign.discount_type == "percentage" %}
+          {{ active_festival_campaign.discount_value }}% OFF
+        {% else %}
+          ₹{{ active_festival_campaign.discount_value }} OFF
+        {% endif %}
+        • {{ active_festival_campaign.start_date }} to {{ active_festival_campaign.end_date }}
+      </p>
+    </div>
+  </div>
+  <div class="p-3">
+    {% if active_festival_campaign.banner_image %}
+      <img src="{{ active_festival_campaign.banner_image.url }}" alt="{{ active_festival_campaign.name }}" style="width:100%;max-height:220px;object-fit:cover;border-radius:14px;">
+    {% else %}
+      <div class="alert alert-success mb-0">Festival discounts are automatically applied on eligible products.</div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if business_health %}
+<!-- Smart BI: Business Health Meter -->
+<div class="smart-card smart-card-wide">
+  <div class="smart-card-header" style="justify-content: space-between; align-items: center;">
+    <div>
+      <h3>Business Health: {{ business_health.health_score }} ({{ business_health_level.label }})</h3>
+      <p class="muted-text mb-0">
+        Sales ₹{{ business_health.total_sales }} • Profit ₹{{ business_health.total_profit }} • Expense ₹{{ business_health.total_expense }}
+      </p>
+    </div>
+    <a class="action-btn primary" href="{% url 'smart_bi:business_health_dashboard' %}">View Analytics</a>
+  </div>
+  <div class="p-3">
+    <div class="progress" style="height: 10px;">
+      <div class="progress-bar bg-{{ business_health_level.css_class }}" role="progressbar" style="width: {{ business_health.health_score }}%;" aria-valuenow="{{ business_health.health_score }}" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <div class="d-flex justify-content-between small text-muted mt-2">
+      <span>Outstanding: ₹{{ business_health.outstanding_due }}</span>
+      <span>Stock: ₹{{ business_health.stock_value }}</span>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if duplicate_invoice_alerts %}
+<!-- Smart BI: Duplicate Invoice Alerts -->
+<div class="smart-card smart-card-wide">
+  <div class="smart-card-header" style="justify-content: space-between; align-items: center;">
+    <div>
+      <h3>Duplicate Invoice Alerts</h3>
+      <p class="muted-text mb-0">Recent possible duplicates detected during invoice creation.</p>
+    </div>
+    <a class="action-btn warning" href="{% url 'smart_bi:duplicate_invoice_report' %}">View Report</a>
+  </div>
+  <div class="p-3">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Invoice</th>
+            <th>Customer</th>
+            <th class="text-end">Similarity</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in duplicate_invoice_alerts %}
+            <tr>
+              <td class="fw-semibold">{{ log.invoice.number }}</td>
+              <td class="text-muted">{{ log.invoice.order.party.name }}</td>
+              <td class="text-end fw-semibold">{{ log.similarity_score }}%</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'commerce:invoice_view' log.invoice.id %}" target="_blank" rel="noopener">View</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Dashboard Slider Buttons -->
+<div class="smart-card smart-card-wide">
+  <div class="smart-card-header">
+    <div>
+      <h3>Quick Centers</h3>
+      <p>Jump to settings, profile, upgrades, and usage.</p>
+    </div>
+  </div>
+  <div class="quick-slider">
+    {% feature_allowed 'settings.advanced' as settings_allowed %}
+    <a href="{% if settings_allowed %}{% url 'core_settings:settings_center' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+       class="quick-slide {% if not settings_allowed %}locked-feature{% endif %}"
+       {% if not settings_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+       <span class="quick-slide-icon"><i class="bi bi-gear-fill"></i></span>
+       <span class="quick-slide-label">Settings Center</span>
+    </a>
+    <a href="{% url 'accounts:edit_profile' %}" class="quick-slide">
+       <span class="quick-slide-icon"><i class="bi bi-person-badge-fill"></i></span>
+       <span class="quick-slide-label">Profile Center</span>
+    </a>
+    <a href="{% url 'whatsapp:control_center' %}" class="quick-slide">
+      <span class="quick-slide-icon"><i class="bi bi-whatsapp"></i></span>
+      <span class="quick-slide-label">WhatsApp Hub</span>
+    </a>
+    <a href="{% url 'ai_insights:dashboard' %}" class="quick-slide">
+      <span class="quick-slide-icon"><i class="bi bi-cpu-fill"></i></span>
+      <span class="quick-slide-label">AI Insights</span>
+    </a>
+    <a href="{% url 'billing:upgrade_plan' %}" class="quick-slide">
+      <span class="quick-slide-icon"><i class="bi bi-rocket-takeoff-fill"></i></span>
+      <span class="quick-slide-label">Upgrade Plan</span>
+    </a>
+    <a href="{% url 'billing:billing_history' %}" class="quick-slide">
+      <span class="quick-slide-icon"><i class="bi bi-receipt-cutoff"></i></span>
+      <span class="quick-slide-label">Billing History</span>
+    </a>
+    <a href="{% url 'khataapp:transaction_list' %}" class="quick-slide">
+       <span class="quick-slide-icon"><i class="bi bi-arrow-left-right"></i></span>
+       <span class="quick-slide-label">Transactions</span>
+    </a>
+    <a href="{% url 'report:all_transactions' %}"
+       class="quick-slide {% if not feature_access|get_item:"reports.advanced" %}locked-feature{% endif %}"
+       {% if not feature_access|get_item:"reports.advanced" %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+       <span class="quick-slide-icon"><i class="bi bi-file-earmark-bar-graph-fill"></i></span>
+       <span class="quick-slide-label">Transactions Report</span>
+    </a>
+    {% if request.user.is_staff or request.user.is_superuser %}
+    <a href="{% url 'khataapp:agents_home' %}"
+       class="quick-slide {% if not feature_access|get_item:"field.agents" %}locked-feature{% endif %}"
+       data-upgrade-url="{% url 'billing:upgrade_plan' %}">
+       <span class="quick-slide-icon"><i class="bi bi-people-fill"></i></span>
+       <span class="quick-slide-label">Field Agents</span>
+    </a>
+    {% endif %}
+    <a href="{% url 'billing:plan_management' %}"
+       class="quick-slide {% if not feature_access|get_item:"reports.advanced" %}locked-feature{% endif %}"
+       data-upgrade-url="{% url 'billing:upgrade_plan' %}">
+       <span class="quick-slide-icon"><i class="bi bi-activity"></i></span>
+       <span class="quick-slide-label">Usage Report</span>
+    </a>
+  </div>
+</div>
+
+<!-- Premium Services Slider -->
+<div class="smart-card smart-card-wide" style="margin-top: 16px;">
+  <div class="smart-card-header">
+    <div>
+      <h3>Premium Services</h3>
+      <p>Advanced features to grow your business.</p>
+    </div>
+  </div>
+  <div class="quick-slider">
+    <!-- Trial Balance -->
+    {% feature_allowed 'reports.advanced' as trial_balance_allowed %}
+    {% if trial_balance_allowed %}
+      {% if subscription.plan.name == "Free" or subscription.plan.price_monthly == 0 %}
+        <div class="quick-slide" onclick="window.location.href='{% url 'billing:upgrade_plan' %}'" style="cursor:pointer;">
+          <span style="font-size: 20px;">📊🔒</span>
+          <span class="quick-slide-icon"><i class="bi bi-bar-chart-line-fill"></i></span>
+          <strong class="quick-slide-label">Trial Balance</strong>
+          <p class="quick-slide-caption">Upgrade Required</p>
+        </div>
+      {% else %}
+        <a href="{% url 'reports:erp_trial_balance' %}" class="quick-slide">
+          <span style="font-size: 20px;">📊</span>
+          <span class="quick-slide-icon"><i class="bi bi-bar-chart-line-fill"></i></span>
+          <strong class="quick-slide-label">Trial Balance</strong>
+          <p class="quick-slide-caption">View Report</p>
+        </a>
+      {% endif %}
+    {% endif %}
+
+    <!-- POS Mode -->
+    {% feature_allowed 'commerce.orders' as pos_allowed %}
+    {% if pos_allowed %}
+      {% if subscription.plan.name == "Free" or subscription.plan.price_monthly == 0 %}
+        <div class="quick-slide" onclick="window.location.href='{% url 'billing:upgrade_plan' %}'" style="cursor:pointer;">
+          <span style="font-size: 20px;">🏪🔒</span>
+          <span class="quick-slide-icon"><i class="bi bi-shop-window"></i></span>
+          <strong class="quick-slide-label">POS Mode</strong>
+          <p class="quick-slide-caption">Upgrade Required</p>
+        </div>
+      {% else %}
+        <a href="{% url 'pos-ui' %}" class="quick-slide">
+          <span style="font-size: 20px;">🏪</span>
+          <span class="quick-slide-icon"><i class="bi bi-shop-window"></i></span>
+          <strong class="quick-slide-label">POS Mode</strong>
+          <p class="quick-slide-caption">Access</p>
+        </a>
+      {% endif %}
+    {% endif %}
+
+    <!-- Reports -->
+    {% feature_allowed 'reports.advanced' as reports_allowed %}
+    {% if reports_allowed %}
+      {% if subscription.plan.name == "Free" or subscription.plan.price_monthly == 0 %}
+        <div class="quick-slide" onclick="window.location.href='{% url 'billing:upgrade_plan' %}'" style="cursor:pointer;">
+          <span style="font-size: 20px;">📈🔒</span>
+          <span class="quick-slide-icon"><i class="bi bi-graph-up-arrow"></i></span>
+          <strong class="quick-slide-label">Reports</strong>
+          <p class="quick-slide-caption">Upgrade Required</p>
+        </div>
+      {% else %}
+        <a href="{% url 'report:all_transactions' %}" class="quick-slide">
+          <span style="font-size: 20px;">📈</span>
+          <span class="quick-slide-icon"><i class="bi bi-graph-up-arrow"></i></span>
+          <strong class="quick-slide-label">Reports</strong>
+          <p class="quick-slide-caption">View All</p>
+        </a>
+      {% endif %}
+    {% endif %}
+
+    <!-- Ledger View -->
+    {% feature_allowed 'reports.advanced' as ledger_allowed %}
+    {% if ledger_allowed %}
+      {% if subscription.plan.name == "Free" or subscription.plan.price_monthly == 0 %}
+        <div class="quick-slide" onclick="window.location.href='{% url 'billing:upgrade_plan' %}'" style="cursor:pointer;">
+          <span style="font-size: 20px;">📋🔒</span>
+          <span class="quick-slide-icon"><i class="bi bi-journal-text"></i></span>
+          <strong class="quick-slide-label">Ledger View</strong>
+          <p class="quick-slide-caption">Upgrade Required</p>
+        </div>
+      {% else %}
+        <a href="{% url 'accounts:ledger_list' %}" class="quick-slide">
+          <span style="font-size: 20px;">📋</span>
+          <span class="quick-slide-icon"><i class="bi bi-journal-text"></i></span>
+          <strong class="quick-slide-label">Ledger View</strong>
+          <p class="quick-slide-caption">Access</p>
+        </a>
+      {% endif %}
+    {% endif %}
+
+    <!-- Multi Device Mode -->
+    {% feature_allowed 'advanced.api' as multi_device_allowed %}
+    {% if multi_device_allowed %}
+      {% if subscription.plan.name == "Free" or subscription.plan.price_monthly == 0 %}
+        <div class="quick-slide" onclick="window.location.href='{% url 'billing:upgrade_plan' %}'" style="cursor:pointer;">
+          <span style="font-size: 20px;">📱🔒</span>
+          <span class="quick-slide-icon"><i class="bi bi-phone-flip"></i></span>
+          <strong class="quick-slide-label">Multi Device</strong>
+          <p class="quick-slide-caption">Upgrade Required</p>
+        </div>
+      {% else %}
+        <a href="{% url 'core_settings:dashboard' %}" class="quick-slide">
+          <span style="font-size: 20px;">📱</span>
+          <span class="quick-slide-icon"><i class="bi bi-phone-flip"></i></span>
+          <strong class="quick-slide-label">Multi Device</strong>
+          <p class="quick-slide-caption">Access</p>
+        </a>
+      {% endif %}
+    {% endif %}
+  </div>
 </div>
 
 <!-- Coupon Slider -->
@@ -275,73 +678,6 @@
 </div>
 {% endif %}
 
-  <!-- Summary row -->
-  <div class="summary-grid">
-    <div class="summary-card">
-      <div class="title">Total Credit</div>
-      <div class="value" style="color: #15803d">{{ total_credit|default:"0" }}</div>
-    </div>
-    <div class="summary-card">
-      <div class="title">Total Debit</div>
-      <div class="value" style="color:#dc2626">{{ total_debit|default:"0" }}</div>
-    </div>
-    <div class="summary-card">
-      <div class="title">Net Balance</div>
-      <div class="value" style="color:#075985">{{ net_balance|default:"0" }}</div>
-    </div>
-    {% if loyalty_account %}
-      <div class="summary-card loyalty-card">
-        <div class="title">
-          <i class="fas fa-star"></i> Loyalty Points
-        </div>
-        <div class="value" style="color:#f59e0b">{{ loyalty_account.available_points }}</div>
-        <div class="loyalty-tier">
-          {% if loyalty_account.current_tier %}
-            <span class="tier-badge {{ loyalty_account.current_tier.name }}">{{ loyalty_account.current_tier.display_name }}</span>
-          {% else %}
-            <span class="tier-badge bronze">Bronze</span>
-          {% endif %}
-        </div>
-        <a href="{% url 'accounts:loyalty_dashboard' %}" class="loyalty-link">View Details</a>
-      </div>
-    {% endif %}
-  </div>
-
-  <div class="summary-grid">
-    <div class="summary-card status-card">
-      <div class="title">Company Config Status</div>
-      <div class="value">{{ settings_status_cards.company_config_status|default:"Missing" }}</div>
-    </div>
-    <div class="summary-card status-card">
-      <div class="title">Tax Setup Status</div>
-      <div class="value">{{ settings_status_cards.tax_setup_status|default:"Missing" }}</div>
-    </div>
-    <div class="summary-card status-card">
-      <div class="title">Printer Ready Status</div>
-      <div class="value">{{ settings_status_cards.printer_ready_status|default:"Not Ready" }}</div>
-    </div>
-    <div class="summary-card status-card">
-      <div class="title">WhatsApp Connected</div>
-      <div class="value">{{ settings_status_cards.whatsapp_connected_status|default:"Not Connected" }}</div>
-    </div>
-    {% if loyalty_account %}
-      <div class="summary-card loyalty-card">
-        <div class="title">
-          <i class="fas fa-star"></i> Loyalty Points
-        </div>
-        <div class="value" style="color:#f59e0b">{{ loyalty_account.available_points }}</div>
-        <div class="loyalty-tier">
-          {% if loyalty_account.current_tier %}
-            <span class="tier-badge {{ loyalty_account.current_tier.name }}">{{ loyalty_account.current_tier.display_name }}</span>
-          {% else %}
-            <span class="tier-badge bronze">Bronze</span>
-          {% endif %}
-        </div>
-        <a href="{% url 'accounts:loyalty_dashboard' %}" class="loyalty-link">View Details</a>
-      </div>
-    {% endif %}
-  </div>
-
   {% include "commerce/dashboard_ai_cards.html" %}
   {% include "commerce/dashboard_order_cards.html" %}
   {% include "accounts/loyalty_cards.html" %}
@@ -349,27 +685,47 @@
 
   <!-- Recent Parties and Transactions -->
   <div class="smart-section-grid">
-    <div class="smart-card">
+    <div class="smart-card recent-smart-card recent-parties-card" data-limited-table-card>
       <div class="smart-card-header">
-        <div>
-          <h3>Recent Parties</h3>
-          <p>Latest customers and suppliers added.</p>
+        <div class="recent-smart-title">
+          <span class="recent-smart-title-icon"><i class="bi bi-people-fill"></i></span>
+          <div>
+            <h3>Recent Parties</h3>
+            <p>Latest 12 customers and suppliers added.</p>
+          </div>
         </div>
-        <a href="{% url 'khataapp:party_list' %}" class="summary-modern-btn summary-modern-btn-ghost">View All Parties '</a>
+        <div class="recent-smart-actions">
+          <button type="button" class="summary-modern-btn summary-modern-btn-ghost recent-more-btn" data-limited-table-more>
+            <i class="bi bi-list-ul" aria-hidden="true"></i>
+            <span data-limited-table-more-label>More Details</span>
+          </button>
+          <a href="{% url 'khataapp:party_list' %}" class="summary-modern-btn summary-modern-btn-ghost">
+            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+            <span>View All Parties</span>
+          </a>
+        </div>
       </div>
 
-      <div class="smart-table-wrap">
-        <table class="smart-table">
+      <div class="smart-table-wrap recent-smart-table-wrap">
+        <table class="smart-table recent-smart-table">
           <thead>
             <tr><th>Name</th><th>Type</th><th>Grade</th><th>Created</th></tr>
           </thead>
           <tbody>
             {% for party in recent_parties %}
-            <tr>
-              <td>{{ party.name }}</td>
-              <td>{{ party.party_type|title }}</td>
-              <td>{{ party.credit_grade|default:"-" }}</td>
-              <td>{{ party.created_at|date:"Y-m-d" }}</td>
+            <tr {% if forloop.counter > 12 %}data-limited-table-extra hidden{% endif %}>
+              <td>
+                <div class="recent-party-name">
+                  <span class="recent-smart-avatar">{{ party.name|default:"P"|first|upper }}</span>
+                  <div>
+                    <strong>{{ party.name }}</strong>
+                    <span>Party account</span>
+                  </div>
+                </div>
+              </td>
+              <td><span class="recent-smart-pill">{{ party.party_type|title }}</span></td>
+              <td><span class="recent-smart-muted">{{ party.credit_grade|default:"-" }}</span></td>
+              <td><span class="recent-smart-date">{{ party.created_at|date:"Y-m-d" }}</span></td>
             </tr>
             {% empty %}
             <tr><td colspan="4" class="smart-empty">No recent parties found.</td></tr>
@@ -379,24 +735,44 @@
       </div>
     </div>
 
-    <div class="smart-card">
+    <div class="smart-card recent-smart-card recent-transactions-card" data-limited-table-card>
       <div class="smart-card-header">
-        <div>
-          <h3>Recent Transactions</h3>
-          <p>Latest cashflow activity tracked today.</p>
+        <div class="recent-smart-title">
+          <span class="recent-smart-title-icon"><i class="bi bi-cash-stack"></i></span>
+          <div>
+            <h3>Recent Transactions</h3>
+            <p>Latest 12 cashflow activities tracked today.</p>
+          </div>
         </div>
-        <a href="{% url 'khataapp:transaction_list' %}" class="summary-modern-btn summary-modern-btn-ghost">View All Transactions '</a>
+        <div class="recent-smart-actions">
+          <button type="button" class="summary-modern-btn summary-modern-btn-ghost recent-more-btn" data-limited-table-more>
+            <i class="bi bi-list-ul" aria-hidden="true"></i>
+            <span data-limited-table-more-label>More Details</span>
+          </button>
+          <a href="{% url 'khataapp:transaction_list' %}" class="summary-modern-btn summary-modern-btn-ghost">
+            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+            <span>View All Transactions</span>
+          </a>
+        </div>
       </div>
 
-      <div class="smart-table-wrap">
-        <table class="smart-table">
+      <div class="smart-table-wrap recent-smart-table-wrap">
+        <table class="smart-table recent-smart-table">
           <thead>
             <tr><th>Party</th><th>Type</th><th>Amount</th><th>Date</th><th>Notes</th></tr>
           </thead>
           <tbody>
             {% for txn in recent_transactions %}
-            <tr>
-              <td>{{ txn.party.name }}</td>
+            <tr {% if forloop.counter > 12 %}data-limited-table-extra hidden{% endif %}>
+              <td>
+                <div class="recent-party-name">
+                  <span class="recent-smart-avatar">{{ txn.party.name|default:"T"|first|upper }}</span>
+                  <div>
+                    <strong>{{ txn.party.name }}</strong>
+                    <span>Cashflow entry</span>
+                  </div>
+                </div>
+              </td>
               <td>
                 {% if txn.txn_type == 'credit' %}
                   <span class="smart-badge smart-badge-positive">Credit</span>
@@ -404,9 +780,9 @@
                   <span class="smart-badge smart-badge-negative">Debit</span>
                 {% endif %}
               </td>
-              <td>{{ txn.amount }}</td>
-              <td>{{ txn.date|date:"Y-m-d" }}</td>
-              <td>{{ txn.notes|default:"-" }}</td>
+              <td><span class="recent-smart-amount">{{ txn.amount }}</span></td>
+              <td><span class="recent-smart-date">{{ txn.date|date:"Y-m-d" }}</span></td>
+              <td><span class="recent-smart-notes">{{ txn.notes|default:"-" }}</span></td>
             </tr>
             {% empty %}
             <tr><td colspan="5" class="smart-empty">No recent transactions found.</td></tr>
@@ -419,42 +795,70 @@
 
 
 <!-- == Party Ledger Summary == -->
-<div class="smart-card smart-card-wide">
+<div class="smart-card smart-card-wide party-ledger-card" data-party-ledger-card>
   <div class="smart-card-header">
-    <div>
-      <h3>Party Ledger Summary</h3>
-      <p>Outstanding balances and ledger actions by party.</p>
+    <div class="party-ledger-title">
+      <span class="party-ledger-title-icon"><i class="bi bi-journal-check"></i></span>
+      <div>
+        <h3>Party Ledger Summary</h3>
+        <p>Latest 12 parties are shown here. Open more details for the full list.</p>
+      </div>
     </div>
-    <a href="{% url 'accounts:ledger_list' %}" class="summary-modern-btn summary-modern-btn-ghost">View All Ledger '</a>
+    <div class="party-ledger-actions">
+      <button type="button" class="summary-modern-btn summary-modern-btn-ghost party-ledger-more-btn" data-party-ledger-more>
+        <i class="bi bi-list-ul" aria-hidden="true"></i>
+        <span data-party-ledger-more-label>More Details</span>
+      </button>
+      <a href="{% url 'accounts:ledger_list' %}" class="summary-modern-btn summary-modern-btn-ghost">
+        <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+        <span>View All Ledger</span>
+      </a>
+    </div>
   </div>
 
-  <div class="smart-table-wrap">
-    <table class="smart-table">
+  <div class="smart-table-wrap party-ledger-table-wrap">
+    <table class="smart-table party-ledger-table">
       <thead>
         <tr>
           <th>S.No</th>
           <th>Party</th>
           <th>Business</th>
           <th>Mobile</th>
-          <th>Credit ()</th>
-          <th>Debit ()</th>
-          <th>Balance ()</th>
+          <th>Credit</th>
+          <th>Debit</th>
+          <th>Balance</th>
           <th class="text-center">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for card in party_cards %}
-        <tr>
-          <td>{{ forloop.counter }}</td>
-          <td>{{ card.party.name }}</td>
-          <td>{{ card.party.business_name|default:"-" }}</td>
-          <td>{{ card.party.mobile_number|default:"-" }}</td>
+        <tr {% if forloop.counter > 12 %}class="party-ledger-extra-row" data-party-ledger-extra hidden{% endif %}>
+          <td><span class="party-ledger-index">{{ forloop.counter }}</span></td>
+          <td>
+            <div class="party-ledger-party">
+              <span class="party-ledger-avatar">{{ card.party.name|default:"P"|first|upper }}</span>
+              <div>
+                <strong>{{ card.party.name }}</strong>
+                <span>Ledger account</span>
+              </div>
+            </div>
+          </td>
+          <td><span class="party-ledger-muted">{{ card.party.business_name|default:"-" }}</span></td>
+          <td><span class="party-ledger-muted">{{ card.party.mobile_number|default:"-" }}</span></td>
           <td><span class="smart-badge smart-badge-positive">{{ card.total_credit|default:"0" }}</span></td>
           <td><span class="smart-badge smart-badge-negative">{{ card.total_debit|default:"0" }}</span></td>
-          <td style="font-weight:700;">{{ card.balance }}</td>
+          <td><span class="party-ledger-balance">{{ card.balance }}</span></td>
           <td class="text-center">
-            <a href="{% url 'accounts:party_ledger' card.party.id %}" class="summary-modern-btn">View</a>
-            <a href="{% url 'accounts:party_ledger_pdf' card.party.id %}" class="summary-modern-btn summary-modern-btn-ghost">PDF</a>
+            <div class="party-ledger-row-actions">
+              <a href="{% url 'accounts:party_ledger' card.party.id %}" class="summary-modern-btn">
+                <i class="bi bi-eye" aria-hidden="true"></i>
+                <span>View</span>
+              </a>
+              <a href="{% url 'accounts:party_ledger_pdf' card.party.id %}" class="summary-modern-btn summary-modern-btn-ghost">
+                <i class="bi bi-filetype-pdf" aria-hidden="true"></i>
+                <span>PDF</span>
+              </a>
+            </div>
           </td>
         </tr>
         {% empty %}
@@ -468,31 +872,123 @@
 </div>
 <!-- == END == -->
 
-
-<div class="summary-modern-wrap">
+{% if high_due_customers and high_due_customers|length > 0 %}
+<div class="summary-modern-wrap high-due-card" data-high-due-card>
   <div class="summary-modern-header">
-    <div>
-      <h3>Today Summary</h3>
-      <p>Quick view of todays cashflow performance.</p>
+    <div class="high-due-title">
+      <span class="high-due-title-icon"><i class="bi bi-exclamation-diamond-fill"></i></span>
+      <div>
+      <h3>Customers with High Due</h3>
+      <p>Smart Khata â€” customers with pending dues and credit score</p>
+      </div>
     </div>
-    <button type="button" class="summary-modern-btn summary-modern-btn-ghost" onclick="toggleSummaryDetails()">
-      More Details -
+    <div class="high-due-actions">
+      <a href="{% url 'smart_khata:credit_score_dashboard' %}" class="summary-modern-btn summary-modern-btn-ghost">
+        <i class="bi bi-speedometer2" aria-hidden="true"></i>
+        <span>Open Credit Dashboard</span>
+      </a>
+      <div class="dropdown">
+        <button type="button" class="high-due-menu-btn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="High due options">
+          <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <button type="button" class="dropdown-item" data-high-due-toggle>
+              <i class="bi bi-eye-slash me-2" aria-hidden="true"></i>
+              <span data-high-due-toggle-label>Hide list</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="high-due-body" data-high-due-body>
+  <div class="smart-table-wrap high-due-table-wrap">
+    <table class="smart-table high-due-table">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Due</th>
+          <th>Credit Score</th>
+          <th>Last Reminder</th>
+          <th class="text-center">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in high_due_customers %}
+        {% with s=row.credit_score %}
+        <tr>
+          <td>
+            <div class="high-due-customer">
+              <span class="high-due-avatar">{{ row.party.name|default:"C"|first|upper }}</span>
+              <div>
+                <strong>{{ row.party.name }}</strong>
+                <span>Pending follow-up</span>
+              </div>
+            </div>
+          </td>
+          <td><span class="high-due-amount">{{ row.due }}</span></td>
+          <td>
+            {% if s >= 80 %}
+              <span class="smart-badge high-due-score good">{{ s }}</span>
+            {% elif s >= 60 %}
+              <span class="smart-badge high-due-score watch">{{ s }}</span>
+            {% elif s >= 40 %}
+              <span class="smart-badge high-due-score warn">{{ s }}</span>
+            {% else %}
+              <span class="smart-badge high-due-score risk">{{ s }}</span>
+            {% endif %}
+          </td>
+          <td><span class="high-due-reminder">{{ row.last_reminder_sent|date:"d M Y H:i"|default:"-" }}</span></td>
+          <td class="text-center">
+            <a href="{% url 'smart_khata:customer_profile' row.party.id %}" class="summary-modern-btn high-due-view-btn">
+              <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+              <span>View</span>
+            </a>
+          </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  </div>
+</div>
+{% endif %}
+
+
+<div class="summary-modern-wrap today-summary-card">
+  <div class="summary-modern-header">
+    <div class="dashboard-metric-title">
+      <span class="dashboard-metric-title-icon"><i class="bi bi-calendar2-check"></i></span>
+      <div>
+        <h3>Today Summary</h3>
+        <p>Quick view of today's cashflow performance.</p>
+      </div>
+    </div>
+    <button type="button" class="summary-modern-btn summary-modern-btn-ghost dashboard-metric-toggle" onclick="toggleSummaryDetails()">
+      <i class="bi bi-list-ul" aria-hidden="true"></i>
+      <span data-summary-details-label>More Details</span>
     </button>
   </div>
 
   {% if summary %}
   <div class="summary-modern-grid">
-    <div class="summary-modern-card positive">
+    <div class="summary-modern-card positive dashboard-metric-card">
+      <span class="dashboard-metric-icon"><i class="bi bi-arrow-down-left-circle"></i></span>
       <div class="label">Total Credit</div>
       <div class="value"> {{ summary.total_credit }}</div>
       <div class="meta">Received</div>
     </div>
-    <div class="summary-modern-card negative">
+    <div class="summary-modern-card negative dashboard-metric-card">
+      <span class="dashboard-metric-icon"><i class="bi bi-arrow-up-right-circle"></i></span>
       <div class="label">Total Debit</div>
       <div class="value"> {{ summary.total_debit }}</div>
       <div class="meta">Given</div>
     </div>
-    <div class="summary-modern-card accent">
+    <div class="summary-modern-card accent dashboard-metric-card">
+      <span class="dashboard-metric-icon"><i class="bi bi-wallet2"></i></span>
       <div class="label">Balance</div>
       <div class="value"> {{ summary.balance }}</div>
       <div class="meta">
@@ -515,20 +1011,17 @@
   </div>
 </div>
 
-<div class="snapshot-modern-wrap">
+<div class="snapshot-modern-wrap business-snapshot-card">
   <div class="summary-modern-header">
-    <div>
-      <h3>Today Business Snapshot</h3>
-      <p>Revenue, purchases, and cash movement at a glance.</p>
+    <div class="dashboard-metric-title">
+      <span class="dashboard-metric-title-icon"><i class="bi bi-clipboard2-pulse"></i></span>
+      <div>
+        <h3>Today Business Snapshot</h3>
+        <p>Revenue, purchases, and cash movement at a glance.</p>
+      </div>
     </div>
     <form method="get" class="snapshot-period">
       <select name="period" class="summary-modern-select" onchange="this.form.submit()" aria-label="Select period">
-
-      <form method="get" class="mb-3">
-  <div class="row g-2 align-items-center">
-    <div class="col-auto">
-      <select name="period" class="form-select" onchange="this.form.submit()" aria-label="Select period">
-
         <option value="today" {% if period == 'today' %}selected{% endif %}>Today</option>
         <option value="yesterday" {% if period == 'yesterday' %}selected{% endif %}>Yesterday</option>
         <option value="month" {% if period == 'month' %}selected{% endif %}>This Month</option>
@@ -537,37 +1030,44 @@
   </div>
 
   <div class="snapshot-modern-grid">
-    <div class="summary-modern-card positive">
+    <div class="summary-modern-card positive dashboard-metric-card">
+      <span class="dashboard-metric-icon"><i class="bi bi-bag-check"></i></span>
       <div class="label">Total Sales</div>
       <div class="value"> {{ snapshot.sales_amount }}</div>
       <div class="meta">Orders: {{ snapshot.sales_orders }}</div>
     </div>
-    <div class="summary-modern-card accent">
+    <div class="summary-modern-card accent dashboard-metric-card">
+      <span class="dashboard-metric-icon"><i class="bi bi-cart-plus"></i></span>
       <div class="label">Total Purchase</div>
       <div class="value"> {{ snapshot.purchase_amount }}</div>
       <div class="meta">Orders: {{ snapshot.purchase_orders }}</div>
     </div>
-    <div class="summary-modern-card {% if snapshot.profit_loss >= 0 %}positive{% else %}negative{% endif %}">
+    <div class="summary-modern-card {% if snapshot.profit_loss >= 0 %}positive{% else %}negative{% endif %} dashboard-metric-card">
+      <span class="dashboard-metric-icon"><i class="bi bi-graph-up-arrow"></i></span>
       <div class="label">{% if snapshot.profit_loss >= 0 %}Profit{% else %}Loss{% endif %}</div>
       <div class="value"> {{ snapshot.profit_loss }}</div>
       <div class="meta">Today</div>
     </div>
-    <div class="summary-modern-card info">
+    <div class="summary-modern-card info dashboard-metric-card">
+      <span class="dashboard-metric-icon"><i class="bi bi-cash-coin"></i></span>
       <div class="label">Payment Received</div>
       <div class="value"> {{ snapshot.payment_received }}</div>
       <div class="meta">Cash In</div>
     </div>
-    <div class="summary-modern-card warning">
+    <div class="summary-modern-card warning dashboard-metric-card">
+      <span class="dashboard-metric-icon"><i class="bi bi-credit-card-2-front"></i></span>
       <div class="label">Payment Given</div>
       <div class="value"> {{ snapshot.payment_given }}</div>
       <div class="meta">Cash Out</div>
     </div>
-    <div class="summary-modern-card positive">
+    <div class="summary-modern-card positive dashboard-metric-card">
+      <span class="dashboard-metric-icon"><i class="bi bi-inbox"></i></span>
       <div class="label">Receivable</div>
       <div class="value"> {{ snapshot.receivable_amount }}</div>
       <div class="meta">Pending Inflow</div>
     </div>
-    <div class="summary-modern-card negative">
+    <div class="summary-modern-card negative dashboard-metric-card">
+      <span class="dashboard-metric-icon"><i class="bi bi-send"></i></span>
       <div class="label">Payable</div>
       <div class="value"> {{ snapshot.payable_amount }}</div>
       <div class="meta">Pending Outflow</div>
@@ -576,18 +1076,172 @@
 
   <div class="snapshot-footer">
     <a href="{% url 'accounts:business_snapshot' %}" class="summary-modern-btn">
-      View Full Report
+      <i class="bi bi-file-earmark-bar-graph" aria-hidden="true"></i>
+      <span>View Full Report</span>
     </a>
   </div>
 </div>
 
 
   <!-- Commerce quick actions (Smart card) -->
+  <div class="smart-card smart-card-wide commerce-smart-card" id="commerceCard">
+    <div class="smart-card-header">
+      <div class="commerce-smart-title">
+        <span class="commerce-smart-title-icon" aria-hidden="true">
+          <i class="bi bi-cart3"></i>
+        </span>
+        <div>
+          <h3>Commerce</h3>
+          <p>Fast sales, billing, inventory, and expense actions.</p>
+        </div>
+      </div>
+
+      <div class="commerce-smart-actions">
+        {% feature_allowed 'commerce.orders' as commerce_orders_allowed %}
+        <a href="{% if commerce_orders_allowed %}{% url 'commerce:order_list' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+           class="summary-modern-btn summary-modern-btn-ghost {% if not commerce_orders_allowed %}locked-feature{% endif %}"
+           {% if not commerce_orders_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+          <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+          <span>Open Orders</span>
+        </a>
+
+        <button
+          type="button"
+          id="commerceSliderToggle"
+          class="summary-modern-btn summary-modern-btn-ghost"
+          onclick="toggleCommerceQuickActions()">
+          <i class="bi bi-eye-slash" aria-hidden="true"></i>
+          <span data-commerce-toggle-label>Hide Actions</span>
+        </button>
+      </div>
+    </div>
+
+    {% feature_allowed 'commerce.inventory' as commerce_inventory_allowed %}
+    {% feature_allowed 'billing.invoices' as billing_invoices_allowed %}
+
+    <div class="smart-action-grid" id="commerceQuickActionsSlider">
+      <a href="{% if commerce_inventory_allowed %}{% url 'commerce:add_product' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+         class="smart-action-btn kp-action-tile {% if not commerce_inventory_allowed %}locked-feature{% endif %}"
+         {% if not commerce_inventory_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+        <span class="commerce-action-icon"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
+        <span>Add Product</span>
+      </a>
+
+      <a href="{% if commerce_orders_allowed %}{% url 'commerce:add_order' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+         class="smart-action-btn kp-action-tile {% if not commerce_orders_allowed %}locked-feature{% endif %}"
+         {% if not commerce_orders_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+        <span class="commerce-action-icon"><i class="bi bi-bag-check" aria-hidden="true"></i></span>
+        <span>Add Order</span>
+      </a>
+
+      <a href="{% if commerce_orders_allowed %}{% url 'commerce:quotation_create' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+         class="smart-action-btn kp-action-tile {% if not commerce_orders_allowed %}locked-feature{% endif %}"
+         {% if not commerce_orders_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+        <span class="commerce-action-icon"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i></span>
+        <span>Add Quotation</span>
+      </a>
+
+      <a href="{% if commerce_orders_allowed %}{% url 'commerce:quotation_list' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+         class="smart-action-btn kp-action-tile {% if not commerce_orders_allowed %}locked-feature{% endif %}"
+         {% if not commerce_orders_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+        <span class="commerce-action-icon"><i class="bi bi-file-earmark-text" aria-hidden="true"></i></span>
+        <span>Quotations ({{ quotation_total|default:0 }})</span>
+      </a>
+
+      <a href="{% if billing_invoices_allowed %}{% url 'commerce:add_payment' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+         class="smart-action-btn kp-action-tile {% if not billing_invoices_allowed %}locked-feature{% endif %}"
+         {% if not billing_invoices_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+        <span class="commerce-action-icon"><i class="bi bi-cash-coin" aria-hidden="true"></i></span>
+        <span>Add Payment</span>
+      </a>
+
+      <a href="{% if billing_invoices_allowed %}{% url 'commerce:add_invoice' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+         class="smart-action-btn kp-action-tile {% if not billing_invoices_allowed %}locked-feature{% endif %}"
+         {% if not billing_invoices_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+        <span class="commerce-action-icon"><i class="bi bi-receipt" aria-hidden="true"></i></span>
+        <span>Add Invoice</span>
+      </a>
+
+      <a href="{% if commerce_orders_allowed %}{% url 'commerce:sales_voucher_quick_create' %}{% else %}{% url 'billing:upgrade_plan' %}{% endif %}"
+         class="smart-action-btn kp-action-tile {% if not commerce_orders_allowed %}locked-feature{% endif %}"
+         {% if not commerce_orders_allowed %}data-upgrade-url="{% url 'billing:upgrade_plan' %}"{% endif %}>
+        <span class="commerce-action-icon"><i class="bi bi-journal-text" aria-hidden="true"></i></span>
+        <span>Create Sales Voucher</span>
+      </a>
+
+      <a href="{% url 'accounts:expense_create' %}" class="smart-action-btn kp-action-tile danger">
+        <span class="commerce-action-icon"><i class="bi bi-wallet2" aria-hidden="true"></i></span>
+        <span>Add Expense</span>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    (function initCommerceQuickActions() {
+      try {
+        const key = "commerce_quick_actions_hidden";
+        const slider = document.getElementById("commerceQuickActionsSlider");
+        const btn = document.getElementById("commerceSliderToggle");
+        if (!slider || !btn) return;
+        const hidden = localStorage.getItem(key) === "1";
+        if (hidden) {
+          slider.style.display = "none";
+          setCommerceToggleButton(btn, true);
+        }
+      } catch (e) {}
+    })();
+
+    window.toggleCommerceQuickActions = function () {
+      const key = "commerce_quick_actions_hidden";
+      const slider = document.getElementById("commerceQuickActionsSlider");
+      const btn = document.getElementById("commerceSliderToggle");
+      if (!slider || !btn) return;
+
+      if (window.jQuery) {
+        const $ = window.jQuery;
+        const willShow = !$(slider).is(":visible");
+        if (willShow) $(slider).stop(true, true).slideDown(180);
+        else $(slider).stop(true, true).slideUp(180);
+        setCommerceToggleButton(btn, !willShow);
+        try {
+          localStorage.setItem(key, willShow ? "0" : "1");
+        } catch (e) {}
+        return;
+      }
+
+      const isHidden = slider.style.display === "none";
+      slider.style.display = isHidden ? "" : "none";
+      setCommerceToggleButton(btn, !isHidden);
+      try {
+        localStorage.setItem(key, isHidden ? "0" : "1");
+      } catch (e) {}
+    };
+
+    function setCommerceToggleButton(btn, isHidden) {
+      const label = btn.querySelector("[data-commerce-toggle-label]");
+      const icon = btn.querySelector("i");
+      if (label) label.textContent = isHidden ? "Show Actions" : "Hide Actions";
+      if (icon) {
+        icon.classList.toggle("bi-eye", isHidden);
+        icon.classList.toggle("bi-eye-slash", !isHidden);
+      }
+    }
+  </script>
+
+  {% comment %}
 <div class="smart-card smart-card-wide">
   <div class="smart-card-header">
     <div>
-      <h3>' Commerce</h3>
+      <h3>Commerce</h3>
       <p>Quick business actions</p>
+      <button
+        type="button"
+        id="commerceSliderToggle"
+        class="summary-modern-btn summary-modern-btn-ghost"
+        style="margin-top: 10px;"
+        onclick="toggleCommerceQuickActions()">
+        Hide Actions
+      </button>
 
   <!-- Commerce quick actions -->
 <div class="col-md-4 col-sm-6 mb-3">
@@ -636,10 +1290,10 @@
       </a>
 
     </div>
-    <a href="{% url 'commerce:order_list' %}" class="summary-modern-btn summary-modern-btn-ghost">Open Orders '</a>
+    <a href="{% url 'commerce:order_list' %}" class="summary-modern-btn summary-modern-btn-ghost">Open Orders</a>
   </div>
 
-  <div class="smart-action-grid">
+  <div class="smart-action-grid" id="commerceQuickActionsSlider">
     <a href="{% url 'commerce:add_product' %}" class="smart-action-btn">- Add Product</a>
     <a href="{% url 'commerce:add_order' %}" class="smart-action-btn">- Add Order</a>
     <a href="{% url 'commerce:add_payment' %}" class="smart-action-btn">- Add Payment</a>
@@ -648,10 +1302,213 @@
     <a href="{% url 'accounts:expense_create' %}" class="smart-action-btn danger">- Add Expense</a>
   </div>
 </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleActionMenu(menuId) {
+    const el = document.getElementById(menuId);
+    if (!el) return;
+    const isHidden = el.style.display === 'none' || !el.style.display;
+    el.style.display = isHidden ? 'block' : 'none';
+  }
+
+  (function initCommerceQuickActions() {
+    try {
+      const key = 'commerce_quick_actions_hidden';
+      const slider = document.getElementById('commerceQuickActionsSlider');
+      const btn = document.getElementById('commerceSliderToggle');
+      if (!slider || !btn) return;
+      const hidden = localStorage.getItem(key) === '1';
+      if (hidden) {
+        slider.style.display = 'none';
+        btn.textContent = 'Show Actions';
+      }
+    } catch (e) {}
+  })();
+
+  function toggleCommerceQuickActions() {
+    const key = 'commerce_quick_actions_hidden';
+    const slider = document.getElementById('commerceQuickActionsSlider');
+    const btn = document.getElementById('commerceSliderToggle');
+    if (!slider || !btn) return;
+    const isHidden = slider.style.display === 'none';
+    slider.style.display = isHidden ? '' : 'none';
+    btn.textContent = isHidden ? 'Hide Actions' : 'Show Actions';
+    try { localStorage.setItem(key, isHidden ? '0' : '1'); } catch (e) {}
+  }
+</script>
+
+  {% endcomment %}
 
 
 
 <style>
+.dashboard-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.page-head-wrapper {
+    width: 100%;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+}
+
+.page-head {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+    width: 100%;
+}
+
+.page-head-left,
+.page-head-right {
+    min-width: 0;
+}
+
+.page-head-right {
+    display: block !important;
+    width: 100%;
+    overflow: hidden;
+}
+
+.page-head-left h1 {
+    margin: 0 0 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.profile-greeting {
+    margin-bottom: 6px;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.muted-text {
+    color: #475569;
+    font-size: 13px;
+}
+
+.dashboard-actions {
+    width: 100%;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 10px;
+    align-items: stretch;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 2px 8px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+}
+
+.dashboard-actions::-webkit-scrollbar {
+    height: 6px;
+}
+
+.dashboard-actions::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.dashboard-actions .action-btn {
+    flex: 0 0 126px !important;
+    width: 126px;
+    min-height: 68px;
+    display: grid;
+    grid-template-rows: 32px auto;
+    align-items: center;
+    justify-items: center;
+    gap: 5px;
+    padding: 8px 7px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+    color: #0f172a;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.15;
+    text-align: center;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    white-space: normal;
+    scroll-snap-align: start;
+}
+
+.dashboard-actions .action-btn:hover {
+    color: #0f172a;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+}
+
+.dashboard-actions .action-visual {
+    width: 34px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(15, 118, 110, 0.16));
+    color: #1d4ed8;
+    font-size: 17px;
+}
+
+.dashboard-actions .action-btn.primary .action-visual {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(14, 165, 233, 0.14));
+    color: #1d4ed8;
+}
+
+.dashboard-actions .action-btn.success .action-visual,
+.dashboard-actions .action-btn.settings-btn .action-visual {
+    background: linear-gradient(135deg, rgba(15, 118, 110, 0.16), rgba(34, 197, 94, 0.14));
+    color: #0f766e;
+}
+
+.dashboard-actions .action-btn.danger .action-visual {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.16), rgba(236, 72, 153, 0.12));
+    color: #6d28d9;
+}
+
+.dashboard-actions .action-btn.warning .action-visual {
+    background: linear-gradient(135deg, rgba(217, 119, 6, 0.16), rgba(250, 204, 21, 0.16));
+    color: #b45309;
+}
+
+body.dark .page-head-wrapper,
+body.dark .dashboard-actions .action-btn {
+    background: #0b1220;
+    border-color: #1f2937;
+    color: #e5e7eb;
+}
+
+body.dark .dashboard-actions .action-btn:hover {
+    color: #ffffff;
+}
+
+@media (max-width: 760px) {
+    .page-head {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-actions {
+        flex-wrap: nowrap !important;
+    }
+
+    .dashboard-actions .action-btn {
+        flex-basis: 118px !important;
+        width: 118px;
+    }
+}
+
 .smart-coupon-slider {
     margin-top: 10px;
 }
@@ -909,6 +1766,198 @@ body.dark .summary-modern-details {
     background: #0f172a;
 }
 
+.today-summary-card,
+.business-snapshot-card {
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(135deg, rgba(15, 118, 110, 0.07), rgba(37, 99, 235, 0.07)),
+        #ffffff;
+}
+
+.today-summary-card::before,
+.business-snapshot-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0f766e, #0284c7, #6366f1);
+}
+
+.business-snapshot-card::before {
+    background: linear-gradient(90deg, #0284c7, #0f766e, #f59e0b);
+}
+
+.today-summary-card .summary-modern-header,
+.business-snapshot-card .summary-modern-header {
+    position: relative;
+    align-items: flex-start;
+}
+
+.dashboard-metric-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dashboard-metric-title-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 118, 110, 0.12);
+    color: #0f766e;
+    font-size: 19px;
+    box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.14);
+    flex: 0 0 auto;
+}
+
+.business-snapshot-card .dashboard-metric-title-icon {
+    background: rgba(2, 132, 199, 0.12);
+    color: #0369a1;
+    box-shadow: inset 0 0 0 1px rgba(2, 132, 199, 0.14);
+}
+
+.dashboard-metric-toggle,
+.snapshot-footer .summary-modern-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.dashboard-metric-card {
+    position: relative;
+    min-height: 106px;
+    padding: 14px 14px 14px 56px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.dashboard-metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.1);
+    border-color: rgba(15, 118, 110, 0.22);
+}
+
+.dashboard-metric-icon {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #0f172a;
+    font-size: 16px;
+}
+
+.dashboard-metric-card.positive .dashboard-metric-icon {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.dashboard-metric-card.negative .dashboard-metric-icon {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.dashboard-metric-card.accent .dashboard-metric-icon {
+    background: #ccfbf1;
+    color: #0f766e;
+}
+
+.dashboard-metric-card.info .dashboard-metric-icon {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.dashboard-metric-card.warning .dashboard-metric-icon {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.dashboard-metric-card .value {
+    font-size: 23px;
+    letter-spacing: 0;
+}
+
+.today-summary-card .summary-modern-details {
+    display: none;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.today-summary-card .summary-modern-details > div {
+    display: inline-flex;
+    margin-right: 18px;
+    gap: 6px;
+}
+
+.snapshot-period {
+    display: inline-flex;
+    align-items: center;
+}
+
+.business-snapshot-card .summary-modern-select {
+    min-height: 38px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.86);
+}
+
+.business-snapshot-card .snapshot-modern-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+body.dark .today-summary-card,
+body.dark .business-snapshot-card {
+    background:
+        linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(56, 189, 248, 0.08)),
+        #0b1220;
+}
+
+body.dark .dashboard-metric-title-icon {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+    box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.18);
+}
+
+body.dark .business-snapshot-card .dashboard-metric-title-icon {
+    background: rgba(56, 189, 248, 0.12);
+    color: #38bdf8;
+}
+
+body.dark .dashboard-metric-card,
+body.dark .today-summary-card .summary-modern-details,
+body.dark .business-snapshot-card .summary-modern-select {
+    background: rgba(15, 23, 42, 0.88);
+    border-color: #1f2937;
+}
+
+@media (max-width: 768px) {
+    .today-summary-card .summary-modern-header,
+    .business-snapshot-card .summary-modern-header {
+        align-items: stretch;
+    }
+
+    .snapshot-period,
+    .dashboard-metric-toggle {
+        width: 100%;
+    }
+
+    .business-snapshot-card .summary-modern-select {
+        width: 100%;
+    }
+}
+
 .snapshot-period {
     margin-left: auto;
 }
@@ -1003,6 +2052,178 @@ body.dark .smart-card {
     font-size: 12px;
 }
 
+.kp-smart-title-icon {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(15, 118, 110, 0.12);
+    color: #0f766e;
+    flex: 0 0 auto;
+}
+
+body.dark .kp-smart-title-icon {
+    background: rgba(34, 197, 94, 0.14);
+    color: #22c55e;
+}
+
+#commerceCard .smart-action-btn.kp-action-tile {
+    justify-content: flex-start;
+}
+
+#commerceCard .smart-action-btn.kp-action-tile i {
+    font-size: 16px;
+}
+
+.commerce-smart-card {
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(2, 132, 199, 0.08)),
+        #ffffff;
+}
+
+.commerce-smart-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0f766e, #0284c7, #22c55e);
+}
+
+.commerce-smart-card .smart-card-header {
+    position: relative;
+    align-items: flex-start;
+}
+
+.commerce-smart-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.commerce-smart-title-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 118, 110, 0.12);
+    color: #0f766e;
+    font-size: 19px;
+    box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.14);
+    flex: 0 0 auto;
+}
+
+.commerce-smart-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.commerce-smart-actions .summary-modern-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+#commerceCard .smart-action-grid {
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 12px;
+}
+
+#commerceCard .smart-action-btn.kp-action-tile {
+    min-height: 58px;
+    padding: 12px;
+    border: 1px solid rgba(15, 118, 110, 0.18);
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, 0.9);
+    color: #0f172a;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+#commerceCard .smart-action-btn.kp-action-tile:hover {
+    transform: translateY(-2px);
+    color: #0f172a;
+    border-color: rgba(15, 118, 110, 0.32);
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12);
+}
+
+#commerceCard .commerce-action-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(15, 118, 110, 0.14), rgba(2, 132, 199, 0.12));
+    color: #0f766e;
+    flex: 0 0 auto;
+}
+
+#commerceCard .smart-action-btn.kp-action-tile.danger {
+    border-color: rgba(220, 38, 38, 0.2);
+}
+
+#commerceCard .smart-action-btn.kp-action-tile.danger .commerce-action-icon {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+#commerceCard .smart-action-btn.kp-action-tile.danger:hover {
+    border-color: rgba(220, 38, 38, 0.32);
+}
+
+body.dark .commerce-smart-card {
+    background:
+        linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(56, 189, 248, 0.08)),
+        #0b1220;
+}
+
+body.dark .commerce-smart-title-icon {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+    box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.18);
+}
+
+body.dark #commerceCard .smart-action-btn.kp-action-tile {
+    background: rgba(15, 23, 42, 0.88);
+    border-color: #1f2937;
+    color: #e5e7eb;
+}
+
+body.dark #commerceCard .smart-action-btn.kp-action-tile:hover {
+    color: #ffffff;
+    border-color: rgba(34, 197, 94, 0.28);
+}
+
+@media (max-width: 768px) {
+    .commerce-smart-card .smart-card-header,
+    .commerce-smart-actions {
+        align-items: stretch;
+    }
+
+    .commerce-smart-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    #commerceCard .smart-action-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .smart-table-wrap {
     overflow: auto;
     border-radius: 12px;
@@ -1049,6 +2270,601 @@ body.dark .smart-card {
 .smart-badge-negative {
     background: #fee2e2;
     color: #b91c1c;
+}
+
+.recent-smart-card {
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(135deg, rgba(15, 118, 110, 0.07), rgba(2, 132, 199, 0.07)),
+        #ffffff;
+}
+
+.recent-smart-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0f766e, #0284c7, #6366f1);
+}
+
+.recent-smart-card .smart-card-header {
+    position: relative;
+    align-items: flex-start;
+}
+
+.recent-smart-title,
+.recent-party-name {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.recent-smart-title-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 118, 110, 0.12);
+    color: #0f766e;
+    font-size: 18px;
+    box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.14);
+    flex: 0 0 auto;
+}
+
+.recent-transactions-card .recent-smart-title-icon {
+    background: rgba(2, 132, 199, 0.12);
+    color: #0369a1;
+    box-shadow: inset 0 0 0 1px rgba(2, 132, 199, 0.14);
+}
+
+.recent-smart-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.recent-smart-actions .summary-modern-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.recent-more-btn {
+    border: 0;
+    cursor: pointer;
+}
+
+.recent-smart-table-wrap {
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.recent-smart-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.recent-smart-table thead th {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+}
+
+.recent-smart-table tbody tr {
+    transition: background 0.16s ease;
+}
+
+.recent-smart-table tbody tr:hover {
+    background: rgba(15, 118, 110, 0.06);
+}
+
+.recent-smart-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f766e, #0284c7);
+    color: #ffffff;
+    font-weight: 800;
+    flex: 0 0 auto;
+}
+
+.recent-party-name {
+    min-width: 180px;
+}
+
+.recent-party-name strong,
+.recent-party-name span {
+    display: block;
+}
+
+.recent-party-name div > span,
+.recent-smart-muted {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.recent-smart-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #075985;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.recent-smart-date {
+    color: #334155;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.recent-smart-amount {
+    color: #0f172a;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.recent-smart-notes {
+    display: -webkit-box;
+    max-width: 280px;
+    overflow: hidden;
+    color: #475569;
+    font-weight: 600;
+    line-height: 1.35;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+body.dark .recent-smart-card {
+    background:
+        linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(56, 189, 248, 0.08)),
+        #0b1220;
+}
+
+body.dark .recent-smart-title-icon {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+    box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.18);
+}
+
+body.dark .recent-transactions-card .recent-smart-title-icon {
+    background: rgba(56, 189, 248, 0.12);
+    color: #38bdf8;
+}
+
+body.dark .recent-smart-table-wrap,
+body.dark .recent-smart-table thead th {
+    background: rgba(15, 23, 42, 0.88);
+    border-color: #1f2937;
+}
+
+body.dark .recent-smart-table tbody tr:hover {
+    background: rgba(34, 197, 94, 0.08);
+}
+
+body.dark .recent-smart-date,
+body.dark .recent-smart-amount {
+    color: #e5e7eb;
+}
+
+@media (max-width: 768px) {
+    .recent-smart-card .smart-card-header,
+    .recent-smart-actions {
+        align-items: stretch;
+    }
+
+    .recent-smart-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+.party-ledger-card {
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(135deg, rgba(2, 132, 199, 0.07), rgba(15, 118, 110, 0.07)),
+        #ffffff;
+}
+
+.party-ledger-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0284c7, #0f766e, #22c55e);
+}
+
+.party-ledger-card .smart-card-header {
+    position: relative;
+    align-items: flex-start;
+}
+
+.party-ledger-title,
+.party-ledger-party {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.party-ledger-title-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(2, 132, 199, 0.12);
+    color: #0369a1;
+    font-size: 19px;
+    box-shadow: inset 0 0 0 1px rgba(2, 132, 199, 0.14);
+    flex: 0 0 auto;
+}
+
+.party-ledger-actions,
+.party-ledger-row-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.party-ledger-actions .summary-modern-btn,
+.party-ledger-row-actions .summary-modern-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.party-ledger-more-btn {
+    border: 0;
+    cursor: pointer;
+}
+
+.party-ledger-table-wrap {
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.party-ledger-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.party-ledger-table thead th {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+}
+
+.party-ledger-table tbody tr {
+    transition: background 0.16s ease;
+}
+
+.party-ledger-table tbody tr:hover {
+    background: rgba(2, 132, 199, 0.06);
+}
+
+.party-ledger-index {
+    width: 26px;
+    height: 26px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 800;
+}
+
+.party-ledger-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f766e, #0284c7);
+    color: #ffffff;
+    font-weight: 800;
+    flex: 0 0 auto;
+}
+
+.party-ledger-party {
+    min-width: 210px;
+}
+
+.party-ledger-party strong,
+.party-ledger-party span {
+    display: block;
+}
+
+.party-ledger-party div > span,
+.party-ledger-muted {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.party-ledger-balance {
+    font-weight: 900;
+    color: #0f172a;
+}
+
+body.dark .party-ledger-card {
+    background:
+        linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(34, 197, 94, 0.08)),
+        #0b1220;
+}
+
+body.dark .party-ledger-title-icon {
+    background: rgba(56, 189, 248, 0.12);
+    color: #38bdf8;
+    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.18);
+}
+
+body.dark .party-ledger-table-wrap,
+body.dark .party-ledger-table thead th {
+    background: rgba(15, 23, 42, 0.88);
+    border-color: #1f2937;
+}
+
+body.dark .party-ledger-table tbody tr:hover {
+    background: rgba(56, 189, 248, 0.08);
+}
+
+body.dark .party-ledger-index {
+    background: #111827;
+    color: #e5e7eb;
+}
+
+body.dark .party-ledger-balance {
+    color: #e5e7eb;
+}
+
+@media (max-width: 768px) {
+    .party-ledger-card .smart-card-header,
+    .party-ledger-actions {
+        align-items: stretch;
+    }
+
+    .party-ledger-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+.high-due-card {
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(37, 99, 235, 0.08)),
+        #ffffff;
+}
+
+.high-due-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0f766e, #2563eb, #f59e0b);
+}
+
+.high-due-card .summary-modern-header {
+    position: relative;
+    align-items: flex-start;
+}
+
+.high-due-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.high-due-title-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 118, 110, 0.12);
+    color: #0f766e;
+    font-size: 18px;
+    box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.14);
+}
+
+.high-due-title h3 {
+    font-size: 19px;
+}
+
+.high-due-title p {
+    font-size: 0;
+}
+
+.high-due-title p::after {
+    content: "Smart Khata - customers with pending dues and credit score";
+    font-size: 12px;
+}
+
+.high-due-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.high-due-actions .summary-modern-btn,
+.high-due-view-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.high-due-menu-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(15, 118, 110, 0.26);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.78);
+    color: #0f766e;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.high-due-menu-btn:hover {
+    background: #ecfdf5;
+}
+
+.high-due-table-wrap {
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.high-due-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.high-due-table thead th {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+}
+
+.high-due-table tbody tr {
+    transition: background 0.16s ease, transform 0.16s ease;
+}
+
+.high-due-table tbody tr:hover {
+    background: rgba(15, 118, 110, 0.06);
+}
+
+.high-due-customer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 190px;
+}
+
+.high-due-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 800;
+    flex: 0 0 auto;
+}
+
+.high-due-customer strong,
+.high-due-customer span {
+    display: block;
+}
+
+.high-due-customer div > span {
+    color: #64748b;
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+.high-due-amount {
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.high-due-score {
+    min-width: 34px;
+    display: inline-flex;
+    justify-content: center;
+}
+
+.high-due-score.good {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.high-due-score.watch {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.high-due-score.warn {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+.high-due-score.risk {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.high-due-reminder {
+    color: #64748b;
+    font-weight: 600;
+}
+
+body.dark .high-due-card {
+    background:
+        linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(96, 165, 250, 0.08)),
+        #0b1220;
+}
+
+body.dark .high-due-title-icon,
+body.dark .high-due-menu-btn {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+    border-color: rgba(34, 197, 94, 0.24);
+}
+
+body.dark .high-due-table-wrap,
+body.dark .high-due-table thead th {
+    background: rgba(15, 23, 42, 0.88);
+    border-color: #1f2937;
+}
+
+body.dark .high-due-table tbody tr:hover {
+    background: rgba(34, 197, 94, 0.08);
+}
+
+body.dark .high-due-amount {
+    color: #e5e7eb;
+}
+
+@media (max-width: 768px) {
+    .high-due-card .summary-modern-header,
+    .high-due-actions {
+        align-items: stretch;
+    }
+
+    .high-due-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
 }
 
 .smart-action-grid {
@@ -1101,17 +2917,54 @@ body.dark .smart-action-btn.danger {
 .quick-slide {
     background: #0f172a;
     color: #ffffff;
-    padding: 12px;
+    padding: 12px 14px;
     border-radius: 12px;
     text-decoration: none;
     font-weight: 600;
     text-align: center;
     box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 58px;
+    line-height: 1.15;
 }
 
 .quick-slide:hover {
     color: #ffffff;
     opacity: 0.9;
+}
+
+.quick-slide-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+    font-size: 16px;
+    flex: 0 0 auto;
+}
+
+.quick-slide-label {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.quick-slide-caption {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.quick-slide > span[style*="font-size: 20px"] {
+    display: none;
 }
 
 .locked-feature {
@@ -1341,6 +3194,36 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log("dashboard page loaded");
+
+// Protect DataTable initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Helper function to safely initialize DataTable
+    function initDataTableSafely(selector) {
+        const tables = document.querySelectorAll(selector);
+        tables.forEach(table => {
+            // Check if table has valid content
+            const tbody = table.querySelector('tbody');
+            if (tbody && tbody.children.length > 0) {
+                try {
+                    if (!$.fn.DataTable.isDataTable(table)) {
+                        $(table).DataTable({
+                            destroy: true,
+                            paging: false,
+                            searching: false,
+                            info: false,
+                            ordering: true
+                        });
+                    }
+                } catch (e) {
+                    console.warn('DataTable init failed for selector:', selector, e);
+                }
+            }
+        });
+    }
+    
+    // Initialize DataTables on smart tables
+    initDataTableSafely('.smart-table');
+});
 </script>
 
 {% endblock %}

@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: jaistech_erp
+      POSTGRES_USER: jaistech
+      POSTGRES_PASSWORD: jaistech
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  django:
+    build: ..
+    command: python manage.py runserver 0.0.0.0:8080
+    environment:
+      DATABASE_URL: postgres://jaistech:jaistech@postgres:5432/jaistech_erp
+      REDIS_URL: redis://redis:6379/0
+      DEBUG: "True"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+
+  fastapi:
+    build: ..
+    command: uvicorn fastapi_app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      DJANGO_API_BASE: http://django:8080
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      - django
+      - redis
+
+volumes:
+  postgres_data:
+

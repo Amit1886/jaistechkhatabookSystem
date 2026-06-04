@@ -1,0 +1,123 @@
+{% extends "portal/base_portal.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">Supplier Portal Dashboard</h3>
+        <div class="unified-subtitle">Purchase history, invoices, and demand trends</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if can_purchase_history %}
+          <a href="{% url 'portal:order_list' %}" class="btn unified-btn-primary">Purchase History</a>
+        {% endif %}
+        {% if can_invoices %}
+          <a href="{% url 'portal:invoice_list' %}" class="btn unified-btn-outline">Invoices</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="unified-body">
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="small text-muted">Total Purchase Orders</div>
+              <div class="display-6 fw-bold">{% if can_purchase_history %}{{ total_purchase_orders|default:"0" }}{% else %}-{% endif %}</div>
+              <div class="small text-muted">Supplier: {{ party.name }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-8">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="small text-muted mb-2">Recent Invoices</div>
+              <div class="unified-table-wrap">
+                <table class="table unified-table">
+                  <thead><tr><th>Invoice</th><th>Status</th><th class="text-end">Amount</th><th>Date</th></tr></thead>
+                  <tbody>
+                    {% if can_invoices %}
+                      {% for inv in recent_invoices %}
+                        <tr>
+                          <td><a href="{% url 'portal:invoice_detail' inv.id %}">{{ inv.number }}</a></td>
+                          <td><span class="badge bg-light text-dark">{{ inv.status }}</span></td>
+                          <td class="text-end fw-bold">{{ inv.amount }}</td>
+                          <td>{{ inv.created_at|date:"d M Y" }}</td>
+                        </tr>
+                      {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">No invoices yet.</td></tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr><td colspan="4" class="text-center text-muted">Invoice access is disabled for this portal account.</td></tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mt-1">
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="small text-muted mb-2">Products Purchased From You</div>
+              <div class="unified-table-wrap">
+                <table class="table unified-table">
+                  <thead><tr><th>Product</th><th class="text-end">Qty</th><th>Last Purchase</th></tr></thead>
+                  <tbody>
+                    {% if can_purchase_history %}
+                      {% for p in purchased_products %}
+                        <tr>
+                          <td>{{ p.product__name|default:"-" }}</td>
+                          <td class="text-end fw-bold">{{ p.total_qty|default:"0" }}</td>
+                          <td>{{ p.last_purchase|date:"d M Y" }}</td>
+                        </tr>
+                      {% empty %}
+                        <tr><td colspan="3" class="text-center text-muted">No purchase history yet.</td></tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr><td colspan="3" class="text-center text-muted">Purchase history is disabled for this portal account.</td></tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="small text-muted mb-2">Demand Trends (Last 30 days)</div>
+              <div class="unified-table-wrap">
+                <table class="table unified-table">
+                  <thead><tr><th>Product</th><th class="text-end">Qty Sold</th></tr></thead>
+                  <tbody>
+                    {% if can_demand_trends %}
+                      {% for d in demand_trends %}
+                        <tr>
+                          <td>{{ d.product__name|default:"-" }}</td>
+                          <td class="text-end fw-bold">{{ d.qty_sold|default:"0" }}</td>
+                        </tr>
+                      {% empty %}
+                        <tr><td colspan="2" class="text-center text-muted">No demand data yet.</td></tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr><td colspan="2" class="text-center text-muted">Demand trends are disabled for this portal account.</td></tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

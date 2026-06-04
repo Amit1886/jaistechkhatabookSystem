@@ -1,0 +1,96 @@
+<form method="get" id="filtersForm">
+  {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+  {% if active_sort %}<input type="hidden" name="sort" value="{{ active_sort }}">{% endif %}
+
+  <div class="fw-bold">FILTERS</div>
+  <div class="muted small mb-3">{% if total_filtered is not None %}{{ total_filtered }} products{% endif %}</div>
+
+  <div class="mb-3">
+    <div class="fw-semibold mb-2">Search</div>
+    <div class="input-group input-group-sm">
+      <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+      <input class="form-control" name="q" placeholder="Search products..." value="{{ request.GET.q }}">
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <div class="fw-semibold mb-2">Price</div>
+    <div class="row g-2">
+      <div class="col-6">
+        <input class="form-control form-control-sm" name="min_price" placeholder="Min ₹" value="{{ request.GET.min_price }}">
+      </div>
+      <div class="col-6">
+        <input class="form-control form-control-sm" name="max_price" placeholder="Max ₹" value="{{ request.GET.max_price }}">
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <div class="fw-semibold mb-2">Quick</div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-sm {% if active_tag == 'discount' %}btn-brand{% else %}btn-outline-secondary{% endif %}"
+         href="?{% if request.GET.q %}q={{ request.GET.q|urlencode }}&{% endif %}{% for c in active_categories %}category={{ c|urlencode }}&{% endfor %}{% if request.GET.min_price %}min_price={{ request.GET.min_price|urlencode }}&{% endif %}{% if request.GET.max_price %}max_price={{ request.GET.max_price|urlencode }}&{% endif %}{% if active_sort %}sort={{ active_sort|urlencode }}&{% endif %}tag=discount">
+        Discounts
+      </a>
+      <a class="btn btn-sm {% if active_tag == 'trending' %}btn-brand{% else %}btn-outline-secondary{% endif %}"
+         href="?{% if request.GET.q %}q={{ request.GET.q|urlencode }}&{% endif %}{% for c in active_categories %}category={{ c|urlencode }}&{% endfor %}{% if request.GET.min_price %}min_price={{ request.GET.min_price|urlencode }}&{% endif %}{% if request.GET.max_price %}max_price={{ request.GET.max_price|urlencode }}&{% endif %}{% if active_sort %}sort={{ active_sort|urlencode }}&{% endif %}tag=trending">
+        Trending
+      </a>
+      <a class="btn btn-sm {% if active_tag == 'top_rated' %}btn-brand{% else %}btn-outline-secondary{% endif %}"
+         href="?{% if request.GET.q %}q={{ request.GET.q|urlencode }}&{% endif %}{% for c in active_categories %}category={{ c|urlencode }}&{% endfor %}{% if request.GET.min_price %}min_price={{ request.GET.min_price|urlencode }}&{% endif %}{% if request.GET.max_price %}max_price={{ request.GET.max_price|urlencode }}&{% endif %}{% if active_sort %}sort={{ active_sort|urlencode }}&{% endif %}tag=top_rated">
+        Top rated
+      </a>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'store-home' vendor.subdomain %}">Reset</a>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="fw-semibold">Category</div>
+      <button class="btn btn-sm btn-outline-secondary" type="submit">Apply</button>
+    </div>
+    <div class="input-group input-group-sm mt-2">
+      <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+      <input class="form-control" id="catSearch" placeholder="Search category...">
+    </div>
+
+    <div class="mt-2" id="catList">
+      {% for c in categories|slice:":10" %}
+        <label class="d-flex align-items-center gap-2 py-1 cat-row" data-name="{{ c.name|lower }}">
+          <input class="form-check-input" type="checkbox" name="category" value="{{ c.slug }}" {% if c.slug in active_categories %}checked{% endif %}>
+          <span class="small">{{ c.name }}</span>
+          {% if c.product_count %}<span class="muted small ms-auto">{{ c.product_count }}</span>{% endif %}
+        </label>
+      {% endfor %}
+
+      {% if categories|length > 10 %}
+        <div class="collapse" id="moreCats">
+          {% for c in categories|slice:"10:" %}
+            <label class="d-flex align-items-center gap-2 py-1 cat-row" data-name="{{ c.name|lower }}">
+              <input class="form-check-input" type="checkbox" name="category" value="{{ c.slug }}" {% if c.slug in active_categories %}checked{% endif %}>
+              <span class="small">{{ c.name }}</span>
+              {% if c.product_count %}<span class="muted small ms-auto">{{ c.product_count }}</span>{% endif %}
+            </label>
+          {% endfor %}
+        </div>
+        <a class="small text-decoration-none" data-bs-toggle="collapse" href="#moreCats" role="button">Show More</a>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
+<script>
+  (function(){
+    const s = document.getElementById("catSearch");
+    const list = document.getElementById("catList");
+    if (!s || !list) return;
+    s.addEventListener("input", function(){
+      const q = (s.value || "").trim().toLowerCase();
+      list.querySelectorAll(".cat-row").forEach(function(row){
+        const name = (row.getAttribute("data-name") || "");
+        row.style.display = (!q || name.indexOf(q) !== -1) ? "" : "none";
+      });
+    });
+  })();
+</script>
+

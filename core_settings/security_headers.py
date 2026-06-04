@@ -15,7 +15,9 @@ class SecurityHeadersMiddleware:
         self.referrer_policy = os.getenv("REFERRER_POLICY", "strict-origin-when-cross-origin")
         self.permissions_policy = os.getenv(
             "PERMISSIONS_POLICY",
-            "camera=(), microphone=(), geolocation=(), payment=()",
+            # Default: allow microphone for same-origin so Voice Accounting works out-of-the-box.
+            # Deployments can harden this by setting PERMISSIONS_POLICY env var.
+            "camera=(), microphone=(self), geolocation=(self), payment=()",
         )
         self.coop = os.getenv("COOP", "same-origin")
         self.corp = os.getenv("CORP", "same-origin")

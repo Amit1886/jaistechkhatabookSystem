@@ -1,0 +1,241 @@
+{% extends "core/pc_universal.html" %}
+{% load static %}
+
+{% block pc_title %}Business Health Meter{% endblock %}
+
+{% block pc_content %}
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between gap-3">
+            <div>
+              <div class="text-muted small">Business Health</div>
+              <div class="display-6 fw-bold">{{ metric.health_score }}</div>
+              <span class="badge bg-{{ level.css_class }}">{{ level.label }}</span>
+            </div>
+            <div style="width: 180px; height: 110px;">
+              <canvas id="healthGauge" height="110"></canvas>
+            </div>
+          </div>
+          <hr class="my-3">
+          <div class="row g-2 small">
+            <div class="col-6 text-muted">Today's Sales</div>
+            <div class="col-6 text-end fw-semibold">₹{{ metric.total_sales }}</div>
+            <div class="col-6 text-muted">Today's Profit</div>
+            <div class="col-6 text-end fw-semibold">₹{{ metric.total_profit }}</div>
+            <div class="col-6 text-muted">Today's Expense</div>
+            <div class="col-6 text-end fw-semibold">₹{{ metric.total_expense }}</div>
+            <div class="col-6 text-muted">Outstanding Dues</div>
+            <div class="col-6 text-end fw-semibold">₹{{ metric.outstanding_due }}</div>
+            <div class="col-6 text-muted">Stock Value</div>
+            <div class="col-6 text-end fw-semibold">₹{{ metric.stock_value }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-light border mt-3 small mb-0">
+        <div class="fw-semibold mb-1">Profit Boost Tip</div>
+        <div>If a festival campaign is active, discounts can lift sales momentum. Track the weekly trend for best results.</div>
+      </div>
+
+      {% if tips %}
+      <div class="card border-0 shadow-sm mt-3">
+        <div class="card-header bg-light fw-bold">AI Advisor</div>
+        <div class="card-body">
+          <ul class="mb-0 small">
+            {% for t in tips %}
+              <li class="mb-2">
+                <div class="fw-semibold">{{ t.title }}</div>
+                <div class="text-muted">{{ t.detail }}</div>
+                {% if t.action %}
+                  <a class="small" href="{{ t.action }}">Open</a>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light fw-bold">Daily Sales Trend (Last 7 Days)</div>
+        <div class="card-body">
+          <canvas id="dailySalesChart" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mt-0">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light fw-bold">Monthly Profit</div>
+        <div class="card-body">
+          <canvas id="monthlyProfitChart" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light fw-bold">Expense vs Income (Monthly)</div>
+        <div class="card-body">
+          <canvas id="expenseIncomeChart" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light fw-bold">Inventory Turnover (Daily)</div>
+        <div class="card-body">
+          <canvas id="inventoryTurnoverChart" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light fw-bold">Outstanding Dues (Daily)</div>
+        <div class="card-body">
+          <canvas id="outstandingDuesChart" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{ series|json_script:"biSeries" }}
+  {{ monthly|json_script:"biMonthly" }}
+{% endblock %}
+
+{% block extra_js %}
+  {% if desktop_mode %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  {% else %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  {% endif %}
+
+  <script>
+    (function () {
+      const series = JSON.parse(document.getElementById("biSeries").textContent || "{}");
+      const monthly = JSON.parse(document.getElementById("biMonthly").textContent || "{}");
+
+      const score = parseInt("{{ metric.health_score|default:0 }}", 10) || 0;
+      const gaugeCtx = document.getElementById("healthGauge");
+      if (gaugeCtx && window.Chart) {
+        new Chart(gaugeCtx, {
+          type: "doughnut",
+          data: {
+            labels: ["Score", "Remaining"],
+            datasets: [{
+              data: [score, Math.max(0, 100 - score)],
+              backgroundColor: ["#0ea5e9", "#e5e7eb"],
+              borderWidth: 0,
+              cutout: "75%",
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            rotation: -90,
+            circumference: 180,
+          }
+        });
+      }
+
+      function asNums(arr) {
+        return (arr || []).map(x => parseFloat(x || "0"));
+      }
+
+      const labels = series.labels || [];
+
+      const salesCtx = document.getElementById("dailySalesChart");
+      if (salesCtx && window.Chart) {
+        new Chart(salesCtx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              label: "Sales",
+              data: asNums(series.daily_sales),
+              borderColor: "#16a34a",
+              backgroundColor: "rgba(22, 163, 74, 0.12)",
+              fill: true,
+              tension: 0.35,
+            }]
+          },
+          options: { plugins: { legend: { display: false } } }
+        });
+      }
+
+      const monthlyProfitCtx = document.getElementById("monthlyProfitChart");
+      if (monthlyProfitCtx && window.Chart) {
+        new Chart(monthlyProfitCtx, {
+          type: "bar",
+          data: {
+            labels: monthly.labels || [],
+            datasets: [{
+              label: "Profit",
+              data: asNums(monthly.profit),
+              backgroundColor: "rgba(99, 102, 241, 0.75)",
+            }]
+          },
+          options: { plugins: { legend: { display: false } } }
+        });
+      }
+
+      const expIncCtx = document.getElementById("expenseIncomeChart");
+      if (expIncCtx && window.Chart) {
+        new Chart(expIncCtx, {
+          type: "bar",
+          data: {
+            labels: monthly.labels || [],
+            datasets: [
+              { label: "Income", data: asNums(monthly.sales), backgroundColor: "rgba(14, 165, 233, 0.75)" },
+              { label: "Expense", data: asNums(monthly.expense), backgroundColor: "rgba(220, 38, 38, 0.65)" },
+            ]
+          },
+          options: { responsive: true }
+        });
+      }
+
+      const turnoverCtx = document.getElementById("inventoryTurnoverChart");
+      if (turnoverCtx && window.Chart) {
+        new Chart(turnoverCtx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              label: "Turnover",
+              data: asNums(series.daily_turnover),
+              borderColor: "#f59e0b",
+              backgroundColor: "rgba(245, 158, 11, 0.12)",
+              fill: true,
+              tension: 0.35,
+            }]
+          },
+          options: { plugins: { legend: { display: false } } }
+        });
+      }
+
+      const dueCtx = document.getElementById("outstandingDuesChart");
+      if (dueCtx && window.Chart) {
+        new Chart(dueCtx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              label: "Outstanding",
+              data: asNums(series.daily_due),
+              borderColor: "#dc2626",
+              backgroundColor: "rgba(220, 38, 38, 0.10)",
+              fill: true,
+              tension: 0.35,
+            }]
+          },
+          options: { plugins: { legend: { display: false } } }
+        });
+      }
+    })();
+  </script>
+{% endblock %}

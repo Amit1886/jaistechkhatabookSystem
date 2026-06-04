@@ -31,3 +31,21 @@ class CommissionLedgerSerializer(serializers.ModelSerializer):
     class Meta:
         model = CommissionLedger
         fields = "__all__"
+
+
+class SubUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "username",
+            "mobile",
+            "is_active",
+            "store_type",
+            "primary_role",
+            "permissions_json",
+            "parent_id",
+            "seller_id",
+        ]
+        read_only_fields = ["id", "parent_id", "seller_id"]

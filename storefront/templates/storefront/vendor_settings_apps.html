@@ -1,0 +1,301 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Apps</div>
+        <div class="va-help">Install apps to add features to your store (Shopify-style marketplace).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Shopify Connection</div>
+        <div class="va-help">Connect your Shopify store so orders/products can sync into this system.</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm btn-outline-secondary" href="/apps/" target="_blank" rel="nofollow noopener">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Apps page
+        </a>
+      </div>
+    </div>
+
+    {% if not shopify_client_configured %}
+      <div class="alert alert-warning mt-3 mb-0">
+        Shopify is not configured by admin yet. Add `SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET`, and `SHOPIFY_SCOPES` in your server settings.
+      </div>
+    {% else %}
+      {% if shopify_connection %}
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+          <div>
+            <div class="fw-semibold">Connected to: {{ shopify_connection.shop_domain }}</div>
+            <div class="va-help">Scopes: {{ shopify_connection.scope|default:"-" }}</div>
+          </div>
+          <form method="post" action="{% url 'vendor-shopify-disconnect' vendor.subdomain %}">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Disconnect Shopify?');">
+              <i class="bi bi-plug me-1"></i>Disconnect
+            </button>
+          </form>
+        </div>
+      {% else %}
+        <form class="row g-2 align-items-end mt-3" method="post" action="{% url 'vendor-shopify-connect-start' vendor.subdomain %}">
+          {% csrf_token %}
+          <div class="col-12 col-lg-7">
+            <label class="form-label va-form-label small">Shop domain</label>
+            <input class="form-control form-control-sm" name="shop_domain" placeholder="yourstore.myshopify.com" required>
+            <div class="va-help mt-1">Example: `mystore.myshopify.com`</div>
+          </div>
+          <div class="col-12 col-lg-5 d-flex justify-content-lg-end">
+            <button class="btn btn-sm btn-primary" type="submit">
+              <i class="bi bi-link-45deg me-1"></i>Connect Shopify
+            </button>
+          </div>
+        </form>
+        <div class="va-help mt-2">
+          Admin note: Shopify redirect URL must allow <code>/integrations/shopify/oauth/callback/</code>
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <div class="va-panel p-3">
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Built-in apps</div>
+        <div class="va-help">Install/enable apps for your storefront.</div>
+      </div>
+      <div class="col-12 col-lg-6 d-flex justify-content-end align-items-start gap-2">
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-settings-shipping' vendor.subdomain %}">
+          <i class="bi bi-truck me-1"></i>Shipping settings
+        </a>
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-settings-payments' vendor.subdomain %}">
+          <i class="bi bi-credit-card me-1"></i>Payments
+        </a>
+      </div>
+    </div>
+
+    <div class="table-responsive mt-3">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>App</th>
+            <th>Category</th>
+            <th>Rating</th>
+            <th>Status</th>
+            <th style="width: 340px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in apps %}
+            <tr>
+              <td class="fw-semibold">{{ a.name }}<div class="va-help">{{ a.short_description }}</div></td>
+              <td class="va-help">{{ a.category }}</td>
+              <td class="va-help">{{ a.rating }}</td>
+              <td>
+                {% if a.install and a.install.is_installed %}
+                  <span class="badge text-bg-success">Installed</span>
+                {% else %}
+                  <span class="badge text-bg-secondary">Not installed</span>
+                {% endif %}
+                {% if a.install and a.install.is_enabled %}
+                  <span class="badge text-bg-primary">Enabled</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <div class="d-flex gap-2 justify-content-end flex-wrap">
+                  {% if not a.install or not a.install.is_installed %}
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="_action" value="install">
+                      <input type="hidden" name="app_code" value="{{ a.code }}">
+                      <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-download me-1"></i>Install</button>
+                    </form>
+                  {% else %}
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="_action" value="toggle">
+                      <input type="hidden" name="app_code" value="{{ a.code }}">
+                      <button class="btn btn-sm btn-outline-secondary" type="submit">{% if a.install.is_enabled %}Disable{% else %}Enable{% endif %}</button>
+                    </form>
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="_action" value="uninstall">
+                      <input type="hidden" name="app_code" value="{{ a.code }}">
+                      <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Uninstall app?');">Uninstall</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% if a.install and a.install.is_installed %}
+              <tr>
+                <td colspan="5">
+                  <form method="post" class="row g-2 align-items-end">
+                    {% csrf_token %}
+                    <input type="hidden" name="_action" value="save_config">
+                    <input type="hidden" name="app_code" value="{{ a.code }}">
+                    <div class="col-12 col-lg-8">
+                      <label class="form-label va-form-label small">Config (JSON)</label>
+                      <textarea class="form-control form-control-sm" rows="2" name="config_json">{{ a.config_json_text }}</textarea>
+                      <div class="va-help mt-1">Example: set phone/message/text/delay_seconds etc.</div>
+                    </div>
+                    <div class="col-12 col-lg-4 d-flex justify-content-end">
+                      <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-save me-1"></i>Save config</button>
+                    </div>
+                  </form>
+                </td>
+              </tr>
+            {% endif %}
+          {% empty %}
+            <tr><td colspan="5" class="va-help">No apps found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="va-panel p-3 mt-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Recommended Shopify Apps (External)</div>
+        <div class="va-help">
+          Ye apps Shopify App Store se install hote hain. Install se pehle pricing + permissions check kar lo.
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm btn-outline-secondary" href="https://apps.shopify.com/" target="_blank" rel="nofollow noopener">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open App Store
+        </a>
+        <a class="btn btn-sm btn-outline-secondary" href="https://apps.shopify.com/categories" target="_blank" rel="nofollow noopener">
+          <i class="bi bi-grid me-1"></i>Browse Categories
+        </a>
+      </div>
+    </div>
+
+    <div class="row g-2 align-items-center mt-2">
+      <div class="col-12 col-lg-6">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input id="shopifyAppsSearch" class="form-control" placeholder="Search apps: shiprocket, reviews, chat, tracking...">
+        </div>
+      </div>
+      <div class="col-12 col-lg-6 d-flex justify-content-lg-end flex-wrap gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary active js-shopify-filter" data-filter="all">All</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary js-shopify-filter" data-filter="shipping">Shipping</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary js-shopify-filter" data-filter="marketing">Marketing</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary js-shopify-filter" data-filter="reviews">Reviews</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary js-shopify-filter" data-filter="support">Support</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary js-shopify-filter" data-filter="cro">CRO</button>
+      </div>
+    </div>
+
+    {% if shopify_categories %}
+      <div class="mt-3">
+        <div class="va-help mb-2">Quick categories</div>
+        <div class="row g-2">
+          {% for c in shopify_categories %}
+            <div class="col-12 col-md-6 col-xl-4">
+              <a class="va-panel p-3 h-100 d-block text-decoration-none js-shopify-card"
+                 href="{{ c.url }}" target="_blank" rel="nofollow noopener"
+                 data-name="{{ c.title }}" data-tags="category {{ c.tag|default:'' }}">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rounded-3 d-flex align-items-center justify-content-center"
+                       style="width:40px;height:40px;background:rgba(37,99,235,.10);color:#1d4ed8;font-weight:800;">
+                    {{ c.title|slice:":2"|upper }}
+                  </div>
+                  <div>
+                    <div class="fw-semibold">{{ c.title }}</div>
+                    <div class="va-help">{{ c.subtitle }}</div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="row g-3 mt-1" id="shopifyAppsGrid">
+      {% for a in shopify_apps %}
+        <div class="col-12 col-md-6 col-xl-4 js-shopify-card" data-name="{{ a.name }}" data-tags="{{ a.tags|join:' ' }}">
+          <div class="va-panel p-3 h-100 d-flex flex-column">
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-3 d-flex align-items-center justify-content-center"
+                   style="width:44px;height:44px;background:rgba(37,99,235,.10);color:#1d4ed8;font-weight:900;">
+                {{ a.badge|default:"AP" }}
+              </div>
+              <div>
+                <div class="fw-semibold">{{ a.name }}</div>
+                <div class="va-help">{{ a.meta }}</div>
+              </div>
+            </div>
+            <div class="va-help mt-2">{{ a.desc }}</div>
+            <div class="mt-2 d-flex flex-wrap gap-1">
+              {% for t in a.tags %}
+                <span class="badge rounded-pill text-bg-light border">{{ t|capfirst }}</span>
+              {% endfor %}
+            </div>
+            <div class="mt-auto pt-3">
+              <a class="btn btn-sm btn-outline-primary w-100" href="{{ a.url }}" target="_blank" rel="nofollow noopener">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Open on Shopify
+              </a>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12">
+          <div class="va-help">No recommendations configured.</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="va-help mt-2">
+      Tip: filter buttons use karo ya search type karo — recommended cards hide/show ho jayenge.
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const root = document.currentScript && document.currentScript.parentElement;
+      const search = document.getElementById("shopifyAppsSearch");
+      const buttons = Array.from(document.querySelectorAll(".js-shopify-filter[data-filter]"));
+      const cards = Array.from(document.querySelectorAll(".js-shopify-card"));
+      if(!search || !buttons.length || !cards.length) return;
+
+      let active = "all";
+
+      function norm(v){ return (v || "").toString().toLowerCase(); }
+      function hasFilter(tags, f){
+        if(f === "all") return true;
+        const list = norm(tags).split(/\s+/).filter(Boolean);
+        return list.indexOf(f) !== -1;
+      }
+      function apply(){
+        const q = norm(search.value).trim();
+        cards.forEach((el) => {
+          const tags = el.getAttribute("data-tags") || "";
+          const name = el.getAttribute("data-name") || "";
+          const text = el.textContent || "";
+          const okFilter = hasFilter(tags, active);
+          const okQuery = !q || norm(name).includes(q) || norm(tags).includes(q) || norm(text).includes(q);
+          el.style.display = (okFilter && okQuery) ? "" : "none";
+        });
+      }
+
+      buttons.forEach((b) => {
+        b.addEventListener("click", () => {
+          buttons.forEach((x) => x.classList.remove("active"));
+          b.classList.add("active");
+          active = b.getAttribute("data-filter") || "all";
+          apply();
+        });
+      });
+      search.addEventListener("input", apply);
+      apply();
+    })();
+  </script>
+{% endblock %}

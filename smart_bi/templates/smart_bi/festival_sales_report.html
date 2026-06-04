@@ -1,0 +1,136 @@
+{% extends "core/pc_universal.html" %}
+{% load static %}
+
+{% block pc_title %}Festival Sales Report{% endblock %}
+
+{% block pc_actions %}
+  <a class="btn btn-light fw-semibold" href="{% url 'smart_bi:festival_campaign_list' %}">Festival Campaigns</a>
+{% endblock %}
+
+{% block pc_content %}
+  <form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Campaign</label>
+      <select name="campaign_id" class="form-control" data-select2="1">
+        {% for c in campaigns %}
+          <option value="{{ c.id }}" {% if c.id == campaign.id %}selected{% endif %}>{{ c.name }} ({{ c.start_date }} → {{ c.end_date }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <button type="submit" class="btn btn-primary w-100">View Report</button>
+    </div>
+  </form>
+
+  <div class="alert alert-light border d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+      <div class="fw-bold">{{ campaign.name }}</div>
+      <div class="small text-muted">
+        {{ campaign.start_date }} to {{ campaign.end_date }} •
+        {% if campaign.discount_type == "percentage" %}{{ campaign.discount_value }}%{% else %}₹{{ campaign.discount_value }}{% endif %}
+      </div>
+    </div>
+    {% if campaign.banner_image %}
+      <img src="{{ campaign.banner_image.url }}" alt="{{ campaign.name }}" style="height:52px;width:auto;border-radius:12px;">
+    {% endif %}
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Total Festival Sales</div>
+          <div class="h4 fw-bold mb-0">₹{{ total_sales }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Total Discount Given</div>
+          <div class="h4 fw-bold mb-0">₹{{ total_discount }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Invoices</div>
+          <div class="h4 fw-bold mb-0">{{ invoice_count }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mt-3">
+    <div class="card-header bg-light fw-bold">Daily Festival Sales Trend</div>
+    <div class="card-body">
+      <canvas id="festivalSalesChart" height="120"></canvas>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mt-3">
+    <div class="card-header bg-light fw-bold">Invoices</div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Invoice</th>
+              <th>Customer</th>
+              <th>Created</th>
+              <th class="text-end">Discount</th>
+              <th class="text-end">Amount</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inv in invoices %}
+              <tr>
+                <td class="fw-semibold">{{ inv.number }}</td>
+                <td class="text-muted">{{ inv.order.party.name }}</td>
+                <td class="text-muted small">{{ inv.created_at|date:"d M Y, H:i" }}</td>
+                <td class="text-end text-success">₹{{ inv.order.festival_discount_amount|default:"0.00" }}</td>
+                <td class="text-end fw-bold">₹{{ inv.amount }}</td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-outline-primary" href="{% url 'commerce:invoice_view' inv.id %}" target="_blank" rel="noopener">View</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-center text-muted py-4">No festival invoices found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {{ chart|json_script:"festivalChart" }}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script>
+    (function () {
+      const payload = JSON.parse(document.getElementById("festivalChart").textContent || "{}");
+      const ctx = document.getElementById("festivalSalesChart");
+      if (!ctx || !window.Chart) return;
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: payload.labels || [],
+          datasets: [{
+            label: "Sales",
+            data: (payload.values || []).map(x => parseFloat(x || "0")),
+            borderColor: "#16a34a",
+            backgroundColor: "rgba(22, 163, 74, 0.12)",
+            fill: true,
+            tension: 0.35
+          }]
+        },
+        options: { plugins: { legend: { display: false } } }
+      });
+    })();
+  </script>
+{% endblock %}
+

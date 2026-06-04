@@ -1,0 +1,95 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <div class="module">
+    <h1>Desktop Logs</h1>
+
+    {% if error %}
+      <p class="errornote">{{ error }}</p>
+    {% endif %}
+
+    {% if hint %}
+      <p style="opacity:.85;max-width:900px;">{{ hint }}</p>
+    {% endif %}
+
+    {% if debug %}
+      <details style="margin:12px 0;max-width:1100px;">
+        <summary><strong>Debug info</strong></summary>
+        <pre style="margin:10px 0 0 0;border:1px solid #ddd;border-radius:6px;overflow:auto;background:#f8fafc;padding:10px;white-space:pre-wrap;word-break:break-word;">{{ debug|pprint }}</pre>
+      </details>
+    {% endif %}
+
+    <form method="get" style="margin:12px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <label for="logFile"><strong>Log file:</strong></label>
+      <select id="logFile" name="file">
+        {% for it in candidates %}
+          <option value="{{ it.value }}" {% if it.value == selected %}selected{% endif %}>{{ it.label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="button">Open</button>
+      <a class="button" href="?{% if selected %}file={{ selected|urlencode }}&{% endif %}t={{ now|date:'U' }}">Refresh</a>
+    </form>
+
+    {% if selected and selected_exists %}
+      <form method="post" style="margin:0 0 12px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        {% csrf_token %}
+        <input type="hidden" name="file" value="{{ selected }}">
+        <button
+          type="submit"
+          name="action"
+          value="clear"
+          class="button"
+          onclick="return confirm('Clear this log file now?');"
+        >
+          Clear Log
+        </button>
+        <button
+          type="submit"
+          name="action"
+          value="delete"
+          class="button"
+          style="background:#dc2626;border-color:#dc2626;color:#fff;"
+          onclick="return confirm('Delete this log file now? (It will be recreated when the app logs again)');"
+        >
+          Delete File
+        </button>
+      </form>
+    {% endif %}
+
+    {% if selected %}
+      <p style="margin:0 0 10px 0;opacity:.85;">
+        Selected: <code>{{ selected }}</code>
+        {% if selected_exists %}
+          <span style="color:#16a34a;">(exists)</span>
+          {% if selected_size_bytes %}<span> size={{ selected_size_bytes }} bytes</span>{% endif %}
+          {% if selected_mtime %}<span> modified={{ selected_mtime }}</span>{% endif %}
+        {% else %}
+          <span style="color:#dc2626;">(missing)</span>
+        {% endif %}
+      </p>
+    {% endif %}
+
+    {% if not candidates %}
+      <p>No desktop log file found on this machine yet.</p>
+      <p>Expected: <code>%LOCALAPPDATA%\JaisTechKhataBook\logs\desktop.log</code></p>
+    {% else %}
+      {% if selected and not selected_exists %}
+        <p style="margin:0 0 10px 0;opacity:.9;max-width:1000px;">
+          The selected log file is missing. Start the desktop EXE, wait 10–20 seconds, then refresh.
+          If it still stays missing, check the <em>Debug info</em> section for the exact folders being used.
+        </p>
+      {% elif selected and selected_exists and not content %}
+        <p style="margin:0 0 10px 0;opacity:.9;max-width:1000px;">
+          The log file exists but is currently empty.
+        </p>
+      {% endif %}
+      <div style="border:1px solid #d1d5db;border-radius:6px;overflow:auto;max-height:70vh;background:#ffffff;color:#111827;padding:12px;">
+        <pre style="margin:0;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;font-size:12px;line-height:1.35;">{{ content }}</pre>
+      </div>
+      <p style="margin-top:10px;opacity:.8;">
+        Showing last part of: <code>{{ selected }}</code>
+      </p>
+    {% endif %}
+  </div>
+{% endblock %}

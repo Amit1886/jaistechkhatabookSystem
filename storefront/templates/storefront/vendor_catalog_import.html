@@ -1,0 +1,31 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Catalog</div>
+        <div class="va-section-title">Import products</div>
+        <div class="va-help mt-1">Upload CSV with columns: <span class="fw-semibold">sku</span>, <span class="fw-semibold">mode</span> (include/exclude/clear)</div>
+      </div>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-catalog-edit' vendor.subdomain catalog.id %}">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="va-panel p-3">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-12 col-lg-8">
+        <label class="form-label va-form-label">CSV file</label>
+        <input class="form-control" type="file" name="file" accept=".csv" required>
+        <div class="va-help mt-2">Example row: <span class="fw-semibold">USB-CABLE-011, include</span></div>
+      </div>
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-upload me-1"></i>Import</button>
+      </div>
+    </div>
+  </form>
+{% endblock %}
+

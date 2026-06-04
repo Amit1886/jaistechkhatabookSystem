@@ -1,0 +1,119 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Company</div>
+        <div class="va-section-title">{{ company.name }}</div>
+        <div class="va-help mt-1">Members: <span class="fw-semibold">{{ members|length }}</span></div>
+      </div>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-customer-companies' vendor.subdomain %}">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+    </div>
+  </div>
+
+  <form method="post" class="va-panel p-3 mb-3">
+    {% csrf_token %}
+    <input type="hidden" name="_action" value="save_company">
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <label class="form-label va-form-label">Name</label>
+        <input class="form-control" name="name" value="{{ company.name }}" required>
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Phone</label>
+        <input class="form-control" name="phone" value="{{ company.phone }}">
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">GSTIN</label>
+        <input class="form-control" name="gstin" value="{{ company.gstin }}">
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Email</label>
+        <input class="form-control" name="email" value="{{ company.email }}">
+      </div>
+      <div class="col-12 col-lg-8">
+        <label class="form-label va-form-label">Address</label>
+        <input class="form-control" name="address" value="{{ company.address }}">
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Status</label>
+        <select class="form-select" name="is_active">
+          <option value="1" {% if company.is_active %}selected{% endif %}>Active</option>
+          <option value="0" {% if not company.is_active %}selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+      <div class="col-12 d-flex justify-content-end">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Save</button>
+      </div>
+    </div>
+  </form>
+
+  <form method="post" class="va-panel p-3 mb-3">
+    {% csrf_token %}
+    <input type="hidden" name="_action" value="add_member">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="va-section-title mb-1">Add member</div>
+        <div class="va-help">Enter customer email or mobile to link (must exist as a user).</div>
+      </div>
+      <div class="col-12 col-lg-5">
+        <label class="form-label va-form-label">Email</label>
+        <input class="form-control" name="email" placeholder="optional">
+      </div>
+      <div class="col-12 col-lg-5">
+        <label class="form-label va-form-label">Mobile</label>
+        <input class="form-control" name="mobile" placeholder="optional">
+      </div>
+      <div class="col-12 col-lg-2">
+        <label class="form-label va-form-label">Role</label>
+        <input class="form-control" name="role" placeholder="buyer">
+      </div>
+      <div class="col-12 d-flex justify-content-end">
+        <button class="btn btn-outline-primary" type="submit"><i class="bi bi-person-plus me-1"></i>Add</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="va-panel p-3">
+    <div class="va-section-title mb-2">Members</div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Mobile</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th style="width:120px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in members %}
+            <tr>
+              <td class="fw-semibold">{{ m.user.username|default:m.user.id }}</td>
+              <td class="va-help">{{ m.user.mobile|default:"-" }}</td>
+              <td class="va-help">{{ m.user.email|default:"-" }}</td>
+              <td class="va-help">{{ m.role|default:"-" }}</td>
+              <td><span class="badge {% if m.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %}">{% if m.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+              <td class="text-end">
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="_action" value="toggle_member">
+                  <input type="hidden" name="member_id" value="{{ m.id }}">
+                  <button class="btn btn-sm btn-outline-secondary" type="submit">{% if m.is_active %}Disable{% else %}Enable{% endif %}</button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="va-help">No members yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

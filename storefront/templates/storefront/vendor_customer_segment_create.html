@@ -1,0 +1,64 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Segments</div>
+        <div class="va-section-title">New segment</div>
+      </div>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-customer-segments' vendor.subdomain %}">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+    </div>
+  </div>
+
+  <form method="post" class="va-panel p-3">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-12 col-lg-8">
+        <label class="form-label va-form-label">Title</label>
+        <input class="form-control" name="title" maxlength="200" placeholder="High value customers" required>
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Status</label>
+        <select class="form-select" name="is_active">
+          <option value="1" selected>Active</option>
+          <option value="0">Inactive</option>
+        </select>
+      </div>
+
+      <div class="col-12"><div class="va-section-title mb-2">Rules</div></div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Pincode</label>
+        <input class="form-control" name="pincode" placeholder="272002">
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Min orders</label>
+        <input class="form-control" name="min_orders" placeholder="2">
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Min spent (₹)</label>
+        <input class="form-control" name="min_spent" placeholder="1000">
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Has company</label>
+        <select class="form-select" name="has_company">
+          <option value="">Any</option>
+          <option value="1">Yes</option>
+          <option value="0">No</option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label va-form-label">Notes (optional)</label>
+        <textarea class="form-control" rows="3" name="notes"></textarea>
+      </div>
+
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Create</button>
+      </div>
+    </div>
+  </form>
+{% endblock %}
+

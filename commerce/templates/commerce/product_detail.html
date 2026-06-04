@@ -1,34 +1,66 @@
 {% extends "base.html" %}
 {% load static %}
 
-<link rel="stylesheet" href="{% static 'css/product_detail.css' %}">
-<script src="{% static 'js/product_detail.js' %}" defer></script>
-
 {% block content %}
-
-<div class="container mt-4">
-    <div class="card shadow">
-        <div class="card-header bg-dark text-white">
-            <h4> Product Details</h4>
-        </div>
-
-        <div class="card-body">
-            <p><strong>Name:</strong> {{ product.name }}</p>
-            <p><strong>Category:</strong> {{ product.category }}</p>
-            <p><strong>Price:</strong>  {{ product.price }}</p>
-            <p><strong>Stock:</strong> {{ product.stock_qty }}</p>
-            <p><strong>SKU:</strong> {{ product.sku }}</p>
-            <p><strong>HSN:</strong> {{ product.hsn_code }}</p>
-            <p><strong>GST:</strong> {{ product.gst_rate }}%</p>
-            <p><strong>Description:</strong><br>{{ product.description }}</p>
-        </div>
-
-        <div class="card-footer text-end">
-            <a href="{% url 'commerce:product_list' %}" class="btn btn-secondary">
-                 Back
-            </a>
-        </div>
+<div class="container-fluid py-2 unified-screen busy-unified-add">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Product Details</h3>
+        <div class="unified-subtitle">{{ product.name }} • {{ product.sku }}</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'commerce:product_edit' product.id %}" class="btn unified-btn-secondary">Edit</a>
+        <a href="{% url 'commerce:product_list' %}" class="btn unified-btn-outline">Back</a>
+      </div>
     </div>
-</div>
 
+    <div class="unified-body">
+      <div class="report-summary-grid">
+        <div class="report-summary-card">
+          <div class="label">Status</div>
+          <div class="value">
+            {% if product.stock|default:0 <= 0 %}
+              <span class="badge bg-danger">Rejected</span>
+            {% elif product.stock <= product.min_stock %}
+              <span class="badge bg-warning text-dark">Pending</span>
+            {% else %}
+              <span class="badge bg-success">Accepted</span>
+            {% endif %}
+          </div>
+          <div class="meta">Created: {{ product.created_at|date:"d M Y" }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Price</div>
+          <div class="value">{{ product.price }}</div>
+          <div class="meta">Unit: {{ product.unit|default:"-" }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">Stock</div>
+          <div class="value">{{ product.stock|default:0 }}</div>
+          <div class="meta">Low Alert: {{ product.min_stock|default:0 }}</div>
+        </div>
+        <div class="report-summary-card">
+          <div class="label">GST</div>
+          <div class="value">{{ product.gst_rate }}%</div>
+          <div class="meta">HSN: {{ product.hsn_code|default:"-" }}</div>
+        </div>
+      </div>
+
+      <div class="unified-grid cols-2">
+        <div class="unified-section">
+          <label class="unified-label">Category</label>
+          <div>{{ product.category.name|default:"-" }}</div>
+        </div>
+        <div class="unified-section">
+          <label class="unified-label">Description</label>
+          <div>{{ product.description|default:"-" }}</div>
+        </div>
+      </div>
+
+      {% include "core/includes/document_action_bar.html" %}
+    </div>
+  </div>
+</div>
 {% endblock %}
+

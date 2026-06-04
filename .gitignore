@@ -6,6 +6,7 @@ __pycache__/
 
 # Virtual environment
 venv/
+.env
 .env/
 .venv/
 *.pyc
@@ -13,15 +14,52 @@ venv/
 # Django
 *.log
 db.sqlite3
+*.sqlite3.bak
+*.bak
 media/
 staticfiles/
+static_root/
 local_settings.py
+
+# Generated/runtime artifacts
+build/
+dist/
+dist_builds/
+logs/
+temp/
+backups/
+_appdata/
+desktop_test_data/
+.tmp_appdata/
+.tmp_notus_react/
+node_modules/
+frontend/node_modules/
+whatsapp-server/node_modules/
+whatsapp-server/.wwebjs_cache/
+whatsapp-server/.wwebjs_auth/
+whatsapp_gateway/node_modules/
+
+# Local launch/debug noise
+server-8080*.log
+gateway*.log
+gateway*.err
+*.err
+device_id.txt
+flutter_offline_billing_app/bugreport-*.zip
+
+# Local docs generated during dev
+CACHE_FIX.txt
+ENTREE_GUIDE.md
+ERP_ACCOUNTING_ENGINE.md
+KEYBOARD_SHORTCUTS_FIXED.md
+FINAL_CHANGES.patch
 
 # IDEs / Editors
 .vscode/
 .idea/
 *.swp
 *.swo
+.history/
 
 # System files
 .DS_Store

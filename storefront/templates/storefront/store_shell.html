@@ -1,0 +1,710 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% if vendor %}{{ vendor.name }}{% else %}Store{% endif %} - Billentra</title>
+    <link rel="icon" href="{% static 'img/billentra-favicon.ico' %}">
+
+    {% if desktop_mode or use_local_vendor_assets %}
+      <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap-5.3.3.min.css' %}">
+      <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.css' %}">
+    {% else %}
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% endif %}
+
+    {% block extra_head %}{% endblock %}
+
+    <style>
+      :root{
+        --brand: #e91e63;
+        --brand2: #ff5a8a;
+        --ink: #0f172a;
+        --muted: rgba(15,23,42,.65);
+        --card: #ffffff;
+        --border: rgba(2,6,23,.08);
+        --bg: #f8fafc;
+      }
+      body { color: var(--ink); }
+      .muted { color: var(--muted); }
+      .store-hero { background: linear-gradient(135deg, var(--brand), var(--brand2)); color:#fff; border-radius: 18px; }
+      .product-card { border: 1px solid var(--border); border-radius: 18px; background: var(--card); }
+      .price { font-weight: 900; letter-spacing: .2px; }
+      .pill { border: 1px solid var(--border); padding: 6px 10px; border-radius: 999px; background:#fff; }
+      .btn-brand { background: var(--brand); border-color: var(--brand); color:#fff; }
+      .btn-brand:hover { background: #d81b60; border-color: #d81b60; color:#fff; }
+      .shadow-soft { box-shadow: 0 10px 24px rgba(2,6,23,.08); }
+      .thumb { aspect-ratio: 1/1; object-fit: cover; border-radius: 14px; background: #f1f5f9; }
+      .line-clamp-2{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+      .chip-row{
+        display:flex; gap:10px; overflow-x:auto; padding-bottom: 6px;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+      }
+      .chip-row::-webkit-scrollbar{ height: 6px; }
+      .chip-row::-webkit-scrollbar-thumb{ background: rgba(2,6,23,.10); border-radius: 999px; }
+      .chip-row .pill{ white-space: nowrap; scroll-snap-align: start; }
+      .product-card:hover{ transform: translateY(-2px); transition: transform .12s ease; }
+      .badge-off{
+        background: rgba(34,197,94,.14);
+        color: #166534;
+        border: 1px solid rgba(34,197,94,.22);
+      }
+      .price-mrp{ color: rgba(15,23,42,.45); text-decoration: line-through; }
+      .mega-menu{
+        width: min(1120px, 94vw);
+        border: 1px solid rgba(2,6,23,.10);
+        border-radius: 16px;
+        padding: 14px;
+      }
+      .mega-grid{
+        display:grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px 18px;
+      }
+      .mega-col .mega-title{
+        font-weight: 800;
+        color: var(--brand);
+        font-size: 13px;
+        letter-spacing: .2px;
+        margin-bottom: 8px;
+        text-transform: none;
+      }
+      .mega-col a{
+        display:block;
+        color: rgba(15,23,42,.72);
+        text-decoration:none;
+        padding: 6px 8px;
+        border-radius: 10px;
+      }
+      .mega-col a:hover{
+        background: rgba(233,30,99,.08);
+        color: rgba(15,23,42,.92);
+      }
+      .gallery-main{
+        border-radius: 18px;
+        aspect-ratio: 4/3;
+        object-fit: cover;
+        background:#f1f5f9;
+        width:100%;
+      }
+      .thumb-rail{
+        display:flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      @media (max-width: 768px){
+        .thumb-rail{ flex-direction: row; overflow-x:auto; padding-bottom: 6px; }
+      }
+      .thumb-mini{
+        width: 62px;
+        height: 62px;
+        border-radius: 14px;
+        object-fit: cover;
+        background:#f1f5f9;
+        border: 2px solid transparent;
+        cursor: pointer;
+      }
+      .thumb-mini.active{ border-color: rgba(233,30,99,.55); }
+      .card-soft{ border: 1px solid var(--border); border-radius: 18px; background: var(--card); }
+      .copy-btn{ border: 1px dashed rgba(233,30,99,.45); color: var(--brand); background: rgba(233,30,99,.06); }
+      .copy-btn:hover{ background: rgba(233,30,99,.10); color: #d81b60; }
+      #storeHeroSlider .carousel-item{ min-height: 190px; }
+      #storeHeroSlider .carousel-item > div{ min-height: 190px; }
+      .nav-cats{
+        display:flex;
+        gap: 14px;
+        overflow-x:auto;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
+      }
+      .nav-cats::-webkit-scrollbar{ height: 6px; }
+      .nav-cats::-webkit-scrollbar-thumb{ background: rgba(2,6,23,.10); border-radius: 999px; }
+      .nav-cats .nav-link{ white-space: nowrap; font-weight: 600; }
+      @media (min-width: 992px){
+        /* Prevent dropdown clipping on desktop */
+        .nav-cats{ overflow: visible; }
+      }
+      /* Improve dropdown usability and avoid accidental close */
+      .navbar .dropdown-menu{ margin-top: .4rem; }
+      .navbar .dropdown-menu.mega-menu{ margin-top: .5rem; }
+      .navbar .dropdown-toggle::after{ margin-left: .35rem; opacity: .75; }
+      .navbar .dropdown-menu{ max-height: min(70vh, 520px); overflow:auto; }
+      .delivery-bar{
+        background: #0b1220;
+        color: #fff;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+      }
+      .delivery-bar a{ color:#fff; text-decoration:none; }
+      .delivery-pill{
+        display:flex; align-items:center; gap:10px;
+        padding: 10px 0;
+      }
+      .delivery-pill .muted2{ color: rgba(255,255,255,.72); }
+      .store-topbar{
+        position: sticky; top: 0; z-index: 1030;
+        background: rgba(248,250,252,.85);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(2,6,23,.06);
+      }
+      .store-topbar .container{ padding-top: 10px; padding-bottom: 10px; }
+      .sticky-cart{
+        position: fixed; left: 0; right: 0; bottom: 0;
+        background:#fff; border-top: 1px solid var(--border);
+        padding: 10px 12px; z-index: 1040;
+      }
+      .sticky-cart .container{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    </style>
+  </head>
+  <body style="background:var(--bg);">
+    {% if not vendor_admin_mode %}
+      {% if vendor %}
+        <div class="delivery-bar">
+          <div class="container">
+            <div class="delivery-pill">
+              <i class="bi bi-geo-alt"></i>
+              <div class="flex-grow-1">
+                <div class="fw-semibold">Delivering to {% if store_delivery_location.label %}{{ store_delivery_location.label }}{% else %}your location{% endif %}</div>
+                <div class="muted2 small">Fast delivery & easy returns</div>
+              </div>
+              <a class="fw-semibold" href="#" data-bs-toggle="offcanvas" data-bs-target="#deliveryCanvas">Update location</a>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+        <div class="container">
+          <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% if vendor %}{% url 'store-home' vendor.subdomain %}{% else %}{% url 'store-index' %}{% endif %}">
+            <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:34px;height:34px;background:rgba(233,30,99,.12);">
+              <i class="bi bi-bag-heart" style="color:var(--brand);"></i>
+            </span>
+            <span>{% if vendor %}{{ vendor.name }}{% else %}Billentra Store{% endif %}</span>
+          </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#storeNav">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="storeNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 nav-cats">
+              {% if vendor %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'store-home' vendor.subdomain %}">Shop</a></li>
+
+                {% if store_nav_columns %}
+                  <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-display="static" aria-expanded="false">
+                      Popular
+                    </a>
+                    <div class="dropdown-menu mega-menu shadow-soft">
+                      <div class="mega-grid">
+                        <div class="mega-col">
+                          <div class="mega-title">Trending</div>
+                          {% for p in store_nav_popular %}
+                            <a href="{% url 'store-product-detail' vendor.subdomain p.slug %}">{{ p.name }}</a>
+                          {% empty %}
+                            <div class="muted small">No popular products yet.</div>
+                          {% endfor %}
+                        </div>
+                        {% for col in store_nav_columns|slice:":5" %}
+                          <div class="mega-col">
+                            <div class="mega-title">{{ col.category.name }}</div>
+                            <a href="{% url 'store-home' vendor.subdomain %}?category={{ col.category.slug }}">All {{ col.category.name }}</a>
+                            {% for l in col.links %}
+                              <a href="{% url 'store-product-detail' vendor.subdomain l.slug %}">{{ l.name }}</a>
+                            {% endfor %}
+                          </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </li>
+
+                  {% for col in store_nav_columns %}
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-display="static" aria-expanded="false">
+                        {{ col.category.name }}
+                      </a>
+                      <div class="dropdown-menu mega-menu shadow-soft">
+                        <div class="mega-grid">
+                          <div class="mega-col">
+                            <div class="mega-title">{{ col.category.name }}</div>
+                            <a href="{% url 'store-home' vendor.subdomain %}?category={{ col.category.slug }}">All {{ col.category.name }}</a>
+                            {% for l in col.links %}
+                              <a href="{% url 'store-product-detail' vendor.subdomain l.slug %}">{{ l.name }}</a>
+                            {% empty %}
+                              <div class="muted small">No products yet.</div>
+                            {% endfor %}
+                          </div>
+                          <div class="mega-col">
+                            <div class="mega-title">Explore</div>
+                            <a href="{% url 'store-home' vendor.subdomain %}?category={{ col.category.slug }}&sort=newest">New arrivals</a>
+                            <a href="{% url 'store-home' vendor.subdomain %}?category={{ col.category.slug }}&sort=price_asc">Budget picks</a>
+                            <a href="{% url 'store-home' vendor.subdomain %}?category={{ col.category.slug }}&sort=price_desc">Premium picks</a>
+                            <a href="{% url 'store-home' vendor.subdomain %}?category={{ col.category.slug }}&sort=rating">Top rated</a>
+                          </div>
+                          <div class="mega-col">
+                            <div class="mega-title">Quick</div>
+                            <a href="{% url 'store-cart' vendor.subdomain %}">Go to cart</a>
+                            <a href="{% url 'store-wishlist' vendor.subdomain %}">Wishlist</a>
+                            <a href="{% url 'store-checkout' vendor.subdomain %}">Checkout</a>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  {% endfor %}
+                {% endif %}
+
+                <li class="nav-item"><a class="nav-link" href="{% url 'store-cart' vendor.subdomain %}">Cart{% if cart.total_qty %} ({{ cart.total_qty }}){% endif %}</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'store-wishlist' vendor.subdomain %}">Wishlist{% if wishlist.count %} ({{ wishlist.count }}){% endif %}</a></li>
+              {% endif %}
+            </ul>
+            {% if vendor %}
+              <form class="d-none d-lg-block me-2" method="get" action="{% url 'store-home' vendor.subdomain %}" style="min-width: 380px; max-width: 520px;">
+                {% for c in active_categories %}<input type="hidden" name="category" value="{{ c }}">{% endfor %}
+                {% if request.GET.min_price %}<input type="hidden" name="min_price" value="{{ request.GET.min_price }}">{% endif %}
+                {% if request.GET.max_price %}<input type="hidden" name="max_price" value="{{ request.GET.max_price }}">{% endif %}
+                {% if active_sort %}<input type="hidden" name="sort" value="{{ active_sort }}">{% endif %}
+                {% if active_tag %}<input type="hidden" name="tag" value="{{ active_tag }}">{% endif %}
+                <div class="input-group input-group-sm">
+                  <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">All</button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'store-home' vendor.subdomain %}">All</a></li>
+                    {% for col in store_nav_columns|slice:":12" %}
+                      <li><a class="dropdown-item" href="{% url 'store-home' vendor.subdomain %}?category={{ col.category.slug }}">{{ col.category.name }}</a></li>
+                    {% endfor %}
+                  </ul>
+                  <input class="form-control" name="q" placeholder="Search in {{ vendor.name }}..." value="{{ request.GET.q }}">
+                  <button class="btn btn-brand" type="submit" title="Search"><i class="bi bi-search"></i></button>
+                </div>
+              </form>
+            {% endif %}
+            <div class="d-flex gap-2 align-items-center">
+              {% if vendor and can_manage_vendor %}
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'vendor-dashboard-ui' vendor.subdomain %}">Vendor Dashboard</a>
+            {% endif %}
+            {% if request.user.is_authenticated %}
+              {% if vendor %}
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'store-me-orders' vendor.subdomain %}">My Orders</a>
+              {% endif %}
+              {% if can_access_billing %}
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'accounts:role_dashboard' %}">Billing Dashboard</a>
+              {% endif %}
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'accounts:logout' %}">Logout</a>
+            {% else %}
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">Login</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+    {% endif %}
+
+    <div class="container py-3" style="padding-bottom: 80px;">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </div>
+
+    {% if vendor and not vendor_admin_mode %}
+      <div class="offcanvas offcanvas-bottom" tabindex="-1" id="deliveryCanvas" style="height: 70vh;"
+           data-geo-reverse-url="{% url 'store-geo-reverse' vendor.subdomain %}"
+           data-geo-search-url="{% url 'store-geo-search' vendor.subdomain %}">
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title">Update delivery location</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+          <form method="post" action="{% url 'store-update-location' vendor.subdomain %}">
+            {% csrf_token %}
+            <div class="row g-2">
+              <div class="col-12 col-lg-5">
+                 <label class="form-label">Search location</label>
+                 <input class="form-control" id="locSearch" placeholder="Search area / landmark">
+                 <div id="locSuggestions" class="list-group mt-2" style="display:none; max-height: 180px; overflow:auto;"></div>
+                 <div class="muted small mt-1">Tip: You can also use your current location.</div>
+                 <div id="locStatus" class="muted small mt-2"></div>
+
+                 <div class="mt-3">
+                   <label class="form-label">Address / label</label>
+                   <input class="form-control" name="label" id="locLabel" value="{{ store_delivery_location.label|default:'' }}" placeholder="e.g. Kanpur 208001">
+                 </div>
+                <div class="row g-2 mt-1">
+                  <div class="col-6">
+                    <label class="form-label">Pincode</label>
+                    <input class="form-control" name="pincode" id="locPincode" value="{{ store_delivery_location.pincode|default:'' }}">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label">Use GPS</label>
+                    <button class="btn btn-outline-secondary w-100" type="button" id="useGpsBtn">Use current</button>
+                  </div>
+                </div>
+
+                <input type="hidden" name="latitude" id="locLat" value="{{ store_delivery_location.latitude|default:'' }}">
+                <input type="hidden" name="longitude" id="locLng" value="{{ store_delivery_location.longitude|default:'' }}">
+
+                <div class="d-flex justify-content-end mt-3">
+                  <button class="btn btn-outline-secondary me-2" type="button" data-bs-dismiss="offcanvas"
+                          onclick="try{ window.__applyDeliveryToCheckout && window.__applyDeliveryToCheckout(); }catch(e){}">
+                    Use for checkout
+                  </button>
+                  <button class="btn btn-brand" type="submit">Save</button>
+                </div>
+              </div>
+              <div class="col-12 col-lg-7">
+                <div class="card-soft p-2" style="height: 100%;">
+                  <div id="locMap" style="height: 45vh; border-radius: 14px; background:#f1f5f9; overflow:hidden;" class="d-flex align-items-center justify-content-center muted">
+                    {% if google_maps_api_key %}
+                      Loading map…
+                    {% else %}
+                      <div style="width:100%;height:100%;">
+                        <iframe
+                          id="osmMapFrame"
+                          title="Map"
+                          style="border:0;width:100%;height:100%;"
+                          loading="lazy"
+                          referrerpolicy="no-referrer-when-downgrade"
+                          src=""
+                        ></iframe>
+                      </div>
+                    {% endif %}
+                  </div>
+                  {% if not google_maps_api_key %}
+                    <div class="muted small mt-2">
+                      Using OpenStreetMap preview (no API key needed). For full search autocomplete, set `GOOGLE_MAPS_API_KEY`.
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if vendor and cart and cart.total_qty %}
+      <div class="sticky-cart">
+        <div class="container">
+          <div>
+            <div class="fw-bold">&#8377;{{ cart.subtotal }}</div>
+            <div class="muted small">{{ cart.total_qty }} items in cart</div>
+          </div>
+          <a class="btn btn-brand shadow-soft" href="{% url 'store-cart' vendor.subdomain %}">
+            Go to cart <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if desktop_mode or use_local_vendor_assets %}
+      <script src="{% static 'vendor/bootstrap/bootstrap-5.3.3.bundle.min.js' %}"></script>
+    {% else %}
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% endif %}
+
+    {% if vendor %}
+      <script>
+         (function(){
+           const hasGoogleMaps = {{ google_maps_api_key|yesno:"true,false" }};
+           const statusEl = document.getElementById("locStatus");
+           function setStatus(msg){
+             if (!statusEl) return;
+             statusEl.textContent = msg || "";
+           }
+           function setOsmFrame(lat, lng){
+             const frame = document.getElementById("osmMapFrame");
+             if (!frame) return;
+             const d = 0.02;
+            const left = (lng - d), right = (lng + d), top = (lat + d), bottom = (lat - d);
+            const url =
+              "https://www.openstreetmap.org/export/embed.html?bbox=" +
+              encodeURIComponent([left, bottom, right, top].join(",")) +
+              "&layer=mapnik&marker=" + encodeURIComponent(lat + "," + lng);
+            frame.src = url;
+          }
+
+          function applyDeliveryToCheckout(){
+            try{
+              const lat = document.getElementById("locLat")?.value || "";
+              const lng = document.getElementById("locLng")?.value || "";
+              const label = document.getElementById("locLabel")?.value || "";
+              const pin = document.getElementById("locPincode")?.value || "";
+              const cLat = document.getElementById("checkoutLat");
+              const cLng = document.getElementById("checkoutLng");
+              const cLine1 = document.getElementById("checkoutLine1");
+              const cPin = document.getElementById("checkoutPincode");
+              if (cLat) cLat.value = lat;
+              if (cLng) cLng.value = lng;
+              if (cLine1 && label) cLine1.value = label;
+              if (cPin && pin) cPin.value = pin;
+            }catch(e){}
+          }
+           window.__applyDeliveryToCheckout = applyDeliveryToCheckout;
+
+           async function nominatimReverse(lat, lng){
+             try{
+               const canvas = document.getElementById("deliveryCanvas");
+               const base = canvas ? (canvas.getAttribute("data-geo-reverse-url") || "") : "";
+               const url = base ? (base + "?lat=" + encodeURIComponent(lat) + "&lng=" + encodeURIComponent(lng)) : "";
+               if (!url) return null;
+               const res = await fetch(url, {headers: {"Accept":"application/json"}});
+               if (!res.ok) return null;
+               return await res.json();
+             }catch(e){ return null; }
+           }
+
+           async function nominatimSearch(q){
+             try{
+               const canvas = document.getElementById("deliveryCanvas");
+               const base = canvas ? (canvas.getAttribute("data-geo-search-url") || "") : "";
+               const url = base ? (base + "?limit=6&q=" + encodeURIComponent(q)) : "";
+               if (!url) return [];
+               const res = await fetch(url, {headers: {"Accept":"application/json"}});
+               if (!res.ok) return [];
+               const data = await res.json();
+               return Array.isArray(data) ? data : [];
+             }catch(e){ return []; }
+           }
+
+           const labelEl = document.getElementById("locLabel");
+           const pinEl = document.getElementById("locPincode");
+           let labelEdited = false;
+           let pinEdited = false;
+           if (labelEl){
+             labelEl.addEventListener("input", function(){ labelEdited = true; }, {passive:true});
+           }
+           if (pinEl){
+             pinEl.addEventListener("input", function(){ pinEdited = true; }, {passive:true});
+           }
+
+           function setLabelAndPin(label, pincode, opts){
+             const force = !!(opts && opts.force);
+             const treatAsEmpty = function(v){
+               const s = (v || "").trim();
+                return !s || s.toLowerCase() === "current location";
+             };
+             if (labelEl && label){
+               if (force || (!labelEdited && treatAsEmpty(labelEl.value))){
+                 labelEl.value = label;
+               }
+             }
+             if (pinEl && pincode){
+               if (force || (!pinEdited && !(pinEl.value || "").trim())){
+                 pinEl.value = pincode;
+               }
+             }
+           }
+
+           async function autofillFromLatLng(lat, lng, opts){
+             const data = await nominatimReverse(lat, lng);
+             if (!data) return;
+             const label = data.display_name || "";
+             const pincode = (data.address && (data.address.postcode || data.address.postal_code)) || "";
+              // Prefill but keep editable: only fill when user hasn't edited (or placeholder).
+             setLabelAndPin(label, pincode, opts);
+           }
+
+          // OSM preview init (only when Google key is not set)
+          const frame = document.getElementById("osmMapFrame");
+          if (frame){
+            const latV = parseFloat(document.getElementById("locLat")?.value || "") || 26.4499;
+            const lngV = parseFloat(document.getElementById("locLng")?.value || "") || 80.3319;
+            setOsmFrame(latV, lngV);
+            if (!hasGoogleMaps) autofillFromLatLng(latV, lngV);
+          }
+
+           // GPS button works even without Google Maps
+           const useGps = document.getElementById("useGpsBtn");
+           if (useGps && navigator.geolocation){
+             useGps.addEventListener("click", function(){
+               setStatus("Detecting your location…");
+               navigator.geolocation.getCurrentPosition(function(pos){
+                 const lat = pos.coords.latitude;
+                 const lng = pos.coords.longitude;
+                 const latEl = document.getElementById("locLat");
+                 const lngEl = document.getElementById("locLng");
+                 if (latEl) latEl.value = lat.toFixed(6);
+                 if (lngEl) lngEl.value = lng.toFixed(6);
+                 setOsmFrame(lat, lng);
+                 if (!hasGoogleMaps) autofillFromLatLng(lat, lng, {force:true});
+                 setStatus("Location detected. You can edit the address if needed.");
+                 setTimeout(function(){ setStatus(""); }, 3500);
+               }, function(err){
+                 setStatus("Location not available. Please allow permission or type address manually.");
+               }, {enableHighAccuracy:true, timeout:10000});
+             });
+           }
+
+           // If user already granted location permission, auto-fill on open (no prompt).
+           const canvas = document.getElementById("deliveryCanvas");
+           if (canvas && navigator.geolocation && navigator.permissions && navigator.permissions.query){
+             canvas.addEventListener("shown.bs.offcanvas", async function(){
+               try{
+                 const latNow = (document.getElementById("locLat")?.value || "").trim();
+                 const lngNow = (document.getElementById("locLng")?.value || "").trim();
+                 if (latNow && lngNow) return;
+                 const perm = await navigator.permissions.query({name: "geolocation"});
+                 if (perm && perm.state === "granted"){
+                   navigator.geolocation.getCurrentPosition(function(pos){
+                     const lat = pos.coords.latitude;
+                     const lng = pos.coords.longitude;
+                     const latEl = document.getElementById("locLat");
+                     const lngEl = document.getElementById("locLng");
+                     if (latEl) latEl.value = lat.toFixed(6);
+                     if (lngEl) lngEl.value = lng.toFixed(6);
+                     setOsmFrame(lat, lng);
+                     if (!hasGoogleMaps) autofillFromLatLng(lat, lng);
+                   }, function(){}, {enableHighAccuracy:true, timeout:6000});
+                 }
+               }catch(e){}
+             }, {passive:true});
+           }
+
+          // Nominatim search suggestions (only when Google key is not set)
+           const searchEl = document.getElementById("locSearch");
+           const sugEl = document.getElementById("locSuggestions");
+           let t = null;
+           let searchSeq = 0;
+           function clearSug(){
+             if (!sugEl) return;
+             sugEl.style.display = "none";
+             sugEl.innerHTML = "";
+           }
+           function showSug(items){
+             if (!sugEl) return;
+             sugEl.innerHTML = "";
+             if (!items.length){ clearSug(); return; }
+             items.forEach(function(it){
+              const a = document.createElement("button");
+              a.type = "button";
+              a.className = "list-group-item list-group-item-action";
+              a.textContent = it.display_name || "Select";
+                a.addEventListener("click", function(){
+                  const lat = parseFloat(it.lat);
+                  const lng = parseFloat(it.lon);
+                  const latEl = document.getElementById("locLat");
+                  const lngEl = document.getElementById("locLng");
+                  if (latEl) latEl.value = isFinite(lat) ? lat.toFixed(6) : "";
+                  if (lngEl) lngEl.value = isFinite(lng) ? lng.toFixed(6) : "";
+                 let pc = "";
+                 try{ pc = (it.address && (it.address.postcode || it.address.postal_code)) || ""; }catch(e){}
+                 setLabelAndPin(it.display_name || "", pc || "", {force:true});
+                 labelEdited = true;
+                 pinEdited = true;
+                 setOsmFrame(lat, lng);
+                 // Fill any missing parts (safe: won't override edited fields)
+                 autofillFromLatLng(lat, lng);
+                 clearSug();
+               });
+               sugEl.appendChild(a);
+             });
+             sugEl.style.display = "";
+           }
+           if (searchEl && sugEl && !hasGoogleMaps){
+             searchEl.addEventListener("input", function(){
+               const q = (searchEl.value || "").trim();
+               if (t) clearTimeout(t);
+               if (q.length < 3){ clearSug(); return; }
+               t = setTimeout(async function(){
+                 const reqId = ++searchSeq;
+                 const results = await nominatimSearch(q);
+                 if (reqId !== searchSeq) return;
+                 showSug(results);
+               }, 550);
+             });
+             searchEl.addEventListener("keydown", function(ev){
+               if (ev.key === "Escape") clearSug();
+             });
+             document.addEventListener("click", function(ev){
+               if (!sugEl) return;
+               if (ev.target === searchEl || sugEl.contains(ev.target)) return;
+               clearSug();
+             });
+           }
+        })();
+      </script>
+    {% endif %}
+
+    {% if vendor and google_maps_api_key %}
+      <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key|urlencode }}&libraries=places&callback=initStoreLocationPicker"></script>
+      <script>
+        function initStoreLocationPicker(){
+          try{
+            const mapEl = document.getElementById("locMap");
+            if (!mapEl) return;
+            const latInput = document.getElementById("locLat");
+            const lngInput = document.getElementById("locLng");
+            const labelInput = document.getElementById("locLabel");
+            const pinInput = document.getElementById("locPincode");
+            const search = document.getElementById("locSearch");
+            const useGps = document.getElementById("useGpsBtn");
+            const defaultLat = parseFloat(latInput && latInput.value) || 26.4499;
+            const defaultLng = parseFloat(lngInput && lngInput.value) || 80.3319;
+
+            const map = new google.maps.Map(mapEl, {center: {lat: defaultLat, lng: defaultLng}, zoom: 12, mapTypeControl:false});
+            const marker = new google.maps.Marker({position: {lat: defaultLat, lng: defaultLng}, map: map, draggable: true});
+            function setPos(lat, lng){
+              if (latInput) latInput.value = lat.toFixed(6);
+              if (lngInput) lngInput.value = lng.toFixed(6);
+              marker.setPosition({lat, lng});
+              map.panTo({lat, lng});
+            }
+            marker.addListener("dragend", function(){
+              const p = marker.getPosition();
+              if (p) setPos(p.lat(), p.lng());
+            });
+
+            if (search && google.maps.places){
+              const ac = new google.maps.places.Autocomplete(search);
+              ac.addListener("place_changed", function(){
+                const place = ac.getPlace();
+                if (!place || !place.geometry || !place.geometry.location) return;
+                const p = place.geometry.location;
+                setPos(p.lat(), p.lng());
+                if (labelInput && place.formatted_address) labelInput.value = place.formatted_address;
+                try{
+                  const comps = place.address_components || [];
+                  const pin = comps.find(c => (c.types||[]).includes("postal_code"));
+                  if (pin && pinInput) pinInput.value = pin.long_name || pin.short_name || "";
+                }catch(e){}
+              });
+            }
+
+            if (useGps && navigator.geolocation){
+              useGps.addEventListener("click", function(){
+                navigator.geolocation.getCurrentPosition(function(pos){
+                  setPos(pos.coords.latitude, pos.coords.longitude);
+                  if (labelInput && !labelInput.value) labelInput.value = "Current location";
+                }, function(){}, {enableHighAccuracy:true, timeout:8000});
+              });
+            }
+
+            // Override apply helper to ensure best values after Google selection.
+            window.__applyDeliveryToCheckout = function(){
+              try{
+                const lat = latInput && latInput.value;
+                const lng = lngInput && lngInput.value;
+                const label = labelInput && labelInput.value;
+                const pin = pinInput && pinInput.value;
+                const cLat = document.getElementById("checkoutLat");
+                const cLng = document.getElementById("checkoutLng");
+                const cLine1 = document.getElementById("checkoutLine1");
+                const cPin = document.getElementById("checkoutPincode");
+                if (cLat) cLat.value = lat || "";
+                if (cLng) cLng.value = lng || "";
+                if (cLine1 && label) cLine1.value = label;
+                if (cPin && pin) cPin.value = pin;
+              }catch(e){}
+            };
+          }catch(e){}
+        }
+      </script>
+    {% endif %}
+
+    {% if vendor and storefront_apps and not vendor_admin_mode %}
+      {% include "storefront/_store_apps.html" %}
+    {% endif %}
+  </body>
+</html>

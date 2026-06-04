@@ -1,0 +1,90 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Campaign</div>
+        <div class="va-section-title">{{ campaign.name }}</div>
+        <div class="va-help mt-1">
+          Channel: <span class="fw-semibold">{{ campaign.channel }}</span> ·
+          Status: <span class="fw-semibold">{{ campaign.status }}</span>
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-marketing-campaigns' vendor.subdomain %}">
+          <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+        {% if campaign.status == "draft" or campaign.status == "scheduled" %}
+          <form method="post" action="{% url 'vendor-marketing-campaign-start' vendor.subdomain campaign.id %}">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-play-fill me-1"></i>Start</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-6">
+      <div class="va-panel p-3 h-100">
+        <div class="va-section-title mb-2">Ad copy</div>
+        <div class="va-help" style="white-space:pre-wrap;">{{ campaign.ad_copy|default:"-" }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="va-panel p-3 h-100">
+        <div class="va-section-title mb-2">Progress</div>
+        <div class="d-flex gap-2 flex-wrap">
+          <span class="badge text-bg-light border">Total: {{ campaign.recipients_total }}</span>
+          <span class="badge text-bg-success">Sent: {{ campaign.recipients_sent }}</span>
+          <span class="badge text-bg-danger">Failed: {{ campaign.recipients_failed }}</span>
+        </div>
+        {% if paid_runs %}
+          <div class="va-help mt-2">Paid ads runs (demo)</div>
+          <div class="d-flex gap-2 flex-wrap mt-1">
+            {% for r in paid_runs %}
+              <span class="badge text-bg-light border">
+                {{ r.channel }} · {{ r.status }} · ₹{{ r.budget_spent }}/₹{{ r.budget_total }} · {{ r.impressions }} impr
+              </span>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% if campaign.last_error %}
+          <div class="va-help mt-2">Last error: {{ campaign.last_error }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="va-panel p-3 mt-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <div class="va-section-title">Recent messages</div>
+      <div class="va-help">Pending/Sent/Failed</div>
+    </div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Destination</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Sent</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in messages %}
+            <tr>
+              <td class="fw-semibold">{{ m.destination|default:"-" }}</td>
+              <td><span class="badge text-bg-light border">{{ m.status }}</span></td>
+              <td class="va-help">{{ m.created_at }}</td>
+              <td class="va-help">{{ m.sent_at|default:"-" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="va-help">No messages yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% load static %}
+
+<div class="ce-nav mb-3">
+  <ul class="nav nav-pills flex-wrap gap-2">
+    <li class="nav-item"><a class="nav-link" href="{% url 'central_engine:dashboard' %}">Growth Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'central_engine:rewards_wallet' %}">Rewards Wallet</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'central_engine:referral_center' %}">Referral Center</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'central_engine:loyalty_offers' %}">Loyalty & Offers</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'central_engine:payment_earnings' %}">Payment Earnings</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'central_engine:task_center' %}">Task Center</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'central_engine:analytics_snapshot' %}">Analytics Snapshot</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'central_engine:feature_unlock_panel' %}">Feature Unlock</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'central_engine:profit_preview' %}">Profit Preview</a></li>
+    {% if request.user.is_staff or request.user.is_superuser %}
+      <li class="nav-item ms-auto"><a class="nav-link bg-dark text-white" href="{% url 'central_engine:admin_control_center' %}">Admin Control</a></li>
+    {% endif %}
+  </ul>
+</div>
+

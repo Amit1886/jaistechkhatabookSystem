@@ -1,0 +1,111 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Leads & Follow-ups</div>
+        <div class="va-help">Customer follow-up, tracking, and quick messaging (WhatsApp/SMS/Email).</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-marketing-campaigns' vendor.subdomain %}">
+          <i class="bi bi-bullseye me-1"></i>Campaigns
+        </a>
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-marketing-creatives' vendor.subdomain %}">
+          <i class="bi bi-images me-1"></i>Creatives
+        </a>
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-settings-notifications' vendor.subdomain %}">
+          <i class="bi bi-bell me-1"></i>Notifications
+        </a>
+        <a class="btn btn-sm btn-primary" href="{% url 'vendor-marketing-campaign-create' vendor.subdomain %}">
+          <i class="bi bi-plus-circle me-1"></i>New campaign
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="va-panel p-3 mb-3">
+    <form class="row g-2 align-items-end" method="get">
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Search</label>
+        <input class="form-control form-control-sm" name="q" value="{{ q|default:'' }}" placeholder="Name, mobile, email">
+      </div>
+      <div class="col-6 col-lg-2">
+        <label class="form-label va-form-label">Status</label>
+        <select class="form-select form-select-sm" name="status">
+          <option value="">All</option>
+          <option value="new" {% if status == "new" %}selected{% endif %}>New</option>
+          <option value="hot" {% if status == "hot" %}selected{% endif %}>Hot</option>
+          <option value="warm" {% if status == "warm" %}selected{% endif %}>Warm</option>
+          <option value="cold" {% if status == "cold" %}selected{% endif %}>Cold</option>
+          <option value="contacted" {% if status == "contacted" %}selected{% endif %}>Contacted</option>
+          <option value="qualified" {% if status == "qualified" %}selected{% endif %}>Qualified</option>
+          <option value="won" {% if status == "won" %}selected{% endif %}>Won</option>
+          <option value="lost" {% if status == "lost" %}selected{% endif %}>Lost</option>
+          <option value="inactive" {% if status == "inactive" %}selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+      <div class="col-6 col-lg-2">
+        <label class="form-label va-form-label">Assigned</label>
+        <select class="form-select form-select-sm" name="assigned">
+          <option value="">All</option>
+          <option value="me" {% if assigned == "me" %}selected{% endif %}>Me</option>
+        </select>
+      </div>
+      <div class="col-6 col-lg-2">
+        <label class="form-label va-form-label">Follow-up</label>
+        <select class="form-select form-select-sm" name="followup">
+          <option value="">All</option>
+          <option value="due" {% if followup == "due" %}selected{% endif %}>Due ({{ due_count }})</option>
+          <option value="scheduled" {% if followup == "scheduled" %}selected{% endif %}>Scheduled</option>
+        </select>
+      </div>
+      <div class="col-6 col-lg-2 d-flex justify-content-end">
+        <button class="btn btn-sm btn-primary w-100" type="submit"><i class="bi bi-search me-1"></i>Apply</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="va-panel p-3">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Lead</th>
+            <th>Status</th>
+            <th>Follow-up</th>
+            <th>Last contacted</th>
+            <th>Created</th>
+            <th style="width:120px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in leads %}
+            <tr>
+              <td class="fw-semibold">
+                <div>{{ l.name|default:"(no name)" }}</div>
+                <div class="va-help">{{ l.mobile|default:"-" }}{% if l.email %} · {{ l.email }}{% endif %}</div>
+              </td>
+              <td><span class="badge text-bg-light border">{{ l.status }}</span></td>
+              <td class="va-help">
+                {% if l.next_followup_at %}
+                  {{ l.next_followup_at }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td class="va-help">{{ l.last_contacted_at|default:"-" }}</td>
+              <td class="va-help">{{ l.created_at }}</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-marketing-lead-view' vendor.subdomain l.id %}">Open</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="va-help">No leads found. Tip: add lead capture popup or create leads in CRM.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

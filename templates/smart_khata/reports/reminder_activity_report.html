@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Reminder Activity Report</h3>
+        <div class="unified-subtitle">Last 30 days ({{ start|date:"d M Y" }} to {{ today|date:"d M Y" }})</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'smart_khata:reminder_logs' %}" class="btn unified-btn-outline">Open Logs</a>
+      </div>
+    </div>
+    <div class="unified-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" method="get">
+        <div style="min-width:180px;">
+          <label class="unified-label" for="raStatus">Status</label>
+          <select id="raStatus" name="status" class="form-select">
+            <option value="">All</option>
+            <option value="scheduled" {% if status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+            <option value="sent" {% if status == 'sent' %}selected{% endif %}>Sent</option>
+            <option value="failed" {% if status == 'failed' %}selected{% endif %}>Failed</option>
+            <option value="skipped" {% if status == 'skipped' %}selected{% endif %}>Skipped</option>
+          </select>
+        </div>
+        <div style="min-width:180px;">
+          <label class="unified-label" for="raChannel">Channel</label>
+          <select id="raChannel" name="channel" class="form-select">
+            <option value="">All</option>
+            <option value="whatsapp" {% if channel == 'whatsapp' %}selected{% endif %}>WhatsApp</option>
+            <option value="sms" {% if channel == 'sms' %}selected{% endif %}>SMS</option>
+            <option value="email" {% if channel == 'email' %}selected{% endif %}>Email</option>
+          </select>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <a href="{% url 'smart_khata:report_reminder_activity' %}" class="btn unified-btn-outline">Reset</a>
+        </div>
+      </form>
+
+      <div class="unified-grid cols-2">
+        <div class="unified-section">
+          <h5 class="mb-2">By Channel</h5>
+          <div class="list-group">
+            {% for row in by_channel %}
+              <a class="list-group-item list-group-item-action d-flex justify-content-between {% if channel == row.channel %}active{% endif %}"
+                 href="?channel={{ row.channel|urlencode }}{% if status %}&status={{ status|urlencode }}{% endif %}">
+                <span class="fw-semibold">{{ row.channel }}</span>
+                <span class="badge {% if channel == row.channel %}bg-light text-dark{% else %}bg-dark{% endif %}">{{ row.count }}</span>
+              </a>
+            {% empty %}
+              <div class="list-group-item text-muted">No data</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="unified-section">
+          <h5 class="mb-2">By Status</h5>
+          <div class="list-group">
+            {% for row in by_status %}
+              <a class="list-group-item list-group-item-action d-flex justify-content-between {% if status == row.status %}active{% endif %}"
+                 href="?status={{ row.status|urlencode }}{% if channel %}&channel={{ channel|urlencode }}{% endif %}">
+                <span class="fw-semibold">{{ row.status }}</span>
+                <span class="badge {% if status == row.status %}bg-light text-dark{% else %}bg-dark{% endif %}">{{ row.count }}</span>
+              </a>
+            {% empty %}
+              <div class="list-group-item text-muted">No data</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="unified-section mt-2">
+        <h5 class="mb-2">Recent Reminders</h5>
+        <div class="unified-table-wrap">
+          <table class="table unified-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Invoice</th>
+                <th>Channel</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in recent %}
+              <tr>
+                <td>{{ r.created_at|date:"d M Y H:i" }}</td>
+                <td>{{ r.party.name|default:"-" }}</td>
+                <td>{{ r.invoice.number|default:"-" }}</td>
+                <td>{{ r.channel }}</td>
+                <td>{{ r.status }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted py-4">No recent reminders.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "central_engine/layout.html" %}
+
+{% block ce_title %}Admin Control Center{% endblock %}
+
+{% block ce_content %}
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-lg-4">
+      <div class="card ce-soft">
+        <div class="card-body">
+          <h5 class="fw-bold mb-2">Stats</h5>
+          <div class="small text-muted">Engines: {{ stats.engines }}</div>
+          <div class="small text-muted">Reward entries: {{ stats.reward_entries }}</div>
+          <div class="small text-muted">Referrals: {{ stats.referrals }}</div>
+          <div class="small text-muted">Logs: {{ stats.logs }}</div>
+          <hr>
+          <a class="btn btn-outline-dark btn-sm" href="{% url 'central_engine:admin_logs' %}">View Logs</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-8">
+      <div class="card ce-soft">
+        <div class="card-body">
+          <h5 class="fw-bold mb-2">Global Toggles & Rules</h5>
+          <form method="post">
+            {% csrf_token %}
+            <div class="row g-2">
+              <div class="col-12">
+                {{ form.enabled }} <label class="ms-1">Engine enabled</label>
+              </div>
+              <div class="col-12 col-md-6">
+                {{ form.enable_rewards }} <label class="ms-1">Rewards</label><br>
+                {{ form.enable_referrals }} <label class="ms-1">Referrals</label><br>
+                {{ form.enable_payment_commission }} <label class="ms-1">Payment commission</label><br>
+                {{ form.enable_notifications }} <label class="ms-1">Notifications</label>
+              </div>
+              <div class="col-12 col-md-6">
+                {{ form.enable_loyalty }} <label class="ms-1">Loyalty</label><br>
+                {{ form.enable_daily_tasks }} <label class="ms-1">Daily tasks</label><br>
+                {{ form.enable_analytics }} <label class="ms-1">Analytics</label>
+              </div>
+              <div class="col-12"><hr class="my-2"></div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small text-muted mb-1">Invoice reward %</label>
+                {{ form.invoice_reward_percent }}
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small text-muted mb-1">Payment fee %</label>
+                {{ form.payment_commission_percent }}
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small text-muted mb-1">GST bonus points</label>
+                {{ form.gst_invoice_bonus_points }}
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small text-muted mb-1">Non-GST bonus points</label>
+                {{ form.nongst_invoice_bonus_points }}
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small text-muted mb-1">Min company share %</label>
+                {{ form.min_company_share_percent }}
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label small text-muted mb-1">Max user reward %</label>
+                {{ form.max_user_reward_percent }}
+              </div>
+              <div class="col-12 d-flex justify-content-end mt-2">
+                <button class="btn btn-primary" type="submit">Save</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

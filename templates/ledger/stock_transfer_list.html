@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-list-screen" data-export-scope>
+  <div class="unified-list-card">
+    <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Stock Transfers</h3>
+        <div class="unified-subtitle">Move stock between warehouses (Draft → Posted)</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if erp_can_edit %}
+          <a href="{% url 'ledger:stock_transfer_create' %}" class="btn unified-btn-primary">New Transfer</a>
+        {% endif %}
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#transferTable" data-export-name="stock_transfers">CSV</button>
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#transferTable" data-export-name="stock_transfers">Print</button>
+      </div>
+    </div>
+
+    <div class="unified-list-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" method="get">
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="trQ">Search</label>
+          <input id="trQ" name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search notes">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="trStatus">Status</label>
+          <select id="trStatus" name="status" class="form-select">
+            <option value="">All</option>
+            <option value="draft" {% if status == 'draft' %}selected{% endif %}>Draft</option>
+            <option value="posted" {% if status == 'posted' %}selected{% endif %}>Posted</option>
+            <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+          </select>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <a href="{% url 'ledger:stock_transfer_list' %}" class="btn unified-btn-outline">Reset</a>
+        </div>
+      </form>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" id="transferTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Status</th>
+              <th>Notes</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in transfers %}
+              <tr>
+                <td>{{ t.id }}</td>
+                <td>{{ t.date|date:"d M Y" }}</td>
+                <td>{{ t.from_warehouse.name }}</td>
+                <td>{{ t.to_warehouse.name }}</td>
+                <td>
+                  {% if t.status == 'posted' %}
+                    <span class="badge bg-success">Posted</span>
+                  {% elif t.status == 'draft' %}
+                    <span class="badge bg-warning text-dark">Draft</span>
+                  {% else %}
+                    <span class="badge bg-danger">Cancelled</span>
+                  {% endif %}
+                </td>
+                <td class="text-muted">{{ t.notes|default:"-" }}</td>
+                <td class="text-end">
+                  <a class="btn unified-btn-outline btn-sm" href="{% url 'ledger:stock_transfer_detail' t.id %}">View</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="7" class="text-center text-muted py-4">No transfers found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

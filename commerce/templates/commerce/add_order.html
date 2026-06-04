@@ -2,12 +2,31 @@
 {% load static %}
 {% block content %}
 
-<link rel="stylesheet" href="{% static 'css/add_order.css' %}">
-<link rel="stylesheet" href="{% static 'css/add_order_busy.css' %}">
+<link rel="stylesheet" href="{% static 'css/add_order.css' %}?v=20260225">
+<link rel="stylesheet" href="{% static 'css/add_order_busy.css' %}?v=20260302a">
 <script src="{% static 'libs/html5-qrcode.min.js' %}"></script>
-<script src="{% static 'js/add_order_pc_busy.js' %}?v=20260223" defer></script>
+<script src="{% static 'js/add_order_pc_busy.js' %}?v=20260302a" defer></script>
 <script src="{% static 'js/add_order_enhanced.js' %}?v=20260223" defer></script>
 <script src="{% static 'js/add_order_search.js' %}?v=20260223" defer></script>
+<script src="{% static 'js/voice_accounting.js' %}?v=20260310a" defer></script>
+
+{% if not parties or not products %}
+<div class="container-fluid py-3">
+  <div class="alert alert-warning shadow-sm" style="border-left: 6px solid #f59e0b;">
+    <div class="fw-bold mb-1">Setup required for Add Order</div>
+    <div class="small">
+      {% if not parties %}No parties found for your account. {% endif %}
+      {% if not products %}No products found for your account. {% endif %}
+      Create them first to avoid a blank/empty order screen.
+    </div>
+    <div class="mt-2 d-flex gap-2 flex-wrap">
+      <a class="btn btn-sm btn-primary" href="{% url 'khataapp:add_party' %}">Add Party</a>
+      <a class="btn btn-sm btn-primary" href="{% url 'commerce:add_product' %}">Add Product</a>
+      <a class="btn btn-sm btn-dark" href="{% url 'commerce:order_list' %}">Open Orders</a>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <!-- KEYBOARD SHORTCUTS HELP MODAL -->
 <div id="keyboardHelp" class="keyboard-help-modal">
@@ -38,6 +57,27 @@
   </div>
 </div>
 
+<!-- VOICE ACCOUNTING MODAL -->
+<div class="modal fade" id="voiceAccountingModal" tabindex="-1" aria-labelledby="voiceAccountingLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="voiceAccountingLabel">Voice Accounting</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="small text-muted mb-2">Try: <code>sale 5 milk 250</code> or <code>expense diesel 500</code></div>
+        <textarea id="voiceText" class="form-control" rows="3" placeholder="Voice command will appear here..."></textarea>
+        <div id="voiceResult" class="mt-2 small"></div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <button id="voiceStartBtn" type="button" class="btn btn-outline-secondary">Start Mic</button>
+        <button id="voiceRunBtn" type="button" class="btn btn-primary">Create Entry</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="container-fluid py-4 unified-screen busy-unified-add busy-order-pc order-fullscreen">
   <div class="card shadow-lg border-0 order-card" id="mainOrderCard">
 
@@ -46,6 +86,9 @@
       <div class="d-flex align-items-center gap-3">
         <h2 class="mb-0 fw-bold text-shadow">🚀 Smart Order System</h2>
         <span class="badge bg-warning text-dark fw-bold pulse-badge">AI Ready</span>
+        <button type="button" class="btn btn-outline-light btn-lg fw-bold shadow-lg" data-bs-toggle="modal" data-bs-target="#voiceAccountingModal" title="Voice Accounting">
+          🎤 Voice
+        </button>
         <button type="button" class="btn btn-warning btn-lg fw-bold shadow-lg" onclick="showKeyboardHelp()" title="F1">⌨️ Shortcuts
         </button>
       </div>

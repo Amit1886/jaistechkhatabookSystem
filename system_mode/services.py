@@ -18,7 +18,7 @@ CACHE_TTL_SECONDS = 5
 
 def serialize_system_mode(mode_obj: SystemMode) -> dict[str, Any]:
     return {
-        "current_mode": mode_obj.current_mode,
+        "current_mode": str(mode_obj.current_mode),
         "is_locked": bool(mode_obj.is_locked),
         "updated_by_id": mode_obj.updated_by_id,
         "updated_at": mode_obj.updated_at.isoformat() if mode_obj.updated_at else None,
@@ -36,7 +36,7 @@ def get_system_mode_state(force_refresh: bool = False) -> dict[str, Any]:
         payload = serialize_system_mode(mode_obj)
     except OperationalError:
         payload = {
-            "current_mode": SystemMode.Mode.DESKTOP,
+            "current_mode": SystemMode.Mode.DESKTOP.value,
             "is_locked": False,
             "updated_by_id": None,
             "updated_at": None,
@@ -71,7 +71,7 @@ def _resolve_auto_mode(request) -> str:
 
 def resolve_mode_for_request(request, state: dict[str, Any] | None = None) -> str:
     state = state or get_system_mode_state()
-    requested = state.get("current_mode", SystemMode.Mode.DESKTOP)
+    requested = str(state.get("current_mode", SystemMode.Mode.DESKTOP.value))
 
     if requested == SystemMode.Mode.AUTO:
         return _resolve_auto_mode(request)
@@ -79,7 +79,7 @@ def resolve_mode_for_request(request, state: dict[str, Any] | None = None) -> st
     if requested == SystemMode.Mode.ADMIN_SUPER and not getattr(request.user, "is_staff", False):
         return SystemMode.Mode.DESKTOP
 
-    return requested
+    return str(requested)
 
 
 def route_profile_for_mode(resolved_mode: str) -> dict[str, str]:

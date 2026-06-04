@@ -113,6 +113,12 @@ body.mode-pc .busy-unified-add .row.g-3 > [class*="col-"] {
   padding-right: 6px !important;
 }
 
+body.mode-pc.add-screen .row.g-3,
+body.mode-pc .busy-unified-add .row.g-3 {
+  --ui-gutter-x: 12px;
+  --ui-gutter-y: 12px;
+}
+
 body.mode-pc.add-screen .card-footer,
 body.mode-pc .busy-unified-add .card-footer {
   background: #bdd8db !important;

@@ -1,0 +1,63 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Products</div>
+        <div class="va-section-title">Bulk import</div>
+        <div class="va-help mt-1">Upload CSV + optional media ZIP (images/videos). Creates/updates billing products and syncs to vendor store.</div>
+      </div>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-products' vendor.subdomain %}">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+    </div>
+  </div>
+
+  <div class="va-panel p-3 mb-3">
+    <div class="va-section-title mb-2">CSV format</div>
+    <div class="va-help">Required columns: <span class="fw-semibold">sku</span>, <span class="fw-semibold">name</span>, <span class="fw-semibold">price</span>, <span class="fw-semibold">stock</span></div>
+    <div class="va-help mt-1">Optional: category, description, gst_rate, hsn_code, unit, image, video, tags (comma), is_b2b_only (0/1)</div>
+    <div class="va-help mt-2">Media ZIP: put files inside and reference filenames in CSV columns <span class="fw-semibold">image</span> / <span class="fw-semibold">video</span>.</div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="va-panel p-3">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <label class="form-label va-form-label">CSV file</label>
+        <input class="form-control" type="file" name="csv_file" accept=".csv" required>
+      </div>
+      <div class="col-12 col-lg-6">
+        <label class="form-label va-form-label">Media ZIP (optional)</label>
+        <input class="form-control" type="file" name="media_zip" accept=".zip">
+      </div>
+      <div class="col-12">
+        <label class="form-label va-form-label">Publish to store (default)</label>
+        <select class="form-select" name="default_listing_online">
+          <option value="0" selected>Draft (vendor will publish)</option>
+          <option value="1">Online</option>
+        </select>
+      </div>
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-upload me-1"></i>Import</button>
+      </div>
+    </div>
+  </form>
+
+  {% if result %}
+    <div class="va-panel p-3 mt-3">
+      <div class="va-section-title mb-2">Result</div>
+      <div class="va-help">Created: {{ result.created }} · Updated: {{ result.updated }} · Media added: {{ result.media_added }} · Skipped: {{ result.skipped }}</div>
+      {% if result.errors %}
+        <div class="va-help mt-2">Errors:</div>
+        <ul class="va-help mb-0">
+          {% for e in result.errors %}
+            <li>{{ e }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}
+

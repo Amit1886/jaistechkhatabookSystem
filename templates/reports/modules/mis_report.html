@@ -1,0 +1,42 @@
+{% extends "core/pc_universal.html" %}
+
+{% block title %}MIS Report{% endblock %}
+
+{% block pc_content %}
+  <div class="unified-section unified-filter-row">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="unified-label">From</label>
+        <input type="date" name="from" value="{{ date_from|date:'Y-m-d' }}" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="unified-label">To</label>
+        <input type="date" name="to" value="{{ date_to|date:'Y-m-d' }}" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <button class="btn unified-btn-primary" type="submit">Apply</button>
+        <a class="btn unified-btn-outline" href="{% url 'reports:mis_report' %}">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="report-summary-grid">
+    <div class="report-summary-card">
+      <div class="label">Income</div>
+      <div class="value">{{ income }}</div>
+    </div>
+    <div class="report-summary-card">
+      <div class="label">Expense</div>
+      <div class="value">{{ expense }}</div>
+    </div>
+    <div class="report-summary-card">
+      <div class="label">Profit</div>
+      <div class="value">{{ profit }}</div>
+    </div>
+  </div>
+
+  <div class="unified-section">
+    <div class="unified-muted">MIS report is a high-level snapshot. You can extend it with more KPIs (sales, purchase, receivable/payable, inventory value) as needed.</div>
+  </div>
+{% endblock %}
+

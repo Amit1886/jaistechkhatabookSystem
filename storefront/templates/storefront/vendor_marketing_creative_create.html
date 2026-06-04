@@ -1,0 +1,104 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Marketing</div>
+        <div class="va-section-title">New creative</div>
+        <div class="va-help mt-1">Upload an image/video, or generate a demo reel GIF (no ffmpeg needed).</div>
+      </div>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-marketing-creatives' vendor.subdomain %}">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-6">
+      <div class="va-panel p-3 h-100">
+        <div class="va-section-title mb-2">Upload (Image / Reel)</div>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="_mode" value="upload">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label va-form-label">Kind</label>
+              <select class="form-select" name="kind">
+                <option value="reel">Reel/Video</option>
+                <option value="image">Image</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label va-form-label">Title</label>
+              <input class="form-control" name="title" placeholder="e.g. New Arrival Reel">
+            </div>
+            <div class="col-12">
+              <label class="form-label va-form-label">Caption</label>
+              <textarea class="form-control" rows="3" name="caption" placeholder="Short caption..."></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label va-form-label">Link to product (optional)</label>
+              <select class="form-select" name="product_id">
+                <option value="">-- Select product --</option>
+                {% for l in listings %}
+                  <option value="{{ l.product_id }}">{{ l.product.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label va-form-label">File</label>
+              <input class="form-control" name="file" type="file" required>
+              <div class="va-help mt-1">Tip: Upload MP4 for reels and PNG/JPG for images.</div>
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+              <button class="btn btn-primary" type="submit"><i class="bi bi-upload me-1"></i>Upload</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="va-panel p-3 h-100">
+        <div class="va-section-title mb-2">Generate Reel GIF (Demo)</div>
+        <div class="va-help mb-2">Creates a vertical animated GIF using your product images. Good for preview/testing.</div>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="_mode" value="generate_gif">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label va-form-label">Product</label>
+              <select class="form-select" name="product_id" required>
+                <option value="">-- Select product --</option>
+                {% for l in listings %}
+                  <option value="{{ l.product_id }}">{{ l.product.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label va-form-label">Frames</label>
+              <input class="form-control" name="frame_limit" value="6">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label va-form-label">Template</label>
+              <input class="form-control" name="template" value="simple_gif">
+            </div>
+            <div class="col-12">
+              <label class="form-label va-form-label">Title</label>
+              <input class="form-control" name="title" placeholder="e.g. Auto Reel GIF">
+            </div>
+            <div class="col-12">
+              <label class="form-label va-form-label">Caption</label>
+              <textarea class="form-control" rows="3" name="caption" placeholder="Caption shown on the reel header..."></textarea>
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+              <button class="btn btn-outline-primary" type="submit"><i class="bi bi-magic me-1"></i>Create GIF</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

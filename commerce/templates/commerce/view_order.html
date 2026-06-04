@@ -1,34 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
-
-<div class="container mt-4">
-  <div class="card p-4 shadow rounded-4">
-
-    <h4>Order #{{ order.id }}</h4>
-
-    <p>
-      <strong>Customer:</strong> {{ order.party.name }} <br>
-      <strong>Status:</strong> {{ order.status }} <br>
-      {% if order.bill_sundry %}<strong>Bill Sundry:</strong> {{ order.bill_sundry_total }} <br>{% endif %}
-      <strong>Total:</strong> {{ order.total_amount }}
-    </p>
-
-    {% if order.status == "pending" %}
-      <a href="{% url 'commerce:order_action' order.id 'accept' %}"
-         class="btn btn-success">Accept</a>
-
-      <a href="{% url 'commerce:order_action' order.id 'reject' %}"
-         class="btn btn-danger">Reject</a>
-    {% endif %}
-
-    {% if order.status == "accepted" %}
-      <a href="{% url 'commerce:create_voucher' order.id %}"
-         class="btn btn-primary">
-         Create Voucher
-      </a>
-    {% endif %}
-
+  {# Kept for backward compatibility; view now renders order_detail.html #}
+  <div class="container py-3">
+    <div class="alert alert-info">This page has moved. Use Order Details.</div>
   </div>
-</div>
-
 {% endblock %}
+

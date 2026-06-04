@@ -5,7 +5,7 @@
   {% with resolved_system_mode_css|default:'desktop' as mode_css %}
     {% if mode_css != 'mobile' %}
       <link rel="stylesheet" href="{% static 'css/add_order.css' %}">
-      <link rel="stylesheet" href="{% static 'css/add_order_busy.css' %}">
+      <link rel="stylesheet" href="{% static 'css/add_order_busy.css' %}?v=20260302a">
     {% endif %}
   {% endwith %}
   {{ block.super }}
@@ -32,4 +32,3 @@
     </div>
   </div>
 {% endblock %}
-

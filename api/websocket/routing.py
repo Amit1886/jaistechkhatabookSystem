@@ -1,0 +1,5 @@
+from apps.platform.core.interfaces.websocket.routing import websocket_urlpatterns as core_websocket_urlpatterns
+from apps.platform.identity.interfaces.websocket.routing import websocket_urlpatterns as identity_websocket_urlpatterns
+from apps.platform.workforce.interfaces.websocket.routing import websocket_urlpatterns as workforce_websocket_urlpatterns
+
+websocket_urlpatterns = core_websocket_urlpatterns + identity_websocket_urlpatterns + workforce_websocket_urlpatterns

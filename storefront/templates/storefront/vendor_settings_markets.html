@@ -1,0 +1,27 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Markets</div>
+        <div class="va-help">Region-based defaults for customers outside your primary market.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="va-panel p-3">
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Backup region</div>
+        <div class="va-help">Currently: <span class="fw-semibold">{{ settings_summary.backup_region }}</span></div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Unit system</div>
+        <div class="va-help">Currently: <span class="fw-semibold">{{ settings_summary.unit_system }}</span></div>
+      </div>
+    </div>
+    <div class="va-help mt-3">Advanced market configuration will be added in Phase B.</div>
+  </div>
+{% endblock %}
+

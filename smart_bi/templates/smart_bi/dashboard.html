@@ -1,0 +1,70 @@
+{% extends "core/pc_universal.html" %}
+{% load static %}
+
+{% block pc_title %}Smart Business Intelligence{% endblock %}
+
+{% block pc_content %}
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <div class="text-muted small">Business Health</div>
+              <div class="h3 fw-bold mb-0">{{ metric.health_score }}</div>
+              <span class="badge bg-{{ level.css_class }}">{{ level.label }}</span>
+            </div>
+            <a class="btn btn-outline-primary" href="{% url 'smart_bi:business_health_dashboard' %}">Open</a>
+          </div>
+          <hr>
+          <div class="small text-muted">Today</div>
+          <div class="row small mt-2">
+            <div class="col-6 text-muted">Sales</div><div class="col-6 text-end fw-semibold">₹{{ metric.total_sales }}</div>
+            <div class="col-6 text-muted">Profit</div><div class="col-6 text-end fw-semibold">₹{{ metric.total_profit }}</div>
+            <div class="col-6 text-muted">Expense</div><div class="col-6 text-end fw-semibold">₹{{ metric.total_expense }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <div class="text-muted small">Festival Sale Mode</div>
+              {% if festival %}
+                <div class="h4 fw-bold mb-1">{{ festival.name }}</div>
+                <div class="small text-muted">{{ festival.start_date }} → {{ festival.end_date }}</div>
+              {% else %}
+                <div class="h4 fw-bold mb-1">No Active Campaign</div>
+                <div class="small text-muted">Create and activate a festival campaign to auto-apply discounts.</div>
+              {% endif %}
+            </div>
+            <a class="btn btn-outline-primary" href="{% url 'smart_bi:festival_campaign_list' %}">Manage</a>
+          </div>
+          <hr>
+          <a class="btn btn-sm btn-outline-success" href="{% url 'smart_bi:festival_sales_report' %}">Festival Sales Report</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <div class="text-muted small">Duplicate Invoices</div>
+              <div class="h4 fw-bold mb-1">{{ dup_count }}</div>
+              <div class="small text-muted">Possible duplicates flagged by Smart BI.</div>
+            </div>
+            <a class="btn btn-outline-primary" href="{% url 'smart_bi:duplicate_invoice_report' %}">View</a>
+          </div>
+          <hr>
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'smart_bi:duplicate_invoice_settings' %}">Settings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

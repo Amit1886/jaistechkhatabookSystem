@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-list-screen">
+  <div class="unified-list-card">
+    <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Reminder Logs</h3>
+        <div class="unified-subtitle">Auto Khata Reminder AI activity</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'smart_khata:khata_reminder_settings' %}" class="btn unified-btn-outline">Reminder Settings</a>
+        <a href="{% url 'smart_khata:credit_score_dashboard' %}" class="btn unified-btn-outline">Credit Scores</a>
+      </div>
+    </div>
+
+    <div class="unified-list-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" method="get">
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="rlQ">Search</label>
+          <input id="rlQ" name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search customer/invoice/payload">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="rlStatus">Status</label>
+          <select id="rlStatus" name="status" class="form-select">
+            <option value="">All</option>
+            <option value="scheduled" {% if status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+            <option value="sent" {% if status == 'sent' %}selected{% endif %}>Sent</option>
+            <option value="failed" {% if status == 'failed' %}selected{% endif %}>Failed</option>
+            <option value="skipped" {% if status == 'skipped' %}selected{% endif %}>Skipped</option>
+          </select>
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="rlChannel">Channel</label>
+          <select id="rlChannel" name="channel" class="form-select">
+            <option value="">All</option>
+            <option value="whatsapp" {% if channel == 'whatsapp' %}selected{% endif %}>WhatsApp</option>
+            <option value="sms" {% if channel == 'sms' %}selected{% endif %}>SMS</option>
+            <option value="email" {% if channel == 'email' %}selected{% endif %}>Email</option>
+          </select>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <a href="{% url 'smart_khata:reminder_logs' %}" class="btn unified-btn-outline">Reset</a>
+        </div>
+      </form>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Invoice</th>
+              <th>Channel</th>
+              <th>Tone</th>
+              <th>Status</th>
+              <th class="text-end">Offset</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in logs %}
+            <tr>
+              <td>{{ r.created_at|date:"d M Y H:i" }}</td>
+              <td>{{ r.party.name|default:"-" }}</td>
+              <td>{{ r.invoice.number|default:"-" }}</td>
+              <td><span class="badge bg-light text-dark">{{ r.channel }}</span></td>
+              <td><span class="badge bg-light text-dark">{{ r.tone|default:"-" }}</span></td>
+              <td>
+                {% if r.status == 'sent' %}
+                  <span class="badge bg-success">Sent</span>
+                {% elif r.status == 'failed' %}
+                  <span class="badge bg-danger">Failed</span>
+                {% elif r.status == 'skipped' %}
+                  <span class="badge bg-secondary">Skipped</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Scheduled</span>
+                {% endif %}
+              </td>
+              <td class="text-end">{{ r.payload.offset|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted py-4">No logs found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-2">
+        {% include "core/includes/ajax_pagination.html" with page_obj=page_obj %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

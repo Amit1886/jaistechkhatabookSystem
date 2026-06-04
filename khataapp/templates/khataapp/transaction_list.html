@@ -1,102 +1,96 @@
 {% extends "base.html" %}
 {% load static %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/modern-app.css' %}">
-{% endblock %}
+{% load feature_tags %}
 
 {% block content %}
-
-<div class="container-fluid transaction-container">
-
-    <div class="card">
-
-        <!-- Header -->
-        <div class="card-header">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 1rem;">
-                <h3 class="mb-0"> Transaction History</h3>
-                <div class="txn-actions" style="gap: 0.5rem; background: none; border: none; padding: 0;">
-                    <button class="btn btn-dark btn-sm" id="btnPrint"> Print</button>
-                    <button class="btn btn-success btn-sm" id="btnExcel"> Excel</button>
-                    <button class="btn btn-danger btn-sm" id="btnPdf"> PDF</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filters -->
-        <div class="filter-row" style="margin-bottom: 0; border-radius: 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
-            <input type="text" id="partyFilter" class="form-control form-control-sm" placeholder=" Search Party Name..." style="flex: 1; min-width: 200px;">
-            
-            <select id="typeFilter" class="form-select form-select-sm" style="min-width: 150px;">
-                <option value=""> All Types</option>
-                <option value="credit"> Credit (Received)</option>
-                <option value="debit"> Debit (Paid)</option>
-            </select>
-            
-            <input type="date" id="fromDate" class="form-control form-control-sm" placeholder="From Date" style="min-width: 150px;">
-            <input type="date" id="toDate" class="form-control form-control-sm" placeholder="To Date" style="min-width: 150px;">
-            
-            <button class="btn btn-primary-small" onclick="applyFilters()"> Apply</button>
-        </div>
-
-        <!-- Table -->
-        <div class="card-body" style="padding: 0;">
-            <div class="table-responsive" style="border-radius: 0;">
-                <table id="transactionTable" class="table">
-                    <thead>
-                        <tr>
-                            <th> Party</th>
-                            <th> Type</th>
-                            <th> Amount</th>
-                            <th> Date</th>
-                            <th> Notes</th>
-                            <th class="text-center"> Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for txn in transactions %}
-                        <tr>
-                            <td><span class="font-semibold">{{ txn.party.name }}</span></td>
-                            <td>
-                                {% if txn.txn_type == 'credit' %}
-                                    <span class="badge credit"> Credit</span>
-                                {% else %}
-                                    <span class="badge debit"> Debit</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-right"><strong>{{ txn.amount|floatformat:2 }}</strong></td>
-                            <td>{{ txn.date|date:"d M Y" }}</td>
-                            <td>{{ txn.notes|default:"" }}</td>
-                            <td class="text-center">
-                                <a href="{% url 'khataapp:transaction_view' txn.id %}" class="btn btn-table view btn-sm" title="View"></a>
-                                <a href="{% url 'khataapp:transaction_edit' txn.id %}" class="btn btn-table edit btn-sm" title="Edit"></a>
-                                <a href="{% url 'khataapp:transaction_delete' txn.id %}" onclick="return confirm('Are you sure?')" class="btn btn-table delete btn-sm" title="Delete"></a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="6" class="text-center text-muted" style="padding: 2rem;">
-                            <p style="font-size: 1.1rem; margin: 0;"> No transactions found</p>
-                            <p style="font-size: 0.9rem; margin: 0.5rem 0 0 0; color: #9ca3af;">Create your first transaction to get started</p>
-                        </td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+<div class="container-fluid py-2 unified-list-screen" data-ajax-list-wrap data-ajax-url="{% url 'khataapp:transaction_list' %}" data-export-scope>
+  <div class="unified-list-card">
+    <div class="unified-list-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3>Transactions List</h3>
+        <div class="unified-subtitle">Filterable ledger entries</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if erp_can_edit %}
+          <a href="{% url 'khataapp:add_transaction' %}" class="btn unified-btn-primary">Add Transaction</a>
+          <a href="{% url 'khataapp:transaction_bulk_upload' %}" class="btn unified-btn-outline">Bulk Upload</a>
+          {% feature_allowed 'automation.bank_import' as bank_import_allowed %}
+          {% if bank_import_allowed %}
+            <a href="{% url 'bank_import:import' %}" class="btn unified-btn-outline">Import Bank Statement</a>
+          {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="btn unified-btn-outline locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Import Bank Statement</a>
+          {% endif %}
+        {% endif %}
+        <button type="button" class="btn unified-btn-outline" data-export="print" data-export-table="#txnTable" data-export-name="transactions">Print</button>
+        <button type="button" class="btn unified-btn-outline" data-export="excel" data-export-table="#txnTable" data-export-name="transactions">CSV</button>
+        <button type="button" class="btn unified-btn-outline" data-export="pdf" data-export-table="#txnTable">PDF</button>
+      </div>
     </div>
+
+    <div class="unified-list-body">
+      <form class="unified-filter-row d-flex flex-wrap gap-2 align-items-end mb-2" data-ajax-form>
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label class="unified-label" for="txnQ">Search</label>
+          <input id="txnQ" name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search party/notes/amount">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="txnType">Type</label>
+          <select id="txnType" name="type" class="form-select">
+            <option value="">All</option>
+            <option value="credit" {% if type == 'credit' %}selected{% endif %}>Credit</option>
+            <option value="debit" {% if type == 'debit' %}selected{% endif %}>Debit</option>
+          </select>
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="txnMode">Mode</label>
+          <select id="txnMode" name="mode" class="form-select">
+            <option value="">All</option>
+            <option value="cash" {% if mode == 'cash' %}selected{% endif %}>Cash</option>
+            <option value="upi" {% if mode == 'upi' %}selected{% endif %}>UPI</option>
+            <option value="online" {% if mode == 'online' %}selected{% endif %}>Online</option>
+            <option value="bank" {% if mode == 'bank' %}selected{% endif %}>Bank</option>
+            <option value="cheque" {% if mode == 'cheque' %}selected{% endif %}>Cheque</option>
+          </select>
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="fromDate">From</label>
+          <input id="fromDate" name="from" type="date" class="form-control" value="{{ date_from|date:'Y-m-d' }}">
+        </div>
+        <div style="min-width:160px;">
+          <label class="unified-label" for="toDate">To</label>
+          <input id="toDate" name="to" type="date" class="form-control" value="{{ date_to|date:'Y-m-d' }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn unified-btn-primary">Apply</button>
+          <button type="button" class="btn unified-btn-outline" data-ajax-reset>Reset</button>
+        </div>
+      </form>
+
+      <div class="small text-muted mb-2" data-ajax-loading style="display:none;">Loading…</div>
+
+      <div class="unified-table-wrap">
+        <table class="table unified-table" id="txnTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Party</th>
+              <th>Status</th>
+              <th>Type</th>
+              <th>Mode</th>
+              <th class="text-end">Amount</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody data-ajax-tbody>
+            {% include "khataapp/partials/transaction_list_rows.html" %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-2" data-ajax-pagination>
+        {% include "core/includes/ajax_pagination.html" with page_obj=page_obj %}
+      </div>
+    </div>
+  </div>
 </div>
-
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
-<script>
-function applyFilters() {
-    // Filter logic can be added here
-    console.log('Filters applied');
-}
-</script>
-<script src="{% static 'js/transaction.js' %}"></script>
 {% endblock %}

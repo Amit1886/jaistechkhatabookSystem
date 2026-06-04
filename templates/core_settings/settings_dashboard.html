@@ -26,6 +26,10 @@
             <strong>User Overrides</strong>
             <div class="muted">Per-user feature toggles</div>
           </a>
+          <a href="{% url 'validation:dashboard' %}" class="category-pill" style="text-decoration:none;">
+            <strong>Smart Alerts</strong>
+            <div class="muted">Open: {{ open_alerts_count|default:"0" }}</div>
+          </a>
         {% else %}
           <a href="{% url 'billing:upgrade_plan' %}" class="category-pill locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" style="text-decoration:none;" title="Upgrade to unlock">
             <strong>User Overrides</strong>
@@ -405,10 +409,13 @@
     if (setting.data_type === "select") {
       const select = document.createElement("select");
       (setting.options || []).forEach(option => {
+        const isObj = option && typeof option === "object" && !Array.isArray(option);
+        const optionValue = isObj ? String(option.value ?? "") : String(option);
+        const optionLabel = isObj ? String(option.label ?? optionValue) : String(option);
         const opt = document.createElement("option");
-        opt.value = option;
-        opt.textContent = option;
-        if (option === setting.value) {
+        opt.value = optionValue;
+        opt.textContent = optionLabel;
+        if (optionValue === String(setting.value ?? "")) {
           opt.selected = true;
         }
         select.appendChild(opt);

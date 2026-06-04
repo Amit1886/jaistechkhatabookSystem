@@ -1,0 +1,2015 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Smart Self Checkout</title>
+  <link rel="icon" href="{% static 'img/favicon.ico' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap-5.3.3.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.css' %}">
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  <script src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+  <script src="{% static 'libs/html5-qrcode.min.js' %}" defer></script>
+  <style>
+    :root {
+      --bg0: #07080d;
+      --bg1: #101827;
+      --panel: rgba(255,255,255,.105);
+      --panel2: rgba(255,255,255,.17);
+      --line: rgba(255,255,255,.18);
+      --ink: #f8fbff;
+      --muted: #aab7c9;
+      --cyan: #42f8ff;
+      --mint: #5dffb1;
+      --pink: #ff4fd8;
+      --amber: #ffd166;
+      --danger: #ff5a76;
+      --shadow: 0 24px 90px rgba(0,0,0,.42);
+    }
+    * { box-sizing: border-box; letter-spacing: 0; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 16% 18%, rgba(66,248,255,.24), transparent 28%),
+        radial-gradient(circle at 86% 8%, rgba(255,79,216,.18), transparent 30%),
+        radial-gradient(circle at 65% 88%, rgba(93,255,177,.13), transparent 34%),
+        linear-gradient(135deg, var(--bg0), var(--bg1) 54%, #0c1110);
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.6), transparent 82%);
+    }
+    body.large-text { font-size: 18px; }
+    body.high-contrast { --panel: rgba(0,0,0,.84); --panel2: rgba(0,0,0,.95); --line: rgba(255,255,255,.72); --muted: #fff; }
+    body.theme-light_premium { --bg0: #eef7ff; --bg1: #f8fbff; --panel: rgba(255,255,255,.72); --panel2: rgba(255,255,255,.86); --line: rgba(10,40,60,.16); --ink: #071119; --muted: #536475; --cyan: #0ea5e9; --mint: #14b8a6; }
+    body.theme-cyberpunk { --bg0: #100018; --bg1: #1b0934; --cyan: #00f5ff; --mint: #faff00; --pink: #ff2bd6; }
+    body.theme-luxury { --bg0: #090806; --bg1: #1b1710; --cyan: #facc15; --mint: #f8e7b0; --pink: #d97706; }
+    body.theme-diwali, body.theme-newyear { --bg0: #120a02; --bg1: #271407; --cyan: #ffd166; --mint: #ff9f1c; --pink: #ff4d6d; }
+    body.theme-holi { --bg0: #090021; --bg1: #21044d; --cyan: #42f8ff; --mint: #5dffb1; --pink: #ff4fd8; }
+    body.theme-christmas { --bg0: #02120b; --bg1: #082116; --cyan: #d1fae5; --mint: #5dffb1; --pink: #ff5a76; }
+    button, input { font: inherit; }
+    .shell { min-height: 100vh; padding: 16px; display: grid; grid-template-rows: auto 1fr auto; gap: 14px; }
+    .glass { background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); backdrop-filter: blur(24px); }
+    .topbar { border-radius: 22px; padding: 12px 14px; display: grid; grid-template-columns: 1.1fr .9fr 1.2fr; gap: 12px; align-items: center; }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-mark { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: linear-gradient(135deg, var(--cyan), var(--mint)); color: #041016; font-size: 28px; box-shadow: 0 0 30px rgba(66,248,255,.32); }
+    .eyebrow { color: var(--cyan); text-transform: uppercase; font-size: 12px; font-weight: 900; }
+    h1, h2, h3, p { margin-top: 0; }
+    .brand h1 { margin: 1px 0 2px; font-size: 24px; line-height: 1.05; }
+    .muted { color: var(--muted); }
+    .clock { text-align: center; }
+    .clock strong { display: block; font-size: 28px; line-height: 1; }
+    .actions, .row-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; align-items: center; }
+    .btn-k {
+      border: 1px solid var(--line);
+      color: var(--ink);
+      background: rgba(255,255,255,.105);
+      border-radius: 16px;
+      min-height: 46px;
+      padding: 10px 13px;
+      font-weight: 850;
+      transition: transform .18s ease, border .18s ease, background .18s ease;
+    }
+    .btn-k:hover { transform: translateY(-1px); border-color: rgba(66,248,255,.48); background: rgba(255,255,255,.17); }
+    .btn-k.primary { border: 0; color: #061015; background: linear-gradient(135deg, var(--cyan), var(--mint)); }
+    .btn-k.warn { background: rgba(255,90,118,.18); border-color: rgba(255,90,118,.42); }
+    .btn-k.active { color: #061015; background: var(--mint); border-color: transparent; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 11px; background: rgba(0,0,0,.18); font-weight: 800; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 7px rgba(93,255,177,.14); animation: pulse 1.35s infinite; }
+    @keyframes pulse { 50% { transform: scale(1.25); opacity: .72; } }
+    .grid { min-height: 0; display: grid; grid-template-columns: minmax(300px,.95fr) minmax(380px,1.32fr) minmax(330px,.95fr); gap: 14px; }
+    .panel { border-radius: 24px; padding: 15px; overflow: hidden; min-height: 0; }
+    .panel-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+    .panel-head h2 { margin: 0; font-size: 20px; }
+    .scan-stage { position: relative; min-height: 258px; display: grid; place-items: center; gap: 12px; border-radius: 24px; padding: 16px; border: 1px dashed rgba(66,248,255,.44); overflow: hidden; background: linear-gradient(145deg, rgba(66,248,255,.12), rgba(255,79,216,.08)); }
+    .scan-stage::after { content: ""; position: absolute; left: 8%; right: 8%; height: 3px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); box-shadow: 0 0 24px var(--cyan); animation: scan 2s infinite ease-in-out; }
+    @keyframes scan { 0%,100% { transform: translateY(-82px); opacity: .35; } 50% { transform: translateY(86px); opacity: 1; } }
+    .scan-orb { width: 100px; height: 100px; border-radius: 30px; display: grid; place-items: center; background: rgba(255,255,255,.12); font-size: 46px; box-shadow: inset 0 0 28px rgba(66,248,255,.18); }
+    .scan-input { width: 100%; min-height: 58px; border-radius: 18px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.27); color: var(--ink); padding: 0 15px; outline: 0; font-weight: 800; }
+    .scan-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 4px rgba(66,248,255,.14); }
+    .micro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; width: 100%; }
+    .suggestions, .cards { display: grid; gap: 10px; overflow: auto; padding-right: 4px; }
+    .suggestions { max-height: 27vh; margin-top: 12px; }
+    .suggestion, .mini-card, .cart-item { border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.105); border-radius: 18px; }
+    .suggestion { color: var(--ink); text-align: left; padding: 9px; display: grid; grid-template-columns: 54px 1fr auto; gap: 9px; align-items: center; }
+    .product-img, .cart-img { width: 54px; height: 54px; object-fit: contain; border-radius: 13px; padding: 5px; background: rgba(255,255,255,.92); }
+    .cart-panel { display: flex; flex-direction: column; gap: 10px; }
+    .cart-list { flex: 1; min-height: 0; overflow: auto; display: grid; align-content: start; gap: 10px; padding-right: 4px; }
+    .cart-item { display: grid; grid-template-columns: 60px 1fr auto; gap: 10px; align-items: center; padding: 10px; animation: itemIn .24s ease; }
+    @keyframes itemIn { from { transform: translateY(8px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+    .cart-name { font-weight: 900; }
+    .qty { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: 7px; }
+    .qty button { width: 38px; height: 38px; border: 0; border-radius: 12px; color: var(--ink); background: rgba(255,255,255,.16); font-size: 20px; font-weight: 900; }
+    .qty-pill { min-width: 55px; text-align: center; border-radius: 12px; padding: 8px 10px; background: rgba(0,0,0,.22); font-weight: 900; }
+    .price { text-align: right; font-weight: 950; font-size: 17px; }
+    .empty { flex: 1; display: grid; place-items: center; text-align: center; min-height: 280px; border: 1px dashed var(--line); border-radius: 22px; color: var(--muted); }
+    .preview-wrap { position: relative; min-height: 262px; border-radius: 24px; overflow: hidden; background: radial-gradient(circle at center, rgba(66,248,255,.18), rgba(0,0,0,.14)); border: 1px solid var(--line); }
+    #product3d { width: 100%; height: 262px; display: block; }
+    .preview-info { position: absolute; inset: auto 12px 12px 12px; border-radius: 18px; background: rgba(0,0,0,.34); border: 1px solid var(--line); padding: 10px; backdrop-filter: blur(12px); }
+    .live-strip { border-radius: 22px; padding: 12px 0; overflow: hidden; min-height: 178px; position: relative; }
+    .live-strip-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 0 14px 10px; }
+    .live-strip-head h2 { margin: 0; font-size: 20px; }
+    .live-strip-window { position: relative; overflow: hidden; }
+    .live-strip-window::before, .live-strip-window::after { content: ""; position: absolute; top: 0; bottom: 0; width: 62px; z-index: 2; pointer-events: none; }
+    .live-strip-window::before { left: 0; background: linear-gradient(90deg, rgba(7,8,13,.95), transparent); }
+    .live-strip-window::after { right: 0; background: linear-gradient(270deg, rgba(7,8,13,.95), transparent); }
+    .live-strip-track { display: flex; gap: 14px; width: max-content; padding: 0 14px; animation: productTicker 34s linear infinite; will-change: transform; }
+    .live-strip-window:hover .live-strip-track { animation-play-state: paused; }
+    @keyframes productTicker { from { transform: translate3d(-50%,0,0); } to { transform: translate3d(0,0,0); } }
+    .live-product-card {
+      flex: 0 0 310px;
+      min-height: 150px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 20px;
+      overflow: hidden;
+      color: var(--ink);
+      background: rgba(0,0,0,.3);
+      display: block;
+      padding: 0;
+      text-align: left;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+      position: relative;
+    }
+    .live-product-card:hover { transform: translateY(-3px); border-color: rgba(66,248,255,.52); background: rgba(255,255,255,.15); }
+    .live-product-art { position: absolute; inset: 0; background: rgba(0,0,0,.26); overflow: hidden; }
+    .live-product-art img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(1.12) contrast(1.05); }
+    .live-product-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.78), rgba(0,0,0,.24) 48%, rgba(0,0,0,.78)); }
+    .live-product-body { position: relative; min-height: 150px; padding: 16px; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; z-index: 1; }
+    .live-product-tools { position: absolute; top: 13px; left: 16px; display: flex; gap: 8px; z-index: 2; }
+    .live-product-tool { border-radius: 999px; padding: 6px 10px; background: rgba(255,255,255,.26); border: 1px solid rgba(255,255,255,.26); color: #fff; font-size: 11px; font-weight: 900; }
+    button.live-product-tool { cursor: pointer; }
+    button.live-product-tool:hover { background: rgba(66,248,255,.32); border-color: rgba(66,248,255,.52); }
+    .live-product-kicker { color: var(--cyan); font-size: 10px; font-weight: 950; letter-spacing: 4px; text-transform: uppercase; }
+    .live-product-name { font-size: 20px; font-weight: 950; line-height: 1.08; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 18px rgba(0,0,0,.8); }
+    .live-product-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+    .live-product-price, .live-product-hot { border-radius: 999px; padding: 7px 10px; font-weight: 950; font-size: 13px; }
+    .live-product-price { color: #031016; background: var(--mint); }
+    .live-product-hot { color: #271800; background: var(--amber); }
+    .live-product-add { width: 52px; height: 52px; border: 0; border-radius: 16px; color: #031016; background: linear-gradient(135deg, var(--cyan), var(--mint)); font-weight: 950; display: grid; place-items: center; cursor: pointer; }
+    .assistant { display: grid; grid-template-columns: 74px 1fr; gap: 11px; align-items: center; }
+    .avatar { width: 74px; height: 74px; border-radius: 24px; position: relative; background: radial-gradient(circle at 50% 36%, #fff, var(--cyan) 22%, rgba(255,79,216,.75) 55%, rgba(0,0,0,.28)); box-shadow: 0 0 34px rgba(66,248,255,.36); animation: float 3.2s ease-in-out infinite; }
+    .avatar::before, .avatar::after { content: ""; position: absolute; top: 34px; width: 9px; height: 9px; border-radius: 50%; background: #031016; }
+    .avatar::before { left: 24px; } .avatar::after { right: 24px; }
+    @keyframes float { 50% { transform: translateY(-5px); } }
+    .total-card { border-radius: 22px; padding: 14px; background: linear-gradient(145deg, rgba(66,248,255,.16), rgba(255,79,216,.1)); border: 1px solid var(--line); }
+    .total-row { display: flex; justify-content: space-between; margin: 7px 0; color: var(--muted); }
+    .total-row.grand { color: var(--ink); font-size: 25px; font-weight: 950; padding-top: 10px; border-top: 1px solid var(--line); }
+    .pay-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 9px; }
+    .tap-zone { min-height: 105px; border-radius: 22px; border: 1px solid rgba(93,255,177,.38); display: grid; place-items: center; text-align: center; background: rgba(93,255,177,.08); cursor: pointer; }
+    .tap-ring { width: 62px; height: 62px; border-radius: 50%; border: 2px solid var(--mint); display: grid; place-items: center; box-shadow: 0 0 28px rgba(93,255,177,.32); animation: tap 1.5s infinite; }
+    @keyframes tap { 50% { transform: scale(1.07); } }
+    .qr img { width: 126px; height: 126px; border-radius: 18px; padding: 8px; background: white; }
+    .mini-card { padding: 10px; }
+    .metric-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .metric { border-radius: 15px; padding: 9px; background: rgba(0,0,0,.22); border: 1px solid var(--line); }
+    .metric strong { display: block; font-size: 20px; }
+    .health-list { max-height: 150px; overflow: auto; display: grid; gap: 7px; margin-top: 8px; }
+    .health-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 8px; border-radius: 13px; background: rgba(255,255,255,.08); }
+    .bottom { border-radius: 20px; padding: 10px 12px; display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .toast-stack { position: fixed; left: 18px; bottom: 76px; display: grid; gap: 8px; z-index: 80; }
+    .toast-k { max-width: 360px; padding: 11px 13px; border-radius: 16px; background: rgba(0,0,0,.78); border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .fly-item { position: fixed; z-index: 120; width: 58px; height: 58px; object-fit: contain; border-radius: 16px; padding: 5px; background: white; pointer-events: none; }
+    .modal-screen { position: fixed; inset: 0; display: none; place-items: center; padding: 20px; z-index: 100; background: rgba(0,0,0,.78); backdrop-filter: blur(14px); }
+    .modal-screen.active { display: grid; }
+    .success-card { width: min(720px,100%); border-radius: 28px; padding: 24px; text-align: center; }
+    .success-mark { width: 92px; height: 92px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; background: var(--mint); color: #031016; font-size: 52px; font-weight: 950; }
+    .product-showcase { position: fixed; inset: 0; z-index: 94; display: none; place-items: center; padding: 22px; background: radial-gradient(circle at 50% 40%, rgba(66,248,255,.18), rgba(0,0,0,.86)); backdrop-filter: blur(18px); }
+    .product-showcase.active { display: grid; }
+    .showcase-card { width: min(1080px,100%); min-height: 620px; border-radius: 34px; padding: 26px; display: grid; grid-template-columns: .95fr 1.05fr; gap: 22px; align-items: center; position: relative; overflow: hidden; }
+    .showcase-card::before { content: ""; position: absolute; inset: -45%; background: conic-gradient(from 90deg, transparent, rgba(66,248,255,.32), transparent, rgba(255,79,216,.25), transparent); animation: spinBg 7s linear infinite; opacity: .55; }
+    .showcase-card > * { position: relative; z-index: 1; }
+    @keyframes spinBg { to { transform: rotate(360deg); } }
+    .showcase-image-wrap { min-height: 500px; display: grid; place-items: center; border-radius: 30px; background: rgba(255,255,255,.09); border: 1px solid var(--line); box-shadow: inset 0 0 90px rgba(66,248,255,.13); }
+    .showcase-image { width: min(420px,80%); max-height: 430px; object-fit: contain; filter: drop-shadow(0 34px 70px rgba(0,0,0,.5)); animation: productFloat 3.4s ease-in-out infinite; }
+    @keyframes productFloat { 50% { transform: translateY(-16px) rotateY(12deg) scale(1.035); } }
+    .showcase-title { font-size: 48px; line-height: 1.02; margin-bottom: 12px; }
+    .offer-banner { display: inline-flex; border-radius: 999px; padding: 9px 13px; background: rgba(255,209,102,.14); border: 1px solid rgba(255,209,102,.42); font-weight: 900; margin-bottom: 12px; }
+    .payment-wall { position: fixed; inset: 0; z-index: 93; display: none; place-items: center; padding: 22px; background: rgba(0,0,0,.82); backdrop-filter: blur(16px); }
+    .payment-wall.active { display: grid; }
+    .payment-wall-card { width: min(920px,100%); border-radius: 34px; padding: 28px; text-align: center; }
+    .giant-qr { width: min(420px,72vw); height: min(420px,72vw); border-radius: 34px; padding: 18px; background: #fff; border: 5px solid var(--mint); box-shadow: 0 0 70px rgba(93,255,177,.45); animation: qrGlow 1.8s ease-in-out infinite; }
+    @keyframes qrGlow { 50% { transform: scale(1.015); box-shadow: 0 0 100px rgba(93,255,177,.72); } }
+    .idle-screen { position: fixed; inset: 0; z-index: 92; display: none; place-items: center; padding: 20px; background: rgba(0,0,0,.68); backdrop-filter: blur(10px); }
+    .idle-screen.active { display: grid; }
+    .idle-card { width: min(680px,100%); border-radius: 30px; padding: 26px; text-align: center; }
+    .support-beacon { position: fixed; right: 18px; top: 112px; z-index: 50; border-radius: 22px; padding: 12px; }
+    .support-beacon.active { animation: beaconBlink .9s infinite; border-color: rgba(255,90,118,.8); }
+    @keyframes beaconBlink { 50% { box-shadow: 0 0 42px rgba(255,90,118,.55); transform: scale(1.02); } }
+    .particles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .particle { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--cyan); opacity: .35; animation: particleRise linear infinite; }
+    @keyframes particleRise { from { transform: translateY(105vh); } to { transform: translateY(-10vh); } }
+    .heatmap-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 35; opacity: .52; mix-blend-mode: screen; display: none; }
+    .heatmap-canvas.active { display: block; }
+    .floating-smart-panel { position: fixed; right: 18px; bottom: 82px; z-index: 70; width: min(360px, calc(100vw - 24px)); border-radius: 24px; padding: 16px; display: none; }
+    .floating-smart-panel.active { display: block; }
+    .broadcast-bar { position: fixed; left: 18px; right: 18px; top: 12px; z-index: 85; border-radius: 18px; padding: 10px 14px; display: none; align-items: center; gap: 12px; background: rgba(0,0,0,.74); border: 1px solid rgba(66,248,255,.38); box-shadow: var(--shadow); }
+    .broadcast-bar.active { display: flex; }
+    .broadcast-bar.emergency { border-color: rgba(255,90,118,.9); animation: beaconBlink .9s infinite; }
+    .avatar.speaking { animation: float 1.1s ease-in-out infinite, avatarTalk .48s infinite; }
+    @keyframes avatarTalk { 50% { box-shadow: 0 0 48px rgba(93,255,177,.65); filter: saturate(1.4); } }
+    .reward-wheel { width: 210px; height: 210px; border-radius: 50%; margin: 12px auto; display: grid; place-items: center; background: conic-gradient(var(--cyan), var(--mint), var(--amber), var(--pink), var(--cyan)); color: #031016; font-weight: 950; animation: rewardSpin 1.8s cubic-bezier(.17,.67,.16,1.02); }
+    @keyframes rewardSpin { from { transform: rotate(0deg) scale(.82); } to { transform: rotate(1080deg) scale(1); } }
+    .shelf-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .shelf-badge { border-radius: 999px; padding: 5px 8px; background: rgba(66,248,255,.2); border: 1px solid rgba(66,248,255,.38); color: #dffcff; font-size: 10px; font-weight: 950; animation: ticker-pulse 2s infinite; }
+    .promo-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+    .live-product-card.has-video .promo-video { display: block; }
+    .identity-screen { position: fixed; inset: 0; z-index: 95; display: none; place-items: center; padding: 18px; background: rgba(5,7,12,.82); backdrop-filter: blur(18px); }
+    .identity-screen.active { display: grid; }
+    .identity-card { width: min(1080px,100%); border-radius: 30px; padding: 22px; display: grid; grid-template-columns: .95fr 1.05fr; gap: 16px; }
+    .identity-hero { min-height: 560px; border-radius: 26px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(145deg, rgba(66,248,255,.16), rgba(255,79,216,.12)); border: 1px solid var(--line); overflow: hidden; position: relative; }
+    .identity-hero::after { content: ""; position: absolute; inset: 18% -20% auto; height: 2px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); box-shadow: 0 0 32px var(--cyan); animation: scan 2.6s infinite; }
+    .identity-hero h2 { font-size: 40px; line-height: 1.02; margin-bottom: 10px; }
+    .identity-options { display: grid; gap: 10px; }
+    .identity-option { min-height: 82px; border-radius: 22px; border: 1px solid var(--line); background: rgba(255,255,255,.105); color: var(--ink); text-align: left; padding: 14px; display: grid; grid-template-columns: 48px 1fr auto; gap: 12px; align-items: center; }
+    .identity-option.active { border-color: rgba(93,255,177,.65); background: rgba(93,255,177,.12); }
+    .identity-icon { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; background: rgba(255,255,255,.14); font-size: 24px; }
+    .identity-workspace { border-radius: 26px; padding: 18px; background: rgba(0,0,0,.24); border: 1px solid var(--line); min-height: 560px; }
+    .field-grid { display: grid; gap: 10px; }
+    .input-k { width: 100%; min-height: 54px; border-radius: 16px; border: 1px solid rgba(255,255,255,.24); background: rgba(0,0,0,.26); color: var(--ink); padding: 0 14px; outline: 0; font-weight: 800; }
+    .input-k:focus { border-color: var(--cyan); box-shadow: 0 0 0 4px rgba(66,248,255,.13); }
+    .customer-chip { display: grid; grid-template-columns: 58px 1fr; gap: 10px; align-items: center; border-radius: 18px; background: rgba(255,255,255,.1); border: 1px solid var(--line); padding: 10px; }
+    .profile-avatar { width: 58px; height: 58px; border-radius: 18px; display: grid; place-items: center; color: #031016; background: linear-gradient(135deg, var(--mint), var(--cyan)); font-weight: 950; font-size: 22px; }
+    .reward-spark { border-radius: 18px; padding: 10px; background: rgba(255,209,102,.12); border: 1px solid rgba(255,209,102,.32); }
+    .customer-panel { display: grid; gap: 9px; }
+    .profile-metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    [x-cloak] { display: none !important; }
+    .confetti { position: fixed; top: -20px; width: 10px; height: 16px; z-index: 110; animation: fall 1.7s linear forwards; }
+    @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: .2; } }
+    #reader-wrap { display: none; margin-top: 10px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); background: rgba(0,0,0,.32); }
+    #reader-wrap.active { display: block; }
+    @media (max-width: 1180px) { .grid { grid-template-columns: 1fr 1fr; } .right-panel { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } .identity-card { grid-template-columns: 1fr; } .identity-hero, .identity-workspace { min-height: auto; } }
+    @media (max-width: 760px) {
+      .shell { padding: 9px; } .topbar, .grid, .right-panel { grid-template-columns: 1fr; } .clock { text-align: left; } .actions { justify-content: flex-start; }
+      .cart-item { grid-template-columns: 54px 1fr; } .price { grid-column: 1 / -1; text-align: left; } .pay-grid, .micro-grid, .metric-grid { grid-template-columns: 1fr; }
+      .live-product-card { flex-basis: 270px; grid-template-columns: 96px 1fr; }
+    }
+  </style>
+</head>
+<body x-data="selfCheckoutApp()" x-init="init()" :class="bodyClasses()">
+  <form style="display:none;">{% csrf_token %}</form>
+  {{ cart_state|json_script:"selfco-initial" }}
+  <canvas id="selfco-heatmap" class="heatmap-canvas" :class="{active: heatmap.visible}"></canvas>
+  <div class="broadcast-bar" :class="{active: broadcast.active, emergency: broadcast.priority==='emergency'}" x-cloak>
+    <span class="pill"><span class="dot"></span><span x-text="broadcast.priority || 'live'"></span></span>
+    <strong x-text="broadcast.title"></strong>
+    <span class="muted" x-text="broadcast.message"></span>
+    <button class="btn-k" type="button" style="margin-left:auto;" @click="broadcast.active=false"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="particles" aria-hidden="true">
+    <template x-for="p in particles" :key="p.id">
+      <span class="particle" :style="`left:${p.left}%; animation-duration:${p.duration}s; animation-delay:${p.delay}s;`"></span>
+    </template>
+  </div>
+  <div class="identity-screen" :class="{active: showIdentity}" x-cloak>
+    <div class="identity-card glass">
+      <section class="identity-hero">
+        <div>
+          <div class="eyebrow">Smart Customer Verification</div>
+          <h2>Identify, onboard, reward, checkout.</h2>
+          <p class="muted">Existing customer, new customer, or guest shopping in one smooth kiosk flow.</p>
+        </div>
+        <div class="identity-options">
+          <button type="button" class="identity-option" :class="{active: identityMode==='existing'}" @click="chooseIdentity('existing')">
+            <span class="identity-icon"><i class="bi bi-person-check"></i></span>
+            <span><strong>Existing Customer</strong><br><small class="muted">Mobile OTP, QR membership, NFC card, face consent</small></span>
+            <i class="bi bi-arrow-right"></i>
+          </button>
+          <button type="button" class="identity-option" :class="{active: identityMode==='new'}" @click="chooseIdentity('new')">
+            <span class="identity-icon"><i class="bi bi-person-plus"></i></span>
+            <span><strong>New Customer</strong><br><small class="muted">Ultra-fast mobile OTP onboarding with rewards</small></span>
+            <i class="bi bi-arrow-right"></i>
+          </button>
+          <button type="button" class="identity-option" :class="{active: identityMode==='guest'}" @click="guestCheckout()">
+            <span class="identity-icon"><i class="bi bi-lightning-charge"></i></span>
+            <span><strong>Continue as Guest</strong><br><small class="muted">Instant shopping with temporary guest profile</small></span>
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </div>
+      </section>
+      <section class="identity-workspace">
+        <template x-if="identityMode==='existing' || identityMode==='new'">
+          <div>
+            <div class="panel-head">
+              <div>
+                <h2 x-text="identityMode==='existing' ? 'Mobile + OTP Verification' : 'New Customer Onboarding'"></h2>
+                <div class="muted" x-text="otpSent ? 'Enter OTP to load profile instantly.' : 'Enter mobile number to detect customer.'"></div>
+              </div>
+              <span class="pill"><span class="dot"></span><span x-text="otpSent ? 'OTP sent' : 'Ready'"></span></span>
+            </div>
+            <div class="field-grid">
+              <input class="input-k" x-model="identityMobile" inputmode="numeric" maxlength="14" placeholder="Mobile number">
+              <div class="field-grid" x-show="identityMode==='new' || newCustomerDetected">
+                <input class="input-k" x-model="identityName" placeholder="Name optional">
+                <input class="input-k" x-model="identityEmail" placeholder="Email optional">
+              </div>
+              <button class="btn-k primary" type="button" @click="sendIdentityOtp()" x-text="otpSent ? 'Resend OTP' : 'Send OTP'"></button>
+              <input class="input-k" x-show="otpSent" x-model="identityOtp" inputmode="numeric" maxlength="8" placeholder="Enter OTP">
+              <button class="btn-k primary" x-show="otpSent" type="button" @click="verifyIdentityOtp()">Verify and Start Shopping</button>
+              <div class="reward-spark" x-show="devOtp">
+                <strong>Demo OTP</strong>
+                <div class="muted">Use <span x-text="devOtp"></span> in this local environment.</div>
+              </div>
+            </div>
+            <div class="mini-card mt-3">
+              <strong>Other secure verification</strong>
+              <div class="field-grid mt-2">
+                <input class="input-k" x-model="membershipToken" placeholder="Scan QR membership token or member code">
+                <button class="btn-k" type="button" @click="identifyMembership('qr')"><i class="bi bi-qr-code-scan"></i> Verify QR Membership</button>
+                <input class="input-k" x-model="nfcUid" placeholder="Tap NFC card / phone / watch UID">
+                <button class="btn-k" type="button" @click="identifyMembership('nfc')"><i class="bi bi-nfc"></i> Verify NFC</button>
+                <label class="pill justify-content-start"><input type="checkbox" x-model="faceConsent"> Consent to face recognition mode</label>
+                <button class="btn-k" type="button" @click="faceIdentify()"><i class="bi bi-person-bounding-box"></i> Face Recognition Mode</button>
+              </div>
+            </div>
+          </div>
+        </template>
+        <template x-if="customer && customer.identified">
+          <div class="customer-panel">
+            <div class="customer-chip">
+              <div class="profile-avatar" x-text="customerInitials()"></div>
+              <div>
+                <h2 class="mb-1" x-text="customer.is_guest ? 'Guest checkout ready' : 'Welcome back ' + customer.name"></h2>
+                <div class="muted"><span x-text="customer.tier"></span> | <span x-text="customer.masked_mobile || customer.mode"></span></div>
+              </div>
+            </div>
+            <div class="profile-metrics">
+              <div class="metric"><span class="muted">Points</span><strong x-text="customer.loyalty_points || 0"></strong></div>
+              <div class="metric"><span class="muted">Wallet</span><strong>Rs <span x-text="customer.wallet_balance || '0.00'"></span></strong></div>
+              <div class="metric"><span class="muted">Cashback</span><strong>Rs <span x-text="customer.cashback_total || '0.00'"></span></strong></div>
+            </div>
+            <div class="reward-spark" x-show="customer.welcome_coupon">
+              <strong>Welcome reward unlocked</strong>
+              <div class="muted"><span x-text="customer.welcome_coupon"></span> plus starter reward points.</div>
+            </div>
+            <div class="mini-card">
+              <strong>Membership QR</strong>
+              <div class="qr text-center mt-2"><img :src="customerQrUrl()" alt="Customer QR"><div class="muted mt-1" x-text="customer.member_code"></div></div>
+            </div>
+            <button class="btn-k primary" type="button" @click="startShopping()">Start Shopping</button>
+          </div>
+        </template>
+      </section>
+    </div>
+  </div>
+  <div class="product-showcase" :class="{active: showcase.active}" @click="closeShowcase()">
+    <div class="showcase-card glass" @click.stop>
+      <div class="showcase-image-wrap">
+        <img class="showcase-image" :src="showcase.product?.image || '/static/img/billentra-logo.png'" :alt="showcase.product?.name || 'Product'">
+      </div>
+      <div>
+        <div class="offer-banner" x-text="tr('offerBanner')"></div>
+        <h2 class="showcase-title" x-text="showcase.product?.name || 'Product scanned'"></h2>
+        <p class="muted"><span x-text="tr('barcode')"></span>: <span x-text="showcase.product?.sku || showcase.product?.barcode || '-'"></span></p>
+        <div class="metric-grid my-3">
+          <div class="metric"><span class="muted" x-text="tr('qty')"></span><strong x-text="showcase.product?.quantity || '1.00'"></strong></div>
+          <div class="metric"><span class="muted" x-text="tr('price')"></span><strong>Rs <span x-text="showcase.product?.price || showcase.product?.unit_price || '0.00'"></span></strong></div>
+          <div class="metric"><span class="muted">GST</span><strong><span x-text="showcase.product?.tax_percent || '0.00'"></span>%</strong></div>
+        </div>
+        <div class="total-card">
+          <div class="total-row"><span x-text="tr('stock')"></span><strong x-text="showcase.product?.stock || 'Live'"></strong></div>
+          <div class="total-row"><span x-text="tr('discount')"></span><strong>Rs <span x-text="showcase.product?.discount || cart.discount_total || '0.00'"></span></strong></div>
+          <div class="total-row grand"><span x-text="tr('subtotal')"></span><strong>Rs <span x-text="showcase.product?.line_total || cart.subtotal || '0.00'"></span></strong></div>
+        </div>
+        <div class="mini-card mt-3">
+          <strong x-text="tr('together')"></strong>
+          <template x-for="item in (cart.recommendations || []).slice(0,2)" :key="item.id">
+            <div class="health-row mt-2"><span><b x-text="item.name"></b><br><small class="muted" x-text="item.reason"></small></span><strong>Rs <span x-text="item.price"></span></strong></div>
+          </template>
+        </div>
+        <div class="row-actions justify-content-start mt-3">
+          <button class="btn-k primary" type="button" @click="addShowcaseProduct()"><i class="bi bi-cart-plus"></i> Add to Cart</button>
+          <button class="btn-k" type="button" @click="closeShowcase()" x-text="tr('continue')"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="payment-wall" :class="{active: paymentWall}" x-cloak>
+    <div class="payment-wall-card glass">
+      <div class="eyebrow">Dynamic QR Payment Wall</div>
+      <h2 class="showcase-title">Rs <span x-text="cart.total"></span></h2>
+      <img class="giant-qr" :src="qrUrl()" alt="Payment QR">
+      <p class="muted mt-3"><span x-text="tr('paymentStatus')"></span> | <span x-text="paymentCountdown"></span>s</p>
+      <div class="row-actions justify-content-center mt-3">
+        <button class="btn-k primary" type="button" @click="pay()" x-text="paying ? tr('processing') : tr('paidConfirm')"></button>
+        <button class="btn-k" type="button" @click="paymentCountdown=180; toast('QR refreshed')">Refresh QR</button>
+        <button class="btn-k" type="button" @click="paymentWall=false">Close</button>
+      </div>
+    </div>
+  </div>
+  <div class="floating-smart-panel glass" :class="{active: showMobileQr}" x-cloak>
+    <div class="panel-head">
+      <div><h2>Mobile Continue</h2><div class="muted">Scan and continue checkout on phone</div></div>
+      <button class="btn-k" type="button" @click="showMobileQr=false"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="qr text-center">
+      <img :src="mobileQrUrl()" alt="Mobile continue QR">
+      <div class="muted mt-2" x-text="mobileHandoff.expires_at ? 'Secure handoff active' : 'Tap generate to create secure link'"></div>
+    </div>
+    <button class="btn-k primary w-100 mt-3" type="button" @click="createMobileHandoff()">Generate QR</button>
+  </div>
+  <div class="floating-smart-panel glass" :class="{active: reward.active}" x-cloak style="left:18px;right:auto;">
+    <h2 x-text="reward.title"></h2>
+    <div class="reward-wheel"><span x-text="reward.won ? 'WIN' : 'THANK YOU'"></span></div>
+    <div class="total-card">
+      <div class="total-row"><span>Coupon</span><strong x-text="reward.coupon || '-'"></strong></div>
+      <div class="total-row grand"><span>Cashback</span><strong>Rs <span x-text="reward.cashback || '0.00'"></span></strong></div>
+    </div>
+    <button class="btn-k primary w-100 mt-3" type="button" @click="reward.active=false">Continue</button>
+  </div>
+  <div class="idle-screen" :class="{active: idleWarning}" x-cloak>
+    <div class="idle-card glass">
+      <div class="scan-orb mx-auto mb-3"><i class="bi bi-hourglass-split"></i></div>
+      <h2 x-text="tr('idleTitle')"></h2>
+      <p class="muted" x-text="tr('idleBody')"></p>
+      <h1><span x-text="idleCountdown"></span>s</h1>
+      <button class="btn-k primary" type="button" @click="resumeFromIdle()" x-text="tr('resume')"></button>
+    </div>
+  </div>
+  <div class="shell">
+    <div class="support-beacon glass" :class="{active: support.active}" x-show="support.active" x-cloak>
+      <strong>Staff Alert</strong>
+      <div class="muted">Request #<span x-text="support.request_id"></span> | <span x-text="supportTimer"></span>s</div>
+      <button class="btn-k warn mt-2" type="button" @click="requestSupport('emergency','emergency')">Emergency</button>
+    </div>
+    <header class="topbar glass">
+      <div class="brand">
+        <div class="brand-mark"><i class="bi bi-stars"></i></div>
+        <div>
+          <div class="eyebrow">AI Powered Smart Retail Experience</div>
+          <h1>Smart Self Checkout</h1>
+          <div class="muted"><span x-text="kioskId"></span> | Touch, scan, speak, tap, walk out</div>
+        </div>
+      </div>
+      <div class="clock"><strong x-text="clock.time"></strong><span class="muted" x-text="clock.date"></span></div>
+      <div class="actions">
+        <span class="pill"><span class="dot"></span><span x-text="cart.item_count + ' items'"></span></span>
+        <button type="button" class="btn-k" :class="{active: lang==='en'}" @click="setLang('en')">EN</button>
+        <button type="button" class="btn-k" :class="{active: lang==='hi'}" @click="setLang('hi')">HI</button>
+        <button type="button" class="btn-k" :class="{active: support.active}" @click="requestSupport('general_help','normal')"><i class="bi bi-bell"></i> Need Help</button>
+        <select class="btn-k" x-model="themeKey" @change="setTheme(themeKey)">
+          <option value="dark_neon">Dark</option>
+          <option value="light_premium">Light</option>
+          <option value="cyberpunk">Cyber</option>
+          <option value="luxury">Luxury</option>
+          <option value="diwali">Diwali</option>
+          <option value="holi">Holi</option>
+        </select>
+        <button type="button" class="btn-k" @click="largeText=!largeText"><i class="bi bi-universal-access"></i></button>
+        <button type="button" class="btn-k" @click="highContrast=!highContrast"><i class="bi bi-circle-half"></i></button>
+      </div>
+    </header>
+
+    <!-- Live Products News Ticker -->
+    <section class="live-strip glass">
+      <div class="live-strip-head">
+        <div>
+          <div class="eyebrow">Live Product Showcase</div>
+          <h2>Smart Self Checkout Deals</h2>
+        </div>
+        <span class="pill"><span class="dot"></span><span x-text="tickerSourceProducts().length + ' live products'"></span></span>
+      </div>
+
+      <div class="live-strip-window" aria-label="Live product slider">
+        <div class="live-strip-track">
+          <template x-for="(product, index) in tickerProducts()" :key="product.id + '-' + index">
+            <article class="live-product-card" :class="{'has-video': product.promo_video}" role="button" tabindex="0" @click="openProductShowcase(product)" @keydown.enter.prevent="openProductShowcase(product)" @mouseenter="trackProductHover(product, true)" @mouseleave="trackProductHover(product, false)" :aria-label="'View ' + product.name + ' details'">
+              <span class="live-product-art">
+                <video class="promo-video" x-show="product.promo_video" :src="product.promo_video" muted autoplay loop playsinline preload="none"></video>
+                <img :src="product.image" :alt="product.name">
+              </span>
+              <span class="live-product-tools">
+                <button class="live-product-tool" type="button" @click.stop="openProductShowcase(product)"><i class="bi bi-eye"></i> Quick View</button>
+                <button class="live-product-tool" type="button" @click.stop="speakProduct(product)"><i class="bi bi-volume-up"></i> Speak</button>
+              </span>
+              <span class="live-product-body">
+                <span class="live-product-kicker">Available in store</span>
+                <span class="live-product-name" x-text="product.name"></span>
+                <span class="shelf-badges">
+                  <template x-for="badge in (product.badges || [])" :key="badge"><span class="shelf-badge" x-text="badge"></span></template>
+                  <span class="shelf-badge" x-show="product.stock">Stock <span x-text="product.stock"></span></span>
+                  <span class="shelf-badge" x-show="product.expiry_warning" x-text="product.expiry_warning"></span>
+                </span>
+                <span class="live-product-row">
+                  <span>
+                    <span class="live-product-price">Rs <span x-text="product.price"></span></span>
+                    <span class="live-product-hot" x-show="product.is_featured">HOT</span>
+                  </span>
+                  <button class="live-product-add" type="button" @click.stop="addProduct(product.id, product)">Add</button>
+                </span>
+              </span>
+            </article>
+          </template>
+        </div>
+      </div>
+    </section>
+
+    <!-- Old Live Products Carousel -->
+    <section class="glass" style="display: none; border-radius: 22px; padding: 14px; overflow: hidden; min-height: 0;" x-cloak>
+      <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
+        <div style="flex: 1;">
+          <h3 style="margin: 0; font-size: 18px; font-weight: 900;">🔥 Featured Live Products</h3>
+          <div class="muted" style="font-size: 12px;">Click to add to cart instantly</div>
+        </div>
+        <span class="pill"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--mint); display: inline-block; animation: pulse 1.35s infinite;"></span> Live Feed</span>
+      </div>
+      
+      <div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; scroll-behavior: smooth;" id="liveCarousel">
+        <template x-for="product in liveProducts" :key="product.id">
+          <div 
+            style="
+              flex: 0 0 240px;
+              border-radius: 18px;
+              border: 1px solid rgba(255,255,255,.12);
+              background: rgba(255,255,255,.085);
+              overflow: hidden;
+              cursor: pointer;
+              transition: all .2s ease;
+              text-align: left;
+              display: flex;
+              flex-direction: column;
+              position: relative;
+            "
+            @mouseenter="$el.style.background = 'rgba(255,255,255,.14)'; $el.style.borderColor = 'rgba(66,248,255,.48)'; $el.style.transform = 'translateY(-4px)';"
+            @mouseleave="$el.style.background = 'rgba(255,255,255,.085)'; $el.style.borderColor = 'rgba(255,255,255,.12)'; $el.style.transform = 'translateY(0)';"
+          >
+            <!-- Product Image -->
+            <div style="width: 100%; height: 140px; background: rgba(0,0,0,.18); display: grid; place-items: center; overflow: hidden; position: relative;">
+              <img :src="product.image" :alt="product.name" style="width: 100%; height: 100%; object-fit: cover;">
+              <div style="position: absolute; top: 8px; right: 8px;">
+                <span style="display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 5px 10px; background: rgba(93,255,177,.18); border: 1px solid rgba(93,255,177,.42); font-weight: 900; font-size: 11px; color: var(--mint);">
+                  <i class="bi bi-lightning-fill" style="font-size: 10px;"></i> HOT
+                </span>
+              </div>
+            </div>
+            
+            <!-- Product Info -->
+            <div style="flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+              <div>
+                <div style="font-size: 12px; color: var(--cyan); font-weight: 900; text-transform: uppercase;">AVAILABLE IN STORE</div>
+                <strong style="display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-size: 15px; line-height: 1.2;" x-text="product.name"></strong>
+              </div>
+              <div style="margin-top: auto;">
+                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px;">
+                  <span style="display: inline-block; min-width: 50px; padding: 6px 10px; border-radius: 12px; background: rgba(93,255,177,.2); border: 1px solid rgba(93,255,177,.48); font-weight: 900; font-size: 13px; color: var(--mint);">Rs <span x-text="product.price"></span></span>
+                  <span style="display: inline-block; padding: 6px 10px; border-radius: 12px; background: rgba(255,90,118,.18); border: 1px solid rgba(255,90,118,.42); font-weight: 900; font-size: 11px; color: var(--danger); text-transform: uppercase;">Featured</span>
+                </div>
+                <button 
+                  type="button"
+                  style="
+                    width: 100%;
+                    padding: 10px;
+                    border-radius: 12px;
+                    border: 0;
+                    background: linear-gradient(135deg, var(--cyan), var(--mint));
+                    color: #041016;
+                    font-weight: 900;
+                    font-size: 13px;
+                    cursor: pointer;
+                    transition: all .18s ease;
+                  "
+                  @mouseenter="$el.style.transform = 'scale(1.05)';"
+                  @mouseleave="$el.style.transform = 'scale(1)';"
+                  @click="addProduct(product.id, {id: product.id, name: product.name, price: product.price, image: product.image})"
+                >
+                  + Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <main class="grid">
+      <section class="panel glass">
+        <div class="panel-head">
+          <div><h2>Smart Scan + RFID</h2><div class="muted">Barcode, camera, voice, RFID basket detection</div></div>
+          <span class="pill"><span class="dot"></span><span x-text="scanStatus"></span></span>
+        </div>
+        <div class="scan-stage" id="scanStage">
+          <div class="scan-orb"><i class="bi bi-upc-scan"></i></div>
+          <input id="selfco-scan-input" class="scan-input" x-model="scanCode" @keydown.enter.prevent="scan()" @input.debounce.220ms="search()" placeholder="Scan barcode, SKU, or search product" autocomplete="off" autofocus>
+          <div class="micro-grid">
+            <button class="btn-k primary" type="button" @click="scan()">Add item</button>
+            <button class="btn-k" type="button" @click="toggleCamera()" x-text="cameraActive ? 'Stop camera' : 'Camera scan'"></button>
+            <button class="btn-k" type="button" @click="simulateRfid()">RFID detect</button>
+            <button class="btn-k" type="button" @click="assignQueue()">Queue assign</button>
+          </div>
+        </div>
+        <div id="reader-wrap" :class="{active: cameraActive}"><div id="reader"></div></div>
+        <div class="suggestions" x-show="suggestions.length">
+          <template x-for="product in suggestions" :key="product.id">
+            <button class="suggestion" type="button" @click="addProduct(product.id, product)">
+              <img class="product-img" :src="product.image" alt="">
+              <span><strong x-text="product.name"></strong><br><small class="muted"><span x-text="product.sku"></span> | Stock <span x-text="product.stock"></span></small></span>
+              <strong>Rs <span x-text="product.price"></span></strong>
+            </button>
+          </template>
+        </div>
+
+        <div class="mini-card mt-3 assistant">
+          <div class="avatar" id="avatar" :class="{speaking: avatarSpeaking}"></div>
+          <div>
+            <strong>Digital Human Assistant</strong>
+            <div class="muted" x-text="assistantMessage"></div>
+            <div class="row-actions justify-content-start mt-2">
+              <button class="btn-k" type="button" @click="listenVoice()" :class="{active:listening}"><i class="bi bi-mic"></i> Voice</button>
+              <button class="btn-k" type="button" @click="submitVoice('Apply Coupon')">Apply coupon</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel glass cart-panel">
+        <div class="panel-head">
+          <div><h2>Realtime Smart Cart</h2><div class="muted">AI coupon, fraud signals, live sync and animations</div></div>
+          <button class="btn-k warn" type="button" @click="resetSession()">Reset</button>
+        </div>
+        <div class="preview-wrap">
+          <canvas id="product3d"></canvas>
+          <div class="preview-info" x-show="preview">
+            <strong x-text="preview?.name || '3D Product Preview'"></strong>
+            <div class="muted"><span x-text="preview?.reason || 'Rotating holographic product card appears on scan.'"></span></div>
+            <div class="row-actions justify-content-start mt-2" x-show="preview">
+              <span class="pill">Rs <span x-text="preview?.price"></span></span>
+              <span class="pill">GST <span x-text="preview?.tax_percent"></span>%</span>
+              <span class="pill" x-text="preview?.nutrition?.energy || 'Live price'"></span>
+            </div>
+          </div>
+        </div>
+        <div class="empty" x-show="!cart.items.length">
+          <div><div class="scan-orb mx-auto mb-3"><i class="bi bi-bag-plus"></i></div><h3>Cart is empty</h3><p>Scan your first product to begin.</p></div>
+        </div>
+        <div class="cart-list" x-ref="cartList" x-show="cart.items.length">
+          <template x-for="item in cart.items" :key="item.item_id">
+            <article class="cart-item">
+              <img class="cart-img" :src="item.image" alt="">
+              <div>
+                <div class="cart-name" x-text="item.name"></div>
+                <div class="muted">Stock <span x-text="item.stock"></span> | Tax Rs <span x-text="item.tax"></span> | Save Rs <span x-text="item.discount"></span></div>
+                <div class="qty">
+                  <button type="button" @click="changeQty(item,-1)">-</button>
+                  <span class="qty-pill" x-text="item.quantity"></span>
+                  <button type="button" @click="changeQty(item,1)">+</button>
+                  <button type="button" @click="removeItem(item)"><i class="bi bi-trash"></i></button>
+                </div>
+              </div>
+              <div class="price">Rs <span x-text="item.line_total"></span></div>
+            </article>
+          </template>
+        </div>
+      </section>
+
+      <aside class="panel glass right-panel">
+        <div>
+          <div class="panel-head"><div><h2>NFC / QR Checkout</h2><div class="muted">UPI, card tap, mobile wallet, smartwatch</div></div></div>
+          <div class="total-card">
+            <div class="total-row"><span>Subtotal</span><strong>Rs <span x-text="cart.subtotal"></span></strong></div>
+            <div class="total-row"><span>AI savings <span x-text="cart.applied_coupon ? '(' + cart.applied_coupon + ')' : ''"></span></span><strong>Rs <span x-text="cart.discount_total"></span></strong></div>
+            <div class="total-row"><span>GST</span><strong>Rs <span x-text="cart.tax_total"></span></strong></div>
+            <div class="total-row grand"><span>Total</span><strong>Rs <span x-text="cart.total"></span></strong></div>
+          </div>
+          <div class="pay-grid mt-3">
+            <button class="btn-k" :class="{active:paymentMethod==='upi'}" @click="paymentMethod='upi'" type="button">UPI QR</button>
+            <button class="btn-k" :class="{active:paymentMethod==='card'}" @click="paymentMethod='card'" type="button">Card</button>
+            <button class="btn-k" :class="{active:paymentMethod==='wallet'}" @click="paymentMethod='wallet'" type="button">Wallet</button>
+            <button class="btn-k" :class="{active:paymentMethod==='watch'}" @click="paymentMethod='watch'" type="button">Watch</button>
+          </div>
+          <div class="tap-zone mt-3" @click="nfcTap()">
+            <div><div class="tap-ring mx-auto mb-2"><i class="bi bi-nfc fs-3"></i></div><strong>Tap to Pay</strong><div class="muted">Instant detect with retry support</div></div>
+          </div>
+          <div class="qr text-center mt-3">
+            <img :src="qrUrl()" alt="Payment QR"><div class="muted mt-1">Secure QR expires in <span x-text="paymentCountdown"></span>s</div>
+          </div>
+          <button class="btn-k primary w-100 mt-3" type="button" :disabled="paying || !cart.items.length" @click="openPaymentWall()" x-text="paying ? tr('processing') : tr('payNow')"></button>
+        </div>
+
+        <div>
+          <div class="cards">
+            <div class="mini-card customer-panel">
+              <strong>Smart Customer Profile</strong>
+              <template x-if="customer && customer.identified">
+                <div>
+                  <div class="customer-chip mt-2">
+                    <div class="profile-avatar" x-text="customerInitials()"></div>
+                    <div>
+                      <b x-text="customer.name"></b><br>
+                      <small class="muted"><span x-text="customer.tier"></span> | <span x-text="customer.category"></span></small>
+                    </div>
+                  </div>
+                  <div class="profile-metrics mt-2">
+                    <div class="metric"><span class="muted">Points</span><strong x-text="customer.loyalty_points || 0"></strong></div>
+                    <div class="metric"><span class="muted">Wallet</span><strong>Rs <span x-text="customer.wallet_balance || '0.00'"></span></strong></div>
+                    <div class="metric"><span class="muted">Orders</span><strong x-text="(customer.previous_orders || []).length"></strong></div>
+                  </div>
+                  <template x-for="offer in customer.offers || []" :key="offer.code">
+                    <div class="health-row mt-2"><span><b x-text="offer.code"></b><br><small class="muted" x-text="offer.title"></small></span><strong>Rs <span x-text="offer.saving"></span></strong></div>
+                  </template>
+                </div>
+              </template>
+              <template x-if="!customer || !customer.identified">
+                <div class="muted mt-2">Customer not identified. Guest checkout is available.</div>
+              </template>
+              <button class="btn-k w-100 mt-2" type="button" @click="showIdentity=true">Change customer</button>
+            </div>
+            <div class="mini-card">
+              <strong>AI Recommendations</strong>
+              <template x-for="item in cart.recommendations || []" :key="item.id">
+                <button class="suggestion mt-2" type="button" @click="addProduct(item.id, item)">
+                  <img class="product-img" :src="item.image" alt="">
+                  <span><strong x-text="item.name"></strong><br><small class="muted" x-text="item.reason"></small></span>
+                  <strong>Rs <span x-text="item.price"></span></strong>
+                </button>
+              </template>
+            </div>
+            <div class="mini-card">
+              <strong>Smart Offers</strong>
+              <template x-for="offer in cart.offers || []" :key="offer.code">
+                <div class="health-row mt-2"><span><b x-text="offer.code"></b><br><small class="muted" x-text="offer.title"></small></span><strong>Rs <span x-text="offer.saving"></span></strong></div>
+              </template>
+            </div>
+            <div class="mini-card">
+              <strong>Queue Intelligence</strong>
+              <div class="metric-grid mt-2">
+                <div class="metric"><span class="muted">Kiosks</span><strong x-text="queue.active_kiosks || 0"></strong></div>
+                <div class="metric"><span class="muted">Waiting</span><strong x-text="queue.waiting_users || 0"></strong></div>
+                <div class="metric"><span class="muted">ETA</span><strong><span x-text="queue.estimated_wait || 0"></span>s</strong></div>
+              </div>
+            </div>
+            <div class="mini-card">
+              <strong>Enterprise Kiosk Health</strong>
+              <div class="health-list">
+                <template x-for="k in queue.kiosks || []" :key="k.kiosk_id">
+                  <div class="health-row"><span><b x-text="k.kiosk_id"></b><br><small class="muted">Scanner <span x-text="k.scanner"></span> | Pay <span x-text="k.payment"></span></small></span><span class="pill" x-text="k.status"></span></div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="bottom glass">
+      <div class="row-actions justify-content-start">
+        <button class="btn-k" type="button" @click="voiceEnabled=!voiceEnabled" x-text="voiceEnabled ? 'Voice on' : 'Voice off'"></button>
+        <button class="btn-k" type="button" @click="volume = Math.max(0, volume-.1)"><i class="bi bi-volume-down"></i></button>
+        <button class="btn-k" type="button" @click="volume = Math.min(1, volume+.1)"><i class="bi bi-volume-up"></i></button>
+        <button class="btn-k" type="button" @click="heatmap.visible=!heatmap.visible"><i class="bi bi-activity"></i> Heatmap</button>
+        <button class="btn-k" type="button" @click="restoreOffline()">Restore offline</button>
+        <button class="btn-k" type="button" @click="showMobileQr=!showMobileQr"><i class="bi bi-phone"></i> Mobile continue</button>
+      </div>
+      <div class="muted">WebSocket: <span x-text="socketState"></span> | Fraud flags: <span x-text="(cart.fraud_flags || []).length"></span> | Session <span x-text="sessionKey"></span></div>
+    </footer>
+  </div>
+
+  <div class="toast-stack"><template x-for="toast in toasts" :key="toast.id"><div class="toast-k" x-text="toast.message"></div></template></div>
+
+  <div class="modal-screen" :class="{active: success.active}">
+    <div class="success-card glass">
+      <div class="success-mark"><i class="bi bi-check-lg"></i></div>
+      <h2>Payment Successful</h2>
+      <p class="muted">Digital receipt, WhatsApp invoice shortcut, loyalty points and QR exit verification are ready.</p>
+      <h4>Invoice <span x-text="success.invoice"></span></h4>
+      <div class="metric-grid my-3">
+        <div class="metric"><span class="muted">Cashback</span><strong>Rs 25</strong></div>
+        <div class="metric"><span class="muted">Loyalty</span><strong>+48</strong></div>
+        <div class="metric"><span class="muted">Exit</span><strong>Verified</strong></div>
+      </div>
+      <div class="qr my-3"><img :src="receiptQrUrl()" alt="Receipt QR"><div class="fw-bold mt-2" x-text="success.token"></div></div>
+      <div class="muted mb-2" x-text="printStatus"></div>
+      <div class="row-actions justify-content-center">
+        <button class="btn-k" type="button" @click="autoPrintReceipt(success.invoiceId, true)"><i class="bi bi-printer"></i> Print receipt</button>
+        <button class="btn-k" type="button" @click="speak('Receipt sent on WhatsApp')">WhatsApp invoice</button>
+        <button class="btn-k" type="button" @click="toast('Reorder shortcut saved')">Reorder</button>
+        <button class="btn-k primary" type="button" @click="newCustomer()">Start new customer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selfCheckoutApp() {
+      const initial = JSON.parse(document.getElementById("selfco-initial").textContent || "{}");
+      const dictionary = {
+        en: {
+          offerBanner: "Offer unlocked", barcode: "Barcode", qty: "Qty", price: "Price", stock: "Stock", discount: "Discount", subtotal: "Subtotal",
+          together: "Frequently Bought Together", continue: "Continue", paymentStatus: "Waiting for payment scan", processing: "Processing...", paidConfirm: "I have paid", payNow: "Open QR payment wall",
+          idleTitle: "Are you still there?", idleBody: "Your cart is saved. Kiosk will reset soon for privacy.", resume: "Resume checkout",
+          scanNext: "Please scan next item", helpSent: "Staff has been notified"
+        },
+        hi: {
+          offerBanner: "ऑफर अनलॉक हुआ", barcode: "बारकोड", qty: "मात्रा", price: "कीमत", stock: "स्टॉक", discount: "छूट", subtotal: "सबटोटल",
+          together: "अक्सर साथ खरीदा जाता है", continue: "जारी रखें", paymentStatus: "पेमेंट स्कैन का इंतजार", processing: "प्रोसेसिंग...", paidConfirm: "पेमेंट हो गया", payNow: "QR पेमेंट खोलें",
+          idleTitle: "क्या आप अभी भी हैं?", idleBody: "आपका कार्ट सेव है. प्राइवेसी के लिए कियोस्क जल्द रीसेट होगा.", resume: "चेकआउट जारी रखें",
+          scanNext: "कृपया अगला प्रोडक्ट स्कैन करें", helpSent: "स्टाफ को सूचना भेज दी गई है"
+        }
+      };
+      return {
+        sessionKey: initial.session_key,
+        kioskId: initial.kiosk_id || "KIOSK-1",
+        cart: initial,
+        customer: initial.customer || {identified: false, mode: "unidentified"},
+        showIdentity: !(initial.customer && initial.customer.identified),
+        identityMode: "existing",
+        identityMobile: "",
+        identityOtp: "",
+        identityName: "",
+        identityEmail: "",
+        otpSent: false,
+        newCustomerDetected: false,
+        devOtp: "",
+        membershipToken: "",
+        nfcUid: "",
+        faceConsent: false,
+        themeKey: (initial.theme && initial.theme.key) || localStorage.getItem("selfco_theme") || "dark_neon",
+        support: initial.support || {active: false},
+        supportTimer: 0,
+        paymentWall: false,
+        showcase: {active: false, product: null},
+        idleWarning: false,
+        idleCountdown: 30,
+        idleSeconds: 0,
+        idleTimer: null,
+        showMobileQr: false,
+        particles: Array.from({length: 28}, (_, i) => ({id: i, left: Math.round(Math.random() * 100), duration: 9 + Math.random() * 13, delay: -Math.random() * 12})),
+        queue: {},
+        preview: (initial.items && initial.items[0]) || null,
+        assistantMessage: initial.assistant || "Welcome to Smart Checkout.",
+        scanCode: "",
+        suggestions: [],
+        paymentMethod: "upi",
+        paying: false,
+        scanStatus: "Ready",
+        cameraActive: false,
+        camera: null,
+        lang: localStorage.getItem("selfco_lang") || "en",
+        voiceEnabled: localStorage.getItem("selfco_voice") !== "0",
+        listening: false,
+        largeText: false,
+        highContrast: false,
+        volume: .45,
+        sound: {ctx: null, unlocked: false},
+        heatmap: {visible: false, canvas: null, ctx: null, queue: [], hover: {}, flushTimer: null},
+        mobileHandoff: {url: "", token: "", expires_at: ""},
+        reward: {active: false, won: false, title: "", coupon: "", cashback: "0.00"},
+        broadcast: {active: false, title: "", message: "", priority: "normal", voice_enabled: true},
+        avatarSpeaking: false,
+        reconnectDelay: 1000,
+        retailStateTimer: null,
+        socketState: "standby",
+        paymentCountdown: 180,
+        clock: {time: "", date: ""},
+        toasts: [],
+        printStatus: "",
+        success: {active: false, invoice: "", invoiceId: "", token: ""},
+        liveProducts: [
+          {id: "demo-cookies", sku: "DEMO-COOKIE", name: "Chocolate Cookies", category: "Snacks", price: "99", image: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=700&q=80", is_featured: true, demo: true},
+          {id: "demo-juice", sku: "DEMO-JUICE", name: "Orange Juice", category: "Beverages", price: "70", image: "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&w=700&q=80", is_featured: true, demo: true},
+          {id: "demo-cola", sku: "DEMO-COLA", name: "Coca Cola", category: "Beverages", price: "40", image: "https://images.unsplash.com/photo-1629203851122-3726ecdf080e?auto=format&fit=crop&w=700&q=80", is_featured: true, demo: true},
+          {id: "demo-chips", sku: "DEMO-CHIPS", name: "Potato Chips", category: "Snacks", price: "20", image: "https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=700&q=80", is_featured: false, demo: true}
+        ],
+        liveProductsTimer: null,
+        csrf() { return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || ""; },
+        init() {
+          this.autoDetectLanguage();
+          this.applyTheme(this.themeKey);
+          this.tickClock();
+          setInterval(() => this.tickClock(), 1000);
+          setInterval(() => { this.paymentCountdown = this.paymentCountdown > 0 ? this.paymentCountdown - 1 : 180; }, 1000);
+          setInterval(() => this.refreshIntel(), 6000);
+          setInterval(() => this.healthPing(), 15000);
+          setInterval(() => { if (this.support.active) this.supportTimer += 1; }, 1000);
+          window.addEventListener("online", () => this.syncOffline());
+          ["click", "touchstart", "keydown", "mousemove"].forEach(evt => window.addEventListener(evt, () => this.markActivity(), {passive: true}));
+          this.connectSocket();
+          this.init3d();
+          this.initSoundEngine();
+          this.initHeatmapEngine();
+          this.refreshIntel();
+          this.loadLiveProducts();
+          this.syncRetailState();
+          this.retailStateTimer = setInterval(() => this.syncRetailState(), 12000);
+          this.startIdleEngine();
+          if (!this.showIdentity) this.focusScan();
+          this.speak(this.lang === "hi" ? "Smart checkout mein swagat hai. Customer identify karein ya guest continue karein." : "Welcome to Smart Checkout. Identify customer or continue as guest.");
+        },
+        bodyClasses() {
+          return {"large-text": this.largeText, "high-contrast": this.highContrast, [`theme-${this.themeKey}`]: true};
+        },
+        tr(key) { return (dictionary[this.lang] && dictionary[this.lang][key]) || dictionary.en[key] || key; },
+        autoDetectLanguage() {
+          const saved = localStorage.getItem("selfco_lang");
+          if (saved) { this.lang = saved; return; }
+          const locale = (navigator.language || navigator.userLanguage || "en").toLowerCase();
+          this.lang = locale.startsWith("hi") ? "hi" : "en";
+          localStorage.setItem("selfco_lang", this.lang);
+        },
+        tickClock() {
+          const now = new Date();
+          this.clock.time = now.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
+          this.clock.date = now.toLocaleDateString([], {weekday: "long", day: "2-digit", month: "short", year: "numeric"});
+        },
+        setLang(lang) { this.lang = lang; localStorage.setItem("selfco_lang", lang); this.speak(lang === "hi" ? "Hindi voice mode active" : "English voice mode active"); },
+        applyTheme(theme) { this.themeKey = theme || "dark_neon"; localStorage.setItem("selfco_theme", this.themeKey); },
+        initSoundEngine() {
+          const unlock = () => {
+            if (this.sound.unlocked) return;
+            try {
+              this.sound.ctx = this.sound.ctx || new (window.AudioContext || window.webkitAudioContext)();
+              this.sound.ctx.resume && this.sound.ctx.resume();
+              this.sound.unlocked = true;
+            } catch (err) {}
+          };
+          ["pointerdown", "touchstart", "keydown"].forEach(evt => window.addEventListener(evt, unlock, {once: true, passive: true}));
+        },
+        initHeatmapEngine() {
+          const canvas = document.getElementById("selfco-heatmap");
+          if (!canvas) return;
+          this.heatmap.canvas = canvas;
+          this.heatmap.ctx = canvas.getContext("2d");
+          const resize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+          };
+          resize();
+          window.addEventListener("resize", resize);
+          const capture = (evt) => {
+            const point = evt.touches ? evt.touches[0] : evt;
+            if (!point) return;
+            const area = this.detectKioskArea(point.clientX, point.clientY);
+            this.drawHeatPoint(point.clientX, point.clientY, area);
+            this.queueInteraction({kind: evt.type.startsWith("touch") ? "touch" : "click", area, x: point.clientX, y: point.clientY, intensity: 4});
+          };
+          window.addEventListener("click", capture, {passive: true});
+          window.addEventListener("touchstart", capture, {passive: true});
+          this.heatmap.flushTimer = setInterval(() => this.flushInteractions(), 5000);
+        },
+        detectKioskArea(x, y) {
+          const selectors = [["scan-panel", ".grid > section:nth-child(1)"], ["cart-panel", ".cart-panel"], ["payment-panel", ".right-panel"], ["digital-shelf", ".live-strip"], ["mobile-handoff", ".floating-smart-panel"]];
+          for (const [name, selector] of selectors) {
+            const el = document.querySelector(selector);
+            if (!el) continue;
+            const r = el.getBoundingClientRect();
+            if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return name;
+          }
+          return "kiosk";
+        },
+        drawHeatPoint(x, y) {
+          const ctx = this.heatmap.ctx;
+          if (!ctx) return;
+          const gradient = ctx.createRadialGradient(x, y, 0, x, y, 42);
+          gradient.addColorStop(0, "rgba(255,79,216,.55)");
+          gradient.addColorStop(.45, "rgba(66,248,255,.22)");
+          gradient.addColorStop(1, "rgba(66,248,255,0)");
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(x, y, 42, 0, Math.PI * 2);
+          ctx.fill();
+        },
+        queueInteraction(event) {
+          this.heatmap.queue.push({ts: Date.now(), ...event});
+          if (this.heatmap.queue.length >= 30) this.flushInteractions();
+        },
+        async flushInteractions() {
+          if (!this.heatmap.queue.length) return;
+          const events = this.heatmap.queue.splice(0, 80);
+          try {
+            await this.request(`/pos/self-checkout/${this.sessionKey}/interactions/`, {
+              method: "POST",
+              headers: {"X-CSRFToken": this.csrf(), "Content-Type": "application/json"},
+              body: JSON.stringify({events})
+            });
+          } catch (err) {}
+        },
+        async setTheme(theme) {
+          this.applyTheme(theme);
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/theme/?theme=${encodeURIComponent(theme)}`);
+            if (data.theme) this.toast(data.theme.message);
+          } catch (err) {}
+        },
+        markActivity() {
+          this.idleSeconds = 0;
+          if (this.idleWarning) this.resumeFromIdle(false);
+        },
+        startIdleEngine() {
+          if (this.idleTimer) clearInterval(this.idleTimer);
+          this.idleTimer = setInterval(() => {
+            if (this.success.active || this.showIdentity) return;
+            this.idleSeconds += 1;
+            if (this.idleSeconds === 55 && this.cart.items && this.cart.items.length && !this.support.active) this.requestSupport("customer_stuck", "urgent");
+            if (this.idleSeconds === 75) this.triggerIdleWarning();
+            if (this.idleWarning) {
+              this.idleCountdown -= 1;
+              if (this.idleCountdown <= 0) this.timeoutReset();
+            }
+          }, 1000);
+        },
+        async triggerIdleWarning() {
+          this.idleWarning = true;
+          this.idleCountdown = 30;
+          this.speak("Your cart is saved. Touch the screen to continue.");
+          try { await this.request(`/pos/self-checkout/${this.sessionKey}/idle/`, {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({stage: "warning"})}); } catch (err) {}
+        },
+        resumeFromIdle(announce=true) {
+          this.idleWarning = false;
+          this.idleCountdown = 30;
+          this.idleSeconds = 0;
+          if (announce) this.speak(this.tr("scanNext"));
+        },
+        async timeoutReset() {
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/idle/`, {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({stage: "timeout"})});
+            if (data.session_key) this.sessionKey = data.session_key;
+            if (data.cart) this.applyCart(data.cart);
+          } catch (err) {}
+          this.idleWarning = false;
+          this.showIdentity = true;
+          this.success.active = false;
+          this.toast("Kiosk reset after idle timeout");
+        },
+        focusScan() { setTimeout(() => document.getElementById("selfco-scan-input")?.focus(), 80); },
+        async request(url, options) {
+          const res = await fetch(url, options || {});
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || data.ok === false) throw new Error(data.detail || "Request failed");
+          return data;
+        },
+        async search() {
+          const q = this.scanCode.trim();
+          if (!q) { this.suggestions = []; return; }
+          try { this.suggestions = (await this.request(`/pos/self-checkout/search/?q=${encodeURIComponent(q)}`)).products || []; }
+          catch (err) { this.toast(err.message); }
+        },
+        chooseIdentity(mode) {
+          this.identityMode = mode;
+          this.otpSent = false;
+          this.identityOtp = "";
+          this.devOtp = "";
+          this.newCustomerDetected = mode === "new";
+          this.speak(mode === "new" ? "New customer onboarding selected." : "Existing customer verification selected.");
+        },
+        async sendIdentityOtp() {
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/customer/send-otp/`, {
+              method: "POST",
+              headers: {"X-CSRFToken": this.csrf()},
+              body: new URLSearchParams({mobile: this.identityMobile, purpose: this.identityMode === "new" ? "onboard" : "existing"})
+            });
+            this.otpSent = true;
+            this.newCustomerDetected = !!data.new_customer_detected || this.identityMode === "new";
+            this.devOtp = data.dev_otp || "";
+            this.toast(data.message || "OTP sent");
+            this.speak(data.message || "OTP sent successfully");
+          } catch (err) { this.toast(err.message); this.speak(err.message); }
+        },
+        async verifyIdentityOtp() {
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/customer/verify-otp/`, {
+              method: "POST",
+              headers: {"X-CSRFToken": this.csrf()},
+              body: new URLSearchParams({mobile: this.identityMobile, otp: this.identityOtp, name: this.identityName, email: this.identityEmail, mode: this.identityMode})
+            });
+            this.customer = data.customer || this.customer;
+            if (data.cart) this.applyCart(data.cart);
+            this.toast(data.message || "Customer verified");
+            this.speak(data.created ? "Welcome. Your account has been created successfully." : data.message || "Welcome back.");
+            this.rewardBurst();
+            this.showIdentity = false;
+            this.focusScan();
+          } catch (err) { this.toast(err.message); this.speak(err.message); }
+        },
+        async identifyMembership(method) {
+          try {
+            const payload = method === "nfc" ? {nfc_uid: this.nfcUid} : {token: this.membershipToken};
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/customer/membership/`, {
+              method: "POST",
+              headers: {"X-CSRFToken": this.csrf()},
+              body: new URLSearchParams(payload)
+            });
+            this.customer = data.customer || this.customer;
+            if (data.cart) this.applyCart(data.cart);
+            this.toast(data.message || "Customer identified");
+            this.speak(data.message || "Customer identified");
+            this.showIdentity = false;
+            this.focusScan();
+          } catch (err) { this.toast(err.message); this.speak(err.message); }
+        },
+        async faceIdentify() {
+          if (!this.faceConsent) { this.toast("Consent is required for face recognition mode"); return; }
+          const faceHash = this.membershipToken || this.nfcUid || "";
+          if (!faceHash) { this.toast("Enter a face token for demo matching"); return; }
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/customer/membership/`, {
+              method: "POST",
+              headers: {"X-CSRFToken": this.csrf()},
+              body: new URLSearchParams({face_hash: faceHash})
+            });
+            this.customer = data.customer || this.customer;
+            if (data.cart) this.applyCart(data.cart);
+            this.toast("Face verification complete");
+            this.speak(data.message || "Face verification complete");
+            this.showIdentity = false;
+            this.focusScan();
+          } catch (err) { this.toast(err.message); this.speak(err.message); }
+        },
+        async guestCheckout() {
+          this.identityMode = "guest";
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/customer/guest/`, {
+              method: "POST",
+              headers: {"X-CSRFToken": this.csrf()},
+              body: new URLSearchParams({})
+            });
+            this.customer = data.customer || this.customer;
+            if (data.cart) this.applyCart(data.cart);
+            this.toast(data.message || "Guest checkout ready");
+            this.speak("Guest checkout ready. You can start shopping instantly.");
+            this.showIdentity = false;
+            this.focusScan();
+          } catch (err) { this.toast(err.message); this.speak(err.message); }
+        },
+        startShopping() {
+          this.showIdentity = false;
+          this.focusScan();
+          this.speak("Please scan your next item.");
+        },
+        customerInitials() {
+          const name = (this.customer && this.customer.name) || "G";
+          return name.split(/\s+/).filter(Boolean).slice(0,2).map(part => part[0]).join("").toUpperCase();
+        },
+        customerQrUrl() {
+          const payload = encodeURIComponent((this.customer && this.customer.qr_token) || this.sessionKey);
+          return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${payload}`;
+        },
+        async scan() {
+          const code = this.scanCode.trim();
+          if (!code) return;
+          await this.addPayload({barcode: code, quantity: "1"}, null);
+          this.scanCode = "";
+          this.suggestions = [];
+        },
+        async addProduct(productId, product) {
+          this.queueInteraction({kind: "add", area: "digital-shelf", product_id: productId, x: 0, y: 0, intensity: 10});
+          if ((product && product.demo) || String(productId || "").startsWith("demo-")) {
+            await this.loadLiveProducts();
+            const liveProduct = (this.liveProducts || []).find(item => !item.demo && (String(item.sku || "") === String(product?.sku || "") || String(item.name || "") === String(product?.name || "")));
+            if (liveProduct) {
+              await this.addProduct(liveProduct.id, liveProduct);
+              return;
+            }
+            this.toast("Live product feed loading. Please try again.");
+            return;
+          }
+          this.preview = this.previewProduct(product);
+          await this.addPayload({product_id: productId, quantity: "1"}, product);
+          this.scanCode = "";
+          this.suggestions = [];
+        },
+        openProductShowcase(product) {
+          this.showcase.product = this.previewProduct(product);
+          this.showcase.active = true;
+          this.preview = this.showcase.product;
+          this.assistantMessage = `${product.name} is available for Rs ${product.price}. ${((product.badges || [])[0]) || "Tap add when ready."}`;
+          this.speakProduct(product);
+        },
+        closeShowcase() {
+          this.showcase.active = false;
+        },
+        async addShowcaseProduct() {
+          const product = this.showcase.product;
+          if (!product) return;
+          await this.addProduct(product.id, product);
+          this.closeShowcase();
+        },
+        speakProduct(product) {
+          if (!product) return;
+          this.speak(`${product.name}. Price ${product.price || "0"} rupees. Available in store.`);
+        },
+        trackProductHover(product, active) {
+          if (!product) return;
+          const key = String(product.id);
+          if (active) {
+            this.heatmap.hover[key] = Date.now();
+            return;
+          }
+          const started = this.heatmap.hover[key];
+          if (!started) return;
+          delete this.heatmap.hover[key];
+          this.queueInteraction({kind: "hover", area: "digital-shelf", product_id: product.id, x: 0, y: 0, intensity: 2, duration_ms: Date.now() - started});
+        },
+        previewProduct(product) {
+          if (!product) return this.preview;
+          return {
+            ...product,
+            quantity: product.quantity || "1.00",
+            tax_percent: product.tax_percent || "0.00",
+            stock: product.stock || "Live",
+            line_total: product.line_total || product.price || "0.00",
+            reason: "Tap product card added from live slider."
+          };
+        },
+        addDemoProduct(product) {
+          const price = Number(product.price || 0);
+          const existing = (this.cart.items || []).find(item => String(item.id) === String(product.id));
+          if (existing) {
+            existing.quantity = String(Number(existing.quantity || 0) + 1);
+            existing.line_total = (Number(existing.line_total || 0) + price).toFixed(2);
+          } else {
+            this.cart.items = [
+              ...(this.cart.items || []),
+              {
+                ...this.previewProduct(product),
+                item_id: `demo-${product.id}`,
+                quantity: "1.00",
+                tax: "0.00",
+                discount: "0.00",
+                line_total: price.toFixed(2),
+              }
+            ];
+          }
+          const subtotal = (this.cart.items || []).reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+          this.cart.item_count = (this.cart.items || []).length;
+          this.cart.subtotal = subtotal.toFixed(2);
+          this.cart.tax_total = this.cart.tax_total || "0.00";
+          this.cart.discount_total = this.cart.discount_total || "0.00";
+          this.cart.total = subtotal.toFixed(2);
+          this.scanSuccess(this.previewProduct(product));
+        },
+        async addPayload(payload, product) {
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/scan/`, {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams(payload)});
+            this.applyCart(data.cart);
+            this.scanSuccess(product || data.cart.items[data.cart.items.length - 1]);
+          } catch (err) {
+            if (err && err.name === "TypeError") {
+              this.queueOffline(payload);
+              this.toast("Network issue. Item queued, reconnect before payment.");
+              return;
+            }
+            this.toast(err.message);
+            this.speak(err.message);
+            this.errorSound();
+          }
+        },
+        applyCart(cart) {
+          this.cart = cart || this.cart;
+          if (this.cart.customer) this.customer = this.cart.customer;
+          this.assistantMessage = this.cart.assistant || this.assistantMessage;
+          if (this.cart.items && this.cart.items.length) this.preview = this.cart.items[this.cart.items.length - 1];
+          localStorage.setItem("selfco_offline_cart", JSON.stringify({sessionKey: this.sessionKey, cart: this.cart}));
+          this.$nextTick(() => this.$refs.cartList && (this.$refs.cartList.scrollTop = this.$refs.cartList.scrollHeight));
+        },
+        scanSuccess(product) {
+          this.preview = product || this.preview;
+          this.scanStatus = "Added";
+          this.toast("Product added successfully");
+          this.speak(this.lang === "hi" ? "Product add ho gaya. Agla item scan karein." : "Product added successfully. Please scan next item.");
+          this.scanSound();
+          this.flyToCart(product);
+          if (window.gsap) gsap.fromTo("#scanStage", {scale: .985}, {scale: 1, duration: .35, ease: "back.out(2)"});
+          setTimeout(() => { this.scanStatus = "Ready"; this.focusScan(); }, 750);
+        },
+        async changeQty(item, delta) {
+          try {
+            const next = Math.max(Number(item.quantity || 0) + delta, 0);
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/items/${item.item_id}/update/`, {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({quantity: String(next)})});
+            this.applyCart(data.cart);
+            this.scanSound(620);
+          } catch (err) { this.toast(err.message); }
+        },
+        async removeItem(item) {
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/items/${item.item_id}/remove/`, {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({})});
+            this.applyCart(data.cart);
+          } catch (err) { this.toast(err.message); }
+        },
+        async submitVoice(command) {
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/voice/`, {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({command})});
+            if (data.cart) this.applyCart(data.cart);
+            if (data.products) this.suggestions = data.products;
+            if (data.action === "checkout") this.nfcTap();
+            this.assistantMessage = data.message || this.assistantMessage;
+            this.toast(data.message || "Voice command processed");
+            this.speak(data.message || "Command processed");
+          } catch (err) { this.toast(err.message); this.speak(err.message); }
+        },
+        listenVoice() {
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SpeechRecognition) { this.toast("Speech recognition is unavailable in this browser"); return; }
+          const rec = new SpeechRecognition();
+          rec.lang = this.lang === "hi" ? "hi-IN" : "en-IN";
+          rec.interimResults = false;
+          this.listening = true;
+          rec.onresult = e => this.submitVoice(e.results[0][0].transcript);
+          rec.onerror = e => this.toast(e.error || "Voice error");
+          rec.onend = () => this.listening = false;
+          rec.start();
+        },
+        async simulateRfid() {
+          const product = this.suggestions[0] || this.preview || (this.cart.recommendations || [])[0];
+          const tag = product ? (product.specs?.find(s => s.label === "RFID")?.value || `RF-${String(product.id).padStart(5,"0")}`) : "RF-00001";
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/rfid/`, {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({tag})});
+            this.applyCart(data.cart);
+            this.scanSuccess(data.product);
+          } catch (err) { this.toast(err.message); }
+        },
+        async refreshCart() {
+          const data = await this.request(`/pos/self-checkout/${this.sessionKey}/cart/`);
+          if (data.cart) this.applyCart(data.cart);
+          return data.cart || this.cart;
+        },
+        async openPaymentWall() {
+          try {
+            const serverCart = await this.refreshCart();
+            if (!serverCart.items || !serverCart.items.length) {
+              this.toast("Cart is empty");
+              return;
+            }
+            this.paymentWall = true;
+            this.paymentCountdown = 180;
+          } catch (err) {
+            this.toast(err.message || "Unable to refresh checkout amount");
+          }
+        },
+        async pay() {
+          if (!this.cart.items.length) { this.toast("Cart is empty"); return; }
+          this.paying = true;
+          try {
+            const serverCart = await this.refreshCart();
+            if (!serverCart.items || !serverCart.items.length) throw new Error("Cart is empty.");
+            const reference = `SELF-${Date.now()}`;
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/pay/`, {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({method: this.paymentMethod, reference})});
+            this.paymentSuccess(data);
+          } catch (err) { this.toast(err.message); this.speak(err.message); this.errorSound(); }
+          this.paying = false;
+        },
+        async nfcTap() {
+          if (!this.cart.items.length) { this.toast("Cart is empty"); return; }
+          this.paying = true;
+          try {
+            const serverCart = await this.refreshCart();
+            if (!serverCart.items || !serverCart.items.length) throw new Error("Cart is empty.");
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/nfc-tap/`, {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({method: this.paymentMethod, reference: `NFC-${Date.now()}`})});
+            this.paymentSuccess(data);
+          } catch (err) { this.toast(err.message || "Tap failed. Please retry."); this.speak(err.message || "Payment failed. Please retry."); this.errorSound(); }
+          this.paying = false;
+        },
+        paymentSuccess(data) {
+          this.applyCart(data.cart);
+          this.success = {active: true, invoice: data.invoice_number, invoiceId: data.invoice_id, token: data.verification_token};
+          this.confetti();
+          this.paySound();
+          this.triggerRewardDrop();
+          this.speak(this.lang === "hi" ? "Payment received. Exit QR tayyar hai." : "Payment received. Your exit QR is ready.");
+          this.autoPrintReceipt(data.invoice_id, false);
+          localStorage.removeItem("selfco_offline_cart");
+        },
+        autoPrintReceipt(invoiceId, manual) {
+          if (!invoiceId) {
+            this.printStatus = "Print unavailable: invoice not ready.";
+            return;
+          }
+          this.printStatus = manual ? "Sending receipt to printer..." : "Auto printing receipt...";
+          const oldFrame = document.getElementById("selfco-print-frame");
+          if (oldFrame) oldFrame.remove();
+          const frame = document.createElement("iframe");
+          frame.id = "selfco-print-frame";
+          frame.title = "Self checkout receipt print";
+          frame.style.position = "fixed";
+          frame.style.right = "0";
+          frame.style.bottom = "0";
+          frame.style.width = "1px";
+          frame.style.height = "1px";
+          frame.style.opacity = "0";
+          frame.style.border = "0";
+          frame.src = `/commerce/invoices/${invoiceId}/print/?self_checkout=1`;
+          frame.onload = () => {
+            try {
+              frame.contentWindow.focus();
+              frame.contentWindow.print();
+              this.printStatus = "Print command sent. Select printer if the browser asks.";
+              this.toast("Receipt print command sent");
+            } catch (err) {
+              this.printStatus = "Browser blocked auto print. Use Print receipt.";
+              this.toast("Auto print blocked by browser");
+            }
+          };
+          document.body.appendChild(frame);
+        },
+        async resetSession() {
+          const data = await this.request("/pos/self-checkout/reset/", {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({kiosk_id: this.kioskId})});
+          this.sessionKey = data.session_key;
+          this.applyCart(data.cart);
+          this.success.active = false;
+          this.customer = data.cart.customer || {identified: false, mode: "unidentified"};
+          this.showIdentity = true;
+          this.identityMode = "existing";
+          this.otpSent = false;
+          this.identityOtp = "";
+          this.devOtp = "";
+          this.connectSocket();
+          this.toast("Session reset");
+        },
+        newCustomer() { this.resetSession(); },
+        async refreshIntel() {
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/intelligence/`);
+            this.queue = data.queue || {};
+            this.applyCart(data.cart);
+          } catch (err) { this.socketState = this.socketState || "polling"; }
+        },
+        async assignQueue() {
+          const data = await this.request("/pos/self-checkout/queue/assign/", {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({})});
+          this.queue = data.queue || {};
+          this.toast(data.assignment.assigned_kiosk ? `Assigned to ${data.assignment.assigned_kiosk}` : `Ticket ${data.assignment.ticket} waiting`);
+        },
+        async healthPing() {
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/health/`, {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({scanner_status:"online", printer_status:"ready", payment_status:"online", internet_status:navigator.onLine ? "online" : "offline", camera_status:this.cameraActive ? "active" : "ready"})});
+            this.queue = data.queue || this.queue;
+          } catch (err) {}
+        },
+        qrUrl() {
+          const amount = encodeURIComponent(this.cart.total || "0.00");
+          return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(`upi://pay?pa=merchant@upi&pn=Billentra&am=${amount}&cu=INR&tn=SelfCheckout-${this.sessionKey}`)}`;
+        },
+        receiptQrUrl() {
+          return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(`${location.origin}/commerce/invoice/${this.success.invoiceId || ""}/?verify=${this.success.token || ""}`)}`;
+        },
+        mobileQrUrl() {
+          const url = this.mobileHandoff.url || `${location.origin}/pos/self-checkout/?kiosk=${encodeURIComponent(this.kioskId)}&continue=${this.sessionKey}`;
+          return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(url)}`;
+        },
+        async createMobileHandoff() {
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/mobile-handoff/`, {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({device_label: "Customer mobile"})});
+            this.mobileHandoff = {url: data.url, token: data.token, expires_at: data.expires_at};
+            this.toast("Secure mobile handoff QR ready");
+          } catch (err) { this.toast(err.message); }
+        },
+        async triggerRewardDrop() {
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/reward-drop/`, {method: "POST", headers: {"X-CSRFToken": this.csrf()}, body: new URLSearchParams({})});
+            if (data.reward) {
+              this.reward = {active: true, ...data.reward};
+              this.couponSound();
+            }
+          } catch (err) {}
+        },
+        async toggleCamera() {
+          if (this.cameraActive) { if (this.camera) await this.camera.stop().catch(() => {}); this.cameraActive = false; return; }
+          this.cameraActive = true;
+          this.$nextTick(() => {
+            if (!window.Html5Qrcode) { this.toast("Camera scanner library unavailable"); return; }
+            this.camera = new Html5Qrcode("reader");
+            this.camera.start({facingMode: "environment"}, {fps: 10, qrbox: {width: 240, height: 160}}, code => { this.scanCode = code; this.scan(); }).catch(err => this.toast(err.message || "Camera access blocked"));
+          });
+        },
+        speak(message) {
+          if (!this.voiceEnabled || !("speechSynthesis" in window)) return;
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(message);
+          u.lang = this.lang === "hi" ? "hi-IN" : "en-IN";
+          u.rate = .95;
+          u.volume = this.volume;
+          this.avatarSpeaking = true;
+          u.onend = () => this.avatarSpeaking = false;
+          u.onerror = () => this.avatarSpeaking = false;
+          window.speechSynthesis.speak(u);
+        },
+        tone(freq, duration) {
+          try {
+            const ctx = this.sound.ctx || new (window.AudioContext || window.webkitAudioContext)();
+            this.sound.ctx = ctx;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.value = freq; osc.type = "sine"; gain.gain.value = 0;
+            osc.connect(gain); gain.connect(ctx.destination); osc.start();
+            gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, this.volume * .16), ctx.currentTime + .015);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration / 1000);
+            setTimeout(() => { try { osc.stop(); } catch (_) {} }, duration + 20);
+          } catch (err) {}
+        },
+        scanSound(freq=840) { this.tone(freq, 90); },
+        paySound() { this.tone(720, 90); setTimeout(() => this.tone(1040, 150), 110); },
+        clickSound() { this.tone(520, 45); },
+        couponSound() { this.tone(660, 80); setTimeout(() => this.tone(990, 120), 85); },
+        errorSound() { this.tone(180, 180); },
+        toast(message) {
+          const item = {id: Date.now() + Math.random(), message};
+          this.toasts.push(item);
+          setTimeout(() => this.toasts = this.toasts.filter(t => t.id !== item.id), 3000);
+        },
+        flyToCart(product) {
+          if (!product || !product.image || !window.gsap) return;
+          const img = document.createElement("img");
+          img.src = product.image; img.className = "fly-item";
+          img.style.left = "22%"; img.style.top = "36%";
+          document.body.appendChild(img);
+          gsap.to(img, {left: "58%", top: "38%", scale: .35, rotation: 22, duration: .72, ease: "power3.inOut", onComplete: () => img.remove()});
+          gsap.fromTo(".total-card", {boxShadow:"0 0 0 rgba(93,255,177,0)"}, {boxShadow:"0 0 36px rgba(93,255,177,.42)", yoyo:true, repeat:1, duration:.3});
+        },
+        queueOffline(payload) {
+          const queue = JSON.parse(localStorage.getItem("selfco_offline_queue") || "[]");
+          queue.push(payload);
+          localStorage.setItem("selfco_offline_queue", JSON.stringify(queue));
+          this.toast("Offline scan queued");
+        },
+        async syncOffline() {
+          const queue = JSON.parse(localStorage.getItem("selfco_offline_queue") || "[]");
+          localStorage.removeItem("selfco_offline_queue");
+          for (const payload of queue) await this.addPayload(payload, null);
+        },
+        restoreOffline() {
+          const saved = JSON.parse(localStorage.getItem("selfco_offline_cart") || "null");
+          if (saved && saved.cart) { this.sessionKey = saved.sessionKey || this.sessionKey; this.cart = saved.cart; this.toast("Offline cart restored"); }
+        },
+        connectSocket() {
+          try {
+            const proto = location.protocol === "https:" ? "wss" : "ws";
+            const ws = new WebSocket(`${proto}://${location.host}/ws/self-checkout/${this.sessionKey}/`);
+            ws.onopen = () => { this.socketState = "connected"; this.reconnectDelay = 1000; };
+            ws.onerror = () => { this.socketState = "disconnected"; };
+            ws.onmessage = event => {
+              const data = JSON.parse(event.data || "{}");
+              if ((data.type === "cart.update" || data.type === "cart.snapshot") && data.cart) this.applyCart(data.cart);
+              if (data.type === "payment.update" && data.payload) this.paymentSuccess(data.payload);
+              if (data.type === "retail.inventory" && data.payload) this.applyRetailState(data.payload);
+              if (data.type === "retail.broadcast" && data.payload) this.showBroadcast(data.payload);
+              if (data.type === "retail.offers" && data.payload) this.applyRetailState(data.payload);
+              if (data.type === "analytics.heatmap") this.heatmap.visible = true;
+              if (data.type === "support.update" && data.payload && data.payload.support) {
+                this.support = data.payload.support;
+                this.toast("Staff coming to assist");
+              }
+              if (data.type === "mobile.handoff") this.toast("Mobile checkout linked");
+            };
+            ws.onclose = () => {
+              this.socketState = "polling";
+              const delay = this.reconnectDelay;
+              this.reconnectDelay = Math.min(this.reconnectDelay * 1.8, 15000);
+              setTimeout(() => this.connectSocket(), delay);
+            };
+            ws.onerror = () => this.socketState = "polling";
+          } catch (err) { this.socketState = "polling"; }
+        },
+        async loadLiveProducts() {
+          try {
+            const resp = await fetch("/pos/self-checkout/live-products/", { cache: "no-store" });
+            const data = await resp.json();
+            if (data && data.ok && Array.isArray(data.products)) {
+              this.liveProducts = data.products;
+              this.toast(`Live feed loaded: ${data.count} products`);
+            }
+          } catch (err) {
+            console.error("Live products load error:", err);
+          }
+        },
+        async syncRetailState() {
+          try {
+            const data = await this.request(`/pos/self-checkout/${this.sessionKey}/retail-state/`);
+            if (data.state) this.applyRetailState(data.state);
+          } catch (err) {}
+        },
+        applyRetailState(state) {
+          const products = state.products || [];
+          if (products.length) {
+            const byId = new Map(products.map(product => [String(product.id), product]));
+            this.liveProducts = (this.liveProducts || []).map(product => {
+              const live = byId.get(String(product.id));
+              return live ? {...product, stock: live.stock, price: live.price, badges: live.badges || product.badges || []} : product;
+            });
+          }
+          const broadcast = (state.broadcasts || [])[0];
+          if (broadcast) this.showBroadcast(broadcast);
+        },
+        showBroadcast(item) {
+          this.broadcast = {active: true, title: item.title || "Store announcement", message: item.message || "", priority: item.priority || "normal", voice_enabled: item.voice_enabled !== false};
+          this.assistantMessage = `${this.broadcast.title}. ${this.broadcast.message}`;
+          if (this.broadcast.voice_enabled) this.speak(`${this.broadcast.title}. ${this.broadcast.message}`);
+          if (this.broadcast.priority === "emergency") this.requestSupport("admin_emergency", "emergency");
+        },
+        tickerProducts() {
+          const products = this.tickerSourceProducts();
+          if (!products.length) return [];
+          return products.concat(products);
+        },
+        tickerSourceProducts() {
+          const products = Array.isArray(this.liveProducts) ? this.liveProducts.filter(Boolean) : [];
+          return products.length ? products : [];
+        },
+        startAutoScrollCarousel() {
+          if (this.liveProductsTimer) clearInterval(this.liveProductsTimer);
+          const carousel = document.getElementById("liveCarousel");
+          if (!carousel) return;
+          
+          this.liveProductsTimer = setInterval(() => {
+            if (!carousel) return;
+            const firstCard = carousel.querySelector("button");
+            if (firstCard) {
+              const scrollAmount = firstCard.offsetWidth + 12;
+              carousel.scrollBy({ left: scrollAmount, behavior: "smooth" });
+            }
+          }, 4000);
+        },
+        init3d() {
+          const boot = () => {
+            if (!window.THREE) return;
+            const canvas = document.getElementById("product3d");
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(52, canvas.clientWidth / canvas.clientHeight, .1, 100);
+            const renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: true});
+            const resize = () => { renderer.setSize(canvas.clientWidth, canvas.clientHeight, false); camera.aspect = canvas.clientWidth / canvas.clientHeight; camera.updateProjectionMatrix(); };
+            resize(); window.addEventListener("resize", resize);
+            camera.position.z = 4;
+            const group = new THREE.Group();
+            const box = new THREE.Mesh(new THREE.BoxGeometry(1.45, 1.9, .42), new THREE.MeshStandardMaterial({color: 0x42f8ff, roughness: .28, metalness: .55}));
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(1.25, .02, 16, 100), new THREE.MeshBasicMaterial({color: 0x5dffb1}));
+            group.add(box); group.add(ring); scene.add(group);
+            scene.add(new THREE.PointLight(0x42f8ff, 2.5, 8));
+            scene.add(new THREE.AmbientLight(0xffffff, .72));
+            const animate = () => { group.rotation.y += .012; group.rotation.x = Math.sin(Date.now() / 900) * .12; ring.rotation.z += .018; renderer.render(scene, camera); requestAnimationFrame(animate); };
+            animate();
+          };
+          setTimeout(boot, 200);
+        },
+        confetti() {
+          for (let i = 0; i < 54; i++) {
+            const p = document.createElement("div");
+            p.className = "confetti";
+            p.style.left = Math.random() * 100 + "vw";
+            p.style.background = ["#42f8ff","#5dffb1","#ff4fd8","#ffd166"][i % 4];
+            p.style.animationDelay = Math.random() * .45 + "s";
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 2300);
+          }
+        },
+        rewardBurst() {
+          if (window.gsap) gsap.fromTo(".identity-workspace", {scale: .985, boxShadow: "0 0 0 rgba(93,255,177,0)"}, {scale: 1, boxShadow: "0 0 42px rgba(93,255,177,.36)", duration: .45, yoyo: true, repeat: 1});
+          this.confetti();
+        },
+
+        // Live ticker engine (GPU-smooth infinite marquee)
+        initLiveTicker() {
+          try {
+            const placeholder = document.getElementById("selfco-live-ticker-placeholder");
+            if (!placeholder) return;
+
+            const shell = placeholder; // keep placeholder element, we'll fill children
+            shell.innerHTML = `
+              <div style="display:grid;grid-template-columns:1fr;gap:10px;">
+                <div id="selfco-ticker-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                  <div style="font-weight:950;letter-spacing:.3px;font-size:12px;color:var(--cyan);text-transform:uppercase;">LIVE PRODUCT FEED</div>
+                  <div id="selfco-ticker-status" style="font-weight:800;color:var(--muted);font-size:12px;">Auto • News ticker</div>
+                </div>
+                <div id="selfco-ticker-shell" style="position:relative;overflow:hidden;border-radius:22px;">
+                  <div style="position:absolute;left:0;top:0;bottom:0;width:42px;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.55),transparent);z-index:2;"></div>
+                  <div style="position:absolute;right:0;top:0;bottom:0;width:42px;pointer-events:none;background:linear-gradient(270deg,rgba(0,0,0,.55),transparent);z-index:2;"></div>
+                  <div id="selfco-ticker-track" style="display:flex;gap:12px;will-change:transform;touch-action:pan-y;user-select:none;padding:10px;"></div>
+                </div>
+              </div>
+            `;
+
+            const track = document.getElementById("selfco-ticker-track");
+            const statusEl = document.getElementById("selfco-ticker-status");
+            if (!track) return;
+
+            const SPEED_PX_PER_SEC = 92; // kiosk-safe default; tweak later via admin
+            const CARD_W = 250; // matches our placeholder card target
+            const REFRESH_MS = 30000;
+
+            let items = [];
+            let clones = [];
+            let raf = 0;
+            let lastTs = 0;
+            let paused = false;
+            let drag = { active: false, startX: 0, startOffset: 0 };
+
+            const langPref = (document.documentElement.lang || "").toLowerCase().includes("hi") ? "hi" : "en";
+
+            const makeCard = (p) => {
+              const img = p.image || "/static/img/billentra-logo.png";
+              const name = (p.name || "").slice(0, 34) || "Product";
+              const cat = (p.category || "Category").slice(0, 18);
+              const price = p.sale_price ?? "0.00";
+
+              return `
+                <article style="
+                  min-width:${CARD_W}px; max-width:${CARD_W}px;
+                  border-radius:22px;border:1px solid rgba(255,255,255,.14);
+                  background:rgba(255,255,255,.08); overflow:hidden;
+                  box-shadow:0 0 22px rgba(66,248,255,.08);
+                  transform:translateZ(0);
+                " data-product-id="${p.id}">
+                  <div style="height:140px;position:relative;background:rgba(0,0,0,.25);display:grid;place-items:center;">
+                    <img loading="lazy" alt="${name}" src="${img}" style="width:100%;height:100%;object-fit:cover;filter:saturate(1.06) contrast(1.03);">
+                    <div style="position:absolute;inset:-40% -80%;background:linear-gradient(90deg,transparent,rgba(66,248,255,.22),transparent);transform:translateX(-30%);animation:tickerShine 2.8s linear infinite;"></div>
+                  </div>
+                  <div style="padding:10px 12px 12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                      <span style="display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:6px 10px;background:rgba(255,209,102,.14);border:1px solid rgba(255,209,102,.42);font-weight:950;font-size:12px;${p.is_featured ? "" : "display:none"}">HOT</span>
+                      <span style="font-size:12px;color:var(--muted);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">${cat}</span>
+                    </div>
+                    <div style="font-weight:1000;font-size:18px;line-height:1.05;height:44px;overflow:hidden;">${name}</div>
+                    <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:baseline;">
+                      <span style="font-weight:900;color:var(--muted);font-size:13px;">Rs</span>
+                      <strong style="font-size:16px;">${price}</strong>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;">
+                      <button class="btn-k" type="button" data-action="quick" style="min-height:40px;padding:8px 10px;border-radius:14px;">Quick</button>
+                      <button class="btn-k" type="button" data-action="speak" style="min-height:40px;padding:8px 10px;border-radius:14px;">Speak</button>
+                      <button class="btn-k primary" type="button" data-action="add" style="min-height:40px;padding:8px 10px;border-radius:14px;">Add</button>
+                    </div>
+                  </div>
+                </article>
+              `;
+            };
+
+            const bindCardButtons = () => {
+              track.querySelectorAll("article").forEach((card) => {
+                card.addEventListener("pointerup", (e) => {
+                  const btn = e.target && e.target.closest && e.target.closest("button[data-action]");
+                  if (!btn) return;
+                  e.stopPropagation();
+                });
+              });
+
+              track.querySelectorAll("button[data-action]").forEach((btn) => {
+                btn.addEventListener("click", async (e) => {
+                  e.stopPropagation();
+                  const card = e.target.closest("article[data-product-id]");
+                  if (!card) return;
+                  const pid = card.getAttribute("data-product-id");
+                  const p = items.find(x => String(x.id) === String(pid));
+                  if (!p) return;
+
+                  const action = btn.getAttribute("data-action");
+                  if (action === "quick") {
+                    // update modal details by setting showcase.product and opening it
+                    // relies on existing Alpine state:
+                    // We'll trigger by setting a global event the alpine app can react to if present.
+                    // Fallback: do nothing (modal open handled later in next patch).
+                    placeholder.dispatchEvent(new CustomEvent("selfco:quickView", { detail: { product: p } }));
+                  }
+                  if (action === "speak") {
+                    placeholder.dispatchEvent(new CustomEvent("selfco:speakProduct", { detail: { product: p } }));
+                  }
+                  if (action === "add") {
+                    placeholder.dispatchEvent(new CustomEvent("selfco:addProduct", { detail: { product: p } }));
+                  }
+                });
+              });
+            };
+
+            const layoutAndStart = () => {
+              track.innerHTML = "";
+              clones = [];
+
+              // Build base set + duplicate enough to fill ~2 screens
+              const base = items.slice(0, 20);
+              if (!base.length) {
+                statusEl.textContent = "No products found";
+                return;
+              }
+
+              // Render initial base row
+              const frag = document.createDocumentFragment();
+              for (const p of base) {
+                const wrap = document.createElement("div");
+                wrap.innerHTML = makeCard(p);
+                frag.appendChild(wrap.firstElementChild);
+              }
+              track.appendChild(frag);
+
+              // Duplicate it (two sets) so scrolling loops seamlessly
+              const firstWidth = track.scrollWidth;
+              const second = document.createElement("div");
+              second.style.display = "flex";
+              second.style.gap = "12px";
+              second.innerHTML = track.innerHTML;
+
+              track.appendChild(second.firstElementChild ? second.firstElementChild : second);
+
+              // Start animation loop
+              lastTs = 0;
+              cancelAnimationFrame(raf);
+              paused = false;
+              setPaused(false);
+              startRaf();
+            };
+
+            const startRaf = () => {
+              const step = (ts) => {
+                if (!lastTs) lastTs = ts;
+                const dt = Math.min(0.05, (ts - lastTs) / 1000);
+                lastTs = ts;
+
+                if (!paused) {
+                  const dx = SPEED_PX_PER_SEC * dt;
+                  const cur = parseFloat(track.dataset.offset || "0");
+                  const next = cur - dx;
+
+                  track.dataset.offset = String(next);
+
+                  // translate3d GPU
+                  track.style.transform = `translate3d(${next}px,0,0)`;
+
+                  // When we moved one base width, reset to keep infinite illusion
+                  // (We reset to 0 once offset exceeds half of scrollWidth)
+                  if (track.scrollWidth && Math.abs(next) > (track.scrollWidth / 2)) {
+                    track.dataset.offset = "0";
+                    track.style.transform = "translate3d(0px,0,0)";
+                  }
+                }
+
+                raf = requestAnimationFrame(step);
+              };
+              raf = requestAnimationFrame(step);
+            };
+
+            const fetchFeed = async () => {
+              statusEl.textContent = "Loading live feed...";
+              const resp = await fetch("/pos/self-checkout/live-products/", { cache: "no-store" });
+              const data = await resp.json();
+              if (!data || !data.ok) throw new Error("Bad response");
+              items = Array.isArray(data.products) ? data.products : [];
+              statusEl.textContent = items.length ? `Live • ${items.length} items` : "No products found";
+              layoutAndStart();
+              bindCardButtons();
+            };
+
+            // Pause/resume on hover (touch kiosk: also pause during drag)
+            const setPaused = (v) => {
+              paused = v;
+            };
+
+            const shellEl = document.getElementById("selfco-ticker-shell");
+            shellEl.addEventListener("mouseenter", () => setPaused(false));
+            shellEl.addEventListener("mouseleave", () => setPaused(false));
+
+            // Touch/drag support: continue even after touch
+            shellEl.addEventListener("pointerdown", (e) => {
+              if (e.pointerType === "mouse" && e.buttons !== 1) return;
+              drag.active = true;
+              drag.startX = e.clientX;
+              drag.startOffset = parseFloat(track.dataset.offset || "0");
+              setPaused(true);
+              shellEl.setPointerCapture(e.pointerId);
+            });
+            shellEl.addEventListener("pointermove", (e) => {
+              if (!drag.active) return;
+              const dx = e.clientX - drag.startX;
+              const next = drag.startOffset + dx;
+              track.dataset.offset = String(next);
+              track.style.transform = `translate3d(${next}px,0,0)`;
+            });
+            shellEl.addEventListener("pointerup", (e) => {
+              if (!drag.active) return;
+              drag.active = false;
+              setPaused(false);
+              try { shellEl.releasePointerCapture(e.pointerId); } catch (_) {}
+            });
+            shellEl.addEventListener("pointercancel", () => {
+              drag.active = false;
+              setPaused(false);
+            });
+
+            // Bridge events -> real backend cart + speech + quick-view modal
+            const initialPayload = (() => {
+              try {
+                const el = document.getElementById("selfco-initial");
+                return el ? JSON.parse(el.textContent || "{}") : {};
+              } catch (_) {
+                return {};
+              }
+            })();
+
+            const sessionKey = String(initialPayload.session_key || "");
+            const csrfToken = (() => {
+              // Prefer hidden CSRF input if present
+              const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+              if (input && input.value) return input.value;
+              // Fallback to cookie
+              const m = document.cookie.match(/csrftoken=([^;]+)/);
+              return m ? decodeURIComponent(m[1]) : "";
+            })();
+
+            const postAddToCart = async (product) => {
+              if (!product || !sessionKey) return;
+              const fd = new URLSearchParams({ product_id: product.id, quantity: "1" });
+              const resp = await fetch(`/pos/self-checkout/${sessionKey}/scan/`, {
+                method: "POST",
+                headers: {
+                  "X-CSRFToken": csrfToken,
+                },
+                body: fd,
+                credentials: "same-origin",
+              });
+              const data = await resp.json().catch(() => ({}));
+              if (!data || !data.ok) throw new Error(data.detail || "Add failed");
+              // Existing UI already updates via WebSocket; still, nudge by refreshing cart if provided
+              if (data.cart) {
+                placeholder.dispatchEvent(new CustomEvent("selfco:cartUpdate", { detail: { cart: data.cart } }));
+              }
+            };
+
+            const speakProduct = (product) => {
+              if (!product) return;
+              if (!("speechSynthesis" in window)) return;
+
+              const langPref = (document.documentElement.lang || "").toLowerCase().includes("hi") ? "hi" : "en";
+              const name = product.name || "Product";
+              const price = product.sale_price ? String(product.sale_price) : "0.00";
+
+              const offerText = product.is_featured ? (langPref === "hi" ? "ऑफर है" : "Offer available") : (langPref === "hi" ? "ऑफर नहीं" : "No offer");
+              const availability = langPref === "hi" ? "उपलब्ध" : "available";
+
+              const msg = langPref === "hi"
+                ? `${name}. कीमत ${price} रुपये. ${offerText}. ${availability}.`
+                : `${name}. Price ${price} rupees. ${product.is_featured ? "Offer available." : "No offer."} ${availability}.`;
+
+              window.speechSynthesis.cancel();
+              const u = new SpeechSynthesisUtterance(msg);
+              u.lang = langPref === "hi" ? "hi-IN" : "en-IN";
+              u.rate = 0.95;
+              window.speechSynthesis.speak(u);
+            };
+
+            const openQuickViewModal = (product) => {
+              if (!product) return;
+              // Toggle the modal like Alpine does:
+              const modal = document.querySelector(".product-showcase");
+              if (modal) modal.classList.add("active");
+
+              // We cannot directly mutate Alpine state reliably without touching Alpine internals,
+              // so we store it on the element for the modal bindings to read via optional chaining.
+              modal.__selfco_product = product;
+              // Force refresh by dispatching an event; Alpine can optionally pick it up later.
+              modal.dispatchEvent(new CustomEvent("selfco:quickViewSet", { detail: { product } }));
+              // Also render into DOM immediately for kiosk UX:
+              const nameEl = modal.querySelector(".showcase-title");
+              if (nameEl) nameEl.textContent = product.name || "Product";
+
+              const skuEl = modal.querySelector(".muted");
+              // (Lightweight; exact barcode line is bound by Alpine already, but we update as fallback)
+            };
+
+            placeholder.addEventListener("selfco:requestAdd", async (ev) => {
+              try { await postAddToCart(ev.detail); } catch (_) {}
+            });
+
+            placeholder.addEventListener("selfco:requestSpeak", (ev) => {
+              speakProduct(ev.detail);
+            });
+
+            placeholder.addEventListener("selfco:requestQuick", (ev) => {
+              openQuickViewModal(ev.detail);
+            });
+
+            // Keep existing dispatchers from buttons
+            placeholder.addEventListener("selfco:addProduct", (ev) => {
+              placeholder.dispatchEvent(new CustomEvent("selfco:requestAdd", { detail: ev.detail.product }));
+            });
+            placeholder.addEventListener("selfco:speakProduct", (ev) => {
+              placeholder.dispatchEvent(new CustomEvent("selfco:requestSpeak", { detail: ev.detail.product }));
+            });
+            placeholder.addEventListener("selfco:quickView", (ev) => {
+              placeholder.dispatchEvent(new CustomEvent("selfco:requestQuick", { detail: ev.detail.product }));
+            });
+
+            // Boot
+            fetchFeed().catch(() => statusEl.textContent = "Feed load failed");
+            setInterval(() => fetchFeed().catch(() => {}), REFRESH_MS);
+
+            // Inject shine keyframes once (if not present)
+            if (!document.getElementById("selfco-ticker-keyframes")) {
+              const st = document.createElement("style");
+              st.id = "selfco-ticker-keyframes";
+              st.textContent = "@keyframes tickerShine{to{transform:translateX(30%);}}";
+              document.head.appendChild(st);
+            }
+          } catch (err) {
+            // swallow to keep kiosk stable
+          }
+        }
+      };
+    }
+  </script>
+</body>
+</html>

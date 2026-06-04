@@ -149,9 +149,90 @@ def get_user_state(user, branch_code: str = "default") -> Dict[str, Any]:
         "id": getattr(user, "id", None),
         "email": getattr(user, "email", ""),
         "username": getattr(user, "username", ""),
+        "billing_access_level": getattr(user, "billing_access_level", "") or "",
+        "billing_role_type": getattr(user, "billing_role_type", "") or "",
+        "billing_child_role": getattr(user, "billing_child_role", "") or "",
     }
     state["user_metrics"] = user_metrics
+    state["output_demo"] = _build_user_output_demo(user, state)
     return state
+
+
+def _build_user_output_demo(user, state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Compact output panel for the Demotest3 demo page.
+    Uses real rows when available and keeps presentation fallbacks ready.
+    """
+    metrics = state.get("metrics") or {}
+    user_metrics = state.get("user_metrics") or {}
+    total_credit = float(user_metrics.get("total_credit") or 0)
+    total_debit = float(user_metrics.get("total_debit") or 0)
+    balance = total_credit - total_debit
+
+    outputs = {
+        "summary_cards": [
+            {"label": "Demo Balance", "value": f"Rs {balance:,.2f}", "hint": "Demo Test 3 ke credit/debit ka sample balance"},
+            {"label": "Auto Orders", "value": metrics.get("auto_orders_created", 0), "hint": "Automation demo ne itne sample orders banaye"},
+            {"label": "Aaj Ki Demo Sale", "value": f"Rs {float(metrics.get('revenue_today') or 0):,.0f}", "hint": "Ye sample sale figure hai, real payment nahi"},
+            {"label": "Demo Profit", "value": f"Rs {float(metrics.get('net_profit') or 0):,.0f}", "hint": "Sample accounting profit output"},
+        ],
+        "business_outputs": [
+            {"name": "Invoice Demo", "status": "Ready", "detail": "Sample invoice INV-DEMO-1042 generate ho chuka hai"},
+            {"name": "Payment Demo", "status": "Verified", "detail": "Sample payment verify karke ledger me update dikhaya gaya hai"},
+            {"name": "Courier Demo", "status": state.get("courier", {}).get("status", "In Transit"), "detail": f"Sample delivery AWB: {state.get('courier', {}).get('awb', 'DL98765432')}"},
+            {"name": "Marketing Demo", "status": "Running", "detail": f"{state.get('campaign', {}).get('stats', {}).get('conversions', 97)} sample conversions dikhaye gaye hain"},
+        ],
+        "retail_os_outputs": [],
+        "logs": list(state.get("autopilot_logs") or []),
+    }
+
+    try:
+        from retail_os.models import (
+            Branch,
+            DynamicPriceLog,
+            IoTDevice,
+            OfferCampaign,
+            QuickCommerceOrder,
+            RetailScreen,
+        )
+
+        branch = Branch.objects.filter(code__iexact=branch_code_from_state(state)).first() or Branch.objects.first()
+        outputs["retail_os_outputs"] = [
+            {"name": "Branch Setup", "value": Branch.objects.count(), "detail": "Kitni branches Retail OS me add hain"},
+            {"name": "Live Offers", "value": OfferCampaign.objects.exclude(status="ended").count(), "detail": "Kitne offer/dynamic pricing campaign active hain"},
+            {"name": "Price Changes", "value": DynamicPriceLog.objects.count(), "detail": "Smart pricing ne kitni price changes log ki hain"},
+            {"name": "TV Screens", "value": RetailScreen.objects.count(), "detail": "Store TV/signage devices register hain"},
+            {"name": "IoT Devices", "value": IoTDevice.objects.count(), "detail": "Scale, printer, scanner, RFID/NFC devices register hain"},
+            {"name": "Quick Orders", "value": QuickCommerceOrder.objects.count(), "detail": "Blinkit/Zepto style quick orders"},
+        ]
+        if branch:
+            outputs["logs"].append(f"[RETAIL-OS] Branch output ready: {branch.code} - {branch.name}")
+    except Exception:
+        outputs["retail_os_outputs"] = [
+            {"name": "Retail OS", "value": "Demo Ready", "detail": "Run migrations/seed to show live Retail OS counts"},
+        ]
+
+    try:
+        from khataapp.models import Party
+
+        latest_parties = Party.objects.filter(owner=user).order_by("-created_at")[:5]
+        outputs["latest_parties"] = [
+            {
+                "name": p.name,
+                "type": p.party_type,
+                "balance": float(p.balance() or 0),
+                "credit_grade": p.credit_grade or "-",
+            }
+            for p in latest_parties
+        ]
+    except Exception:
+        outputs["latest_parties"] = []
+
+    return outputs
+
+
+def branch_code_from_state(state: Dict[str, Any]) -> str:
+    return str(state.get("branch_code") or "default")
 
 
 def reset_state(branch_code: str = "default") -> Dict[str, Any]:

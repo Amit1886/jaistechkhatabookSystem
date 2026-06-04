@@ -1,40 +1,174 @@
-{% extends "accounts/base.html" %}
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Party Ledger - {{ party.name }}</title>
+    <style>
+      /* xhtml2pdf-safe, professional report layout */
+      @page {
+        size: A4;
+        margin: 18mm 12mm 18mm 12mm;
+        @frame footer_frame {
+          -pdf-frame-content: footer_content;
+          left: 12mm;
+          width: 186mm;
+          top: 276mm;
+          height: 12mm;
+        }
+      }
 
-{% load static %}
+      body { font-family: Arial, sans-serif; font-size: 10.5pt; color: #111827; }
+      .muted { color: #6b7280; }
+      .title { font-size: 16pt; font-weight: bold; margin: 0; }
+      .subtitle { font-size: 10pt; margin: 3pt 0 0 0; }
 
+      .header { border-bottom: 1px solid #e5e7eb; padding-bottom: 8pt; margin-bottom: 10pt; }
+      .row { width: 100%; }
+      .col { vertical-align: top; }
 
-{% block content %}
-  <div class="header">
-    <div class="company">{{ request.site_name|default:"Your Company" }}</div>
-    <div>Party Ledger  {{ party.name }}</div>
-    <div style="font-size:11px;color:#666;">Generated on: {{ generated_on|date:"d M Y H:i" }}</div>
-  </div>
+      .box {
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+        padding: 8pt;
+        margin: 8pt 0 10pt 0;
+      }
 
-  <div class="party-info">
-    <strong>Mobile:</strong> {{ party.mobile }} &nbsp; &nbsp;
-    <strong>Type:</strong> {{ party.party_type }} &nbsp; &nbsp;
-    <strong>Address:</strong> {{ party.address|default:"-" }}
-  </div>
+      table.meta { width: 100%; border-collapse: collapse; }
+      table.meta td { padding: 2pt 0; }
+      .meta-key { width: 18%; color: #6b7280; }
+      .meta-val { width: 32%; }
 
-  <table>
-    <thead>
-      <tr><th>Date</th><th>Type</th><th>Description</th><th>Amount ()</th></tr>
-    </thead>
-    <tbody>
-      {% for e in entries %}
+      table.ledger { width: 100%; border-collapse: collapse; }
+      table.ledger th {
+        background: #111827;
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 9pt;
+        padding: 6pt 5pt;
+        text-align: left;
+      }
+      table.ledger td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 5pt 5pt;
+        font-size: 9.5pt;
+        vertical-align: top;
+      }
+      .num { text-align: right; }
+      .tag { font-size: 8.5pt; padding: 1pt 5pt; border: 1px solid #e5e7eb; background: #ffffff; }
+      .tag-cr { border-color: #bbf7d0; background: #ecfdf5; color: #065f46; }
+      .tag-dr { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+
+      .totals { width: 100%; border-collapse: collapse; margin-top: 10pt; }
+      .totals td { padding: 6pt 8pt; border: 1px solid #e5e7eb; }
+      .totals .k { color: #6b7280; }
+      .totals .v { font-weight: bold; text-align: right; }
+
+      #footer_content { font-size: 9pt; color: #6b7280; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <table class="row" style="width:100%; border-collapse:collapse;">
+        <tr>
+          <td class="col" style="width:70%;">
+            <div class="title">Party Ledger</div>
+            <div class="subtitle muted">
+              Party: <b>{{ party.name }}</b>
+              {% if date_from or date_to %}
+                &nbsp; • &nbsp; Period:
+                {% if date_from %}{{ date_from|date:"d M Y" }}{% else %}—{% endif %}
+                to
+                {% if date_to %}{{ date_to|date:"d M Y" }}{% else %}—{% endif %}
+              {% endif %}
+            </div>
+          </td>
+          <td class="col" style="width:30%; text-align:right;">
+            <div class="muted" style="font-size:9.5pt;">Generated</div>
+            <div style="font-weight:bold;">{{ generated_on|date:"d M Y H:i" }}</div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="box">
+      <table class="meta">
+        <tr>
+          <td class="meta-key">Mobile</td><td class="meta-val"><b>{{ party.mobile|default:"-" }}</b></td>
+          <td class="meta-key">Type</td><td class="meta-val"><b>{{ party.party_type|default:"-" }}</b></td>
+        </tr>
+        <tr>
+          <td class="meta-key">Address</td><td colspan="3">{{ party.address|default:"-" }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <table class="ledger">
+      <thead>
+        <tr>
+          <th style="width:14%;">Date</th>
+          <th style="width:10%;">Type</th>
+          <th style="width:18%;">Invoice</th>
+          <th>Description</th>
+          <th style="width:12%;" class="num">Credit</th>
+          <th style="width:12%;" class="num">Debit</th>
+          <th style="width:14%;" class="num">Balance</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in entries %}
+          <tr>
+            <td>{{ e.date|date:"d M Y" }}</td>
+            <td>
+              {% if e.txn_type == "credit" %}
+                <span class="tag tag-cr">CR</span>
+              {% else %}
+                <span class="tag tag-dr">DR</span>
+              {% endif %}
+            </td>
+            <td>{% if e.invoice_no %}{{ e.invoice_no }}{% else %}-{% endif %}</td>
+            <td>{{ e.description|default:"-" }}</td>
+            <td class="num">{% if e.credit or e.credit == 0 %}{{ e.credit|floatformat:2 }}{% else %}-{% endif %}</td>
+            <td class="num">{% if e.debit or e.debit == 0 %}{{ e.debit|floatformat:2 }}{% else %}-{% endif %}</td>
+            <td class="num">
+              {% if e.balance or e.balance == 0 %}
+                {% if e.balance < 0 %}
+                  {{ e.balance|floatformat:2|slice:"1:" }} DR
+                {% elif e.balance > 0 %}
+                  {{ e.balance|floatformat:2 }} CR
+                {% else %}
+                  0.00
+                {% endif %}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="muted" style="text-align:center; padding:12pt;">No ledger entries found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <table class="totals">
       <tr>
-        <td>{{ e.date|date:"d M Y" }}</td>
-        <td>{{ e.type }}</td>
-        <td>{{ e.desc }}</td>
-        <td style="text-align:right;">{{ e.amount }}</td>
+        <td class="k">Total Credit</td>
+        <td class="v">₹{{ total_credit|floatformat:2 }}</td>
+        <td class="k">Total Debit</td>
+        <td class="v">₹{{ total_debit|floatformat:2 }}</td>
+        <td class="k">Closing Balance</td>
+        <td class="v">₹{{ balance|floatformat:2 }}</td>
       </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    </table>
 
-  <div class="totals">
-    Total Credit: {{ total_credit }} &nbsp; | &nbsp;
-    Total Debit: {{ total_debit }} &nbsp; | &nbsp;
-    Balance: {{ balance }}
-  </div>
-{% endblock %}
+    <div id="footer_content">
+      <table style="width:100%; border-collapse:collapse;">
+        <tr>
+          <td>Generated by {{ request.site_name|default:"JaisTech KhataBook" }}</td>
+          <td style="text-align:right;">Page <pdf:pagenumber /> of <pdf:pagecount /></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

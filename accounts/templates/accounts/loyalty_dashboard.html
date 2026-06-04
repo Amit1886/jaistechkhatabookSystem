@@ -2,188 +2,543 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-star"></i> Loyalty & Membership Dashboard</h3>
-                </div>
-                <div class="card-body">
-                    {% if loyalty_account %}
-                        <div class="row">
-                            <!-- Points Summary -->
-                            <div class="col-md-4">
-                                <div class="card bg-primary text-white">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Available Points</h5>
-                                        <h2 class="card-text">{{ loyalty_account.available_points }}</h2>
-                                        <p class="card-text">Total Earned: {{ loyalty_account.total_points }}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Current Tier -->
-                            <div class="col-md-4">
-                                <div class="card bg-success text-white">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Current Tier</h5>
-                                        <h2 class="card-text">
-                                            {% if loyalty_account.current_tier %}
-                                                {{ loyalty_account.current_tier.display_name }}
-                                            {% else %}
-                                                Bronze
-                                            {% endif %}
-                                        </h2>
-
-                                        <p class="card-text">Total Spent: {{ loyalty_account.total_earned }}</p>
-
-                                        <p class="card-text">Total Spent: ₹{{ loyalty_account.total_earned }}</p>
-
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Redeem Actions -->
-                            <div class="col-md-4">
-                                <div class="card bg-warning">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Quick Actions</h5>
-                                        <button class="btn btn-primary btn-block" onclick="openRedeemModal()">
-                                            <i class="fas fa-exchange-alt"></i> Redeem Points
-                                        </button>
-                                        <a href="{% url 'accounts:membership_upgrade' %}" class="btn btn-success btn-block mt-2">
-                                            <i class="fas fa-arrow-up"></i> Upgrade Membership
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Points History -->
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <h4>Points Transaction History</h4>
-                                <div class="table-responsive">
-                                    <table class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Type</th>
-                                                <th>Points</th>
-                                                <th>Amount</th>
-                                                <th>Description</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for transaction in loyalty_account.transactions.all %}
-                                            <tr>
-                                                <td>{{ transaction.created_at|date:"M d, Y H:i" }}</td>
-                                                <td>
-                                                    {% if transaction.transaction_type == 'earn' %}
-                                                        <span class="badge badge-success">Earned</span>
-                                                    {% elif transaction.transaction_type == 'redeem' %}
-                                                        <span class="badge badge-danger">Redeemed</span>
-                                                    {% else %}
-                                                        <span class="badge badge-info">{{ transaction.transaction_type|title }}</span>
-                                                    {% endif %}
-                                                </td>
-                                                <td>{{ transaction.points }}</td>
-
-                                                <td>{{ transaction.amount }}</td>
-
-                                                <td>₹{{ transaction.amount }}</td>
-
-                                                <td>{{ transaction.description|default:"-" }}</td>
-                                            </tr>
-                                            {% empty %}
-                                            <tr>
-                                                <td colspan="5" class="text-center">No transactions yet</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-info">
-                            <h4>No Loyalty Account Found</h4>
-                            <p>You don't have a loyalty account yet. Please contact support to set up your account.</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+<div class="loyalty-page">
+  <section class="loyalty-hero">
+    <div class="loyalty-hero-copy">
+      <span class="loyalty-hero-icon"><i class="bi bi-gift-fill"></i></span>
+      <div>
+        <h1>Loyalty & Membership</h1>
+        <p>Smart rewards, tier progress, redeem activity, and active offers for {{ request.user.username|default:"Demo Test 3" }}.</p>
+      </div>
     </div>
+    <div class="loyalty-hero-actions">
+      <a class="loyalty-smart-btn loyalty-smart-btn-ghost" href="{% url 'accounts:dashboard' %}">
+        <i class="bi bi-grid" aria-hidden="true"></i>
+        <span>Dashboard</span>
+      </a>
+      {% if loyalty_account %}
+      <button class="loyalty-smart-btn" type="button" onclick="openRedeemModal()">
+        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+        <span>Redeem Points</span>
+      </button>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if loyalty_account %}
+  <section class="loyalty-grid">
+    <article class="loyalty-metric-card positive">
+      <span class="loyalty-card-icon"><i class="bi bi-stars"></i></span>
+      <div class="loyalty-label">Available Points</div>
+      <div class="loyalty-value">{{ loyalty_account.available_points }}</div>
+      <div class="loyalty-meta">Total earned: {{ loyalty_account.total_points }}</div>
+    </article>
+
+    <article class="loyalty-metric-card accent">
+      <span class="loyalty-card-icon"><i class="bi bi-award"></i></span>
+      <div class="loyalty-label">Current Tier</div>
+      <div class="loyalty-value">
+        {% if loyalty_account.current_tier %}{{ loyalty_account.current_tier.display_name }}{% else %}Bronze{% endif %}
+      </div>
+      <div class="loyalty-meta">Total spent: Rs. {{ loyalty_account.total_earned }}</div>
+    </article>
+
+    <article class="loyalty-metric-card warning">
+      <span class="loyalty-card-icon"><i class="bi bi-wallet2"></i></span>
+      <div class="loyalty-label">Used Points</div>
+      <div class="loyalty-value">{{ loyalty_account.used_points }}</div>
+      <div class="loyalty-meta">Redeemed from rewards</div>
+    </article>
+
+    <article class="loyalty-metric-card info">
+      <span class="loyalty-card-icon"><i class="bi bi-lightning-charge"></i></span>
+      <div class="loyalty-label">Active Offers</div>
+      <div class="loyalty-value">{{ offers|length }}</div>
+      <div class="loyalty-meta">Eligible right now</div>
+    </article>
+  </section>
+
+  <section class="loyalty-content-grid">
+    <article class="loyalty-panel loyalty-tier-panel">
+      <div class="loyalty-panel-head">
+        <div>
+          <h2>Membership Progress</h2>
+          <p>
+            {% if next_tier %}
+              {{ points_to_next_tier }} points needed for {{ next_tier.display_name }}.
+            {% else %}
+              Top tier unlocked.
+            {% endif %}
+          </p>
+        </div>
+        <span class="loyalty-tier-chip">
+          {% if loyalty_account.current_tier %}{{ loyalty_account.current_tier.display_name }}{% else %}Bronze{% endif %}
+        </span>
+      </div>
+      <div class="loyalty-progress-track" aria-label="Membership progress">
+        <span style="width: {{ tier_progress }}%;"></span>
+      </div>
+      <div class="loyalty-tier-list">
+        {% for tier in tiers %}
+        <div class="loyalty-tier-row {% if loyalty_account.current_tier and tier.id == loyalty_account.current_tier.id %}active{% endif %}">
+          <span>{{ tier.display_name }}</span>
+          <strong>{{ tier.min_points_required }} pts</strong>
+        </div>
+        {% empty %}
+        <div class="loyalty-empty">No membership tiers configured.</div>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="loyalty-panel">
+      <div class="loyalty-panel-head">
+        <div>
+          <h2>Smart Offers</h2>
+          <p>Personalized offers based on your tier and points.</p>
+        </div>
+      </div>
+      <div class="loyalty-offer-list">
+        {% for offer in offers %}
+        <div class="loyalty-offer">
+          <span class="loyalty-offer-icon"><i class="bi bi-ticket-perforated"></i></span>
+          <div>
+            <strong>{{ offer.name }}</strong>
+            <span>{{ offer.description }}</span>
+          </div>
+          <em>
+            {% if offer.bonus_points %}+{{ offer.bonus_points }} pts{% elif offer.discount_percentage %}{{ offer.discount_percentage }}% off{% else %}Rs. {{ offer.discount_amount }} off{% endif %}
+          </em>
+        </div>
+        {% empty %}
+        <div class="loyalty-empty">No active offers for this account yet.</div>
+        {% endfor %}
+      </div>
+    </article>
+  </section>
+
+  <section class="loyalty-panel">
+    <div class="loyalty-panel-head">
+      <div>
+        <h2>Recent Points Activity</h2>
+        <p>Latest earn, redeem, bonus, and adjustment records.</p>
+      </div>
+    </div>
+    <div class="loyalty-table-wrap">
+      <table class="loyalty-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Points</th>
+            <th>Amount</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for transaction in transactions %}
+          <tr>
+            <td>{{ transaction.created_at|date:"M d, Y H:i" }}</td>
+            <td><span class="loyalty-type-pill {{ transaction.transaction_type }}">{{ transaction.transaction_type|title }}</span></td>
+            <td><strong>{{ transaction.points }}</strong></td>
+            <td>Rs. {{ transaction.amount }}</td>
+            <td>{{ transaction.description|default:"-" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="loyalty-empty">No transactions yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% else %}
+  <section class="loyalty-panel">
+    <div class="loyalty-empty">
+      <strong>No loyalty account found.</strong>
+      <span>Please contact support to set up your rewards account.</span>
+    </div>
+  </section>
+  {% endif %}
 </div>
 
-<!-- Redeem Modal -->
 <div class="modal fade" id="redeemModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-exchange-alt"></i> Redeem Points</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                {% if loyalty_account %}
-                <p>You have <strong>{{ loyalty_account.available_points }}</strong> available points.</p>
-
-                <p>Each {{ loyalty_account.program.min_redeem_points }} points = {{ loyalty_account.program.points_to_rupee_ratio }}</p>
-
-                <p>Each {{ loyalty_account.program.min_redeem_points }} points = ₹{{ loyalty_account.program.points_to_rupee_ratio }}</p>
-
-                <form id="redeemForm">
-                    <div class="mb-3">
-                        <label for="points" class="form-label">Points to Redeem</label>
-                        <input type="number" class="form-control" id="points" min="{{ loyalty_account.program.min_redeem_points }}" max="{{ loyalty_account.available_points }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description (Optional)</label>
-                        <input type="text" class="form-control" id="description" placeholder="e.g., Redeemed for discount">
-                    </div>
-                </form>
-                {% endif %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="redeemPoints()">Redeem</button>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content loyalty-modal">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-arrow-repeat"></i> Redeem Points</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {% if loyalty_account %}
+        <p>You have <strong>{{ loyalty_account.available_points }}</strong> available points.</p>
+        <p>Minimum redeem: {{ loyalty_account.program.min_redeem_points }} points. Conversion: Rs. {{ loyalty_account.program.points_to_rupee_ratio }} per point.</p>
+        <form id="redeemForm">
+          <div class="mb-3">
+            <label for="points" class="form-label">Points to Redeem</label>
+            <input type="number" class="form-control" id="points" min="{{ loyalty_account.program.min_redeem_points }}" max="{{ loyalty_account.available_points }}" required>
+          </div>
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <input type="text" class="form-control" id="description" placeholder="Redeemed for discount">
+          </div>
+        </form>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="redeemPoints()">Redeem</button>
+      </div>
     </div>
+  </div>
 </div>
+
+<style>
+.loyalty-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.loyalty-hero,
+.loyalty-panel,
+.loyalty-metric-card {
+  border: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+.loyalty-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  background:
+    linear-gradient(135deg, rgba(249, 115, 22, 0.09), rgba(15, 118, 110, 0.08)),
+    #ffffff;
+}
+.loyalty-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f97316, #0f766e, #0284c7);
+}
+.loyalty-hero-copy,
+.loyalty-hero-actions,
+.loyalty-panel-head,
+.loyalty-offer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.loyalty-hero-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffedd5;
+  color: #c2410c;
+  font-size: 21px;
+  flex: 0 0 auto;
+}
+.loyalty-hero h1,
+.loyalty-panel h2 {
+  margin: 0;
+  color: #0f172a;
+}
+.loyalty-hero h1 {
+  font-size: 24px;
+  font-weight: 900;
+}
+.loyalty-hero p,
+.loyalty-panel p,
+.loyalty-meta {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+.loyalty-hero-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.loyalty-smart-btn {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #ea580c;
+  border-radius: 10px;
+  background: #ea580c;
+  color: #ffffff;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.loyalty-smart-btn-ghost {
+  background: transparent;
+  color: #0f766e;
+  border-color: #0f766e;
+}
+.loyalty-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+.loyalty-metric-card {
+  position: relative;
+  min-height: 112px;
+  border-radius: 14px;
+  padding: 14px 14px 14px 58px;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.loyalty-metric-card:hover,
+.loyalty-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.1);
+}
+.loyalty-card-icon,
+.loyalty-offer-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.loyalty-card-icon {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: #ffedd5;
+  color: #c2410c;
+}
+.loyalty-metric-card.positive .loyalty-card-icon { background: #dcfce7; color: #15803d; }
+.loyalty-metric-card.accent .loyalty-card-icon { background: #ccfbf1; color: #0f766e; }
+.loyalty-metric-card.warning .loyalty-card-icon { background: #fef3c7; color: #b45309; }
+.loyalty-metric-card.info .loyalty-card-icon { background: #e0f2fe; color: #0369a1; }
+.loyalty-label {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.loyalty-value {
+  margin-top: 6px;
+  color: #0f172a;
+  font-size: 25px;
+  font-weight: 900;
+}
+.loyalty-content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+  gap: 16px;
+}
+.loyalty-panel {
+  border-radius: 16px;
+  padding: 18px;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.loyalty-panel-head {
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+.loyalty-panel h2 {
+  font-size: 18px;
+  font-weight: 900;
+}
+.loyalty-tier-chip,
+.loyalty-type-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 900;
+}
+.loyalty-tier-chip {
+  background: #ffedd5;
+  color: #c2410c;
+}
+.loyalty-progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+.loyalty-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f97316, #0f766e);
+}
+.loyalty-tier-list,
+.loyalty-offer-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+.loyalty-tier-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #334155;
+}
+.loyalty-tier-row.active {
+  border-color: rgba(15, 118, 110, 0.35);
+  background: rgba(15, 118, 110, 0.08);
+  color: #0f766e;
+}
+.loyalty-offer {
+  align-items: flex-start;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+}
+.loyalty-offer-icon {
+  background: #ffedd5;
+  color: #c2410c;
+}
+.loyalty-offer strong,
+.loyalty-offer span {
+  display: block;
+}
+.loyalty-offer span {
+  color: #64748b;
+  font-size: 12px;
+}
+.loyalty-offer em {
+  margin-left: auto;
+  color: #0f766e;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.loyalty-table-wrap {
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+.loyalty-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.loyalty-table th,
+.loyalty-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+}
+.loyalty-table th {
+  background: #f8fafc;
+  color: #334155;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.loyalty-type-pill.earn,
+.loyalty-type-pill.bonus {
+  background: #dcfce7;
+  color: #15803d;
+}
+.loyalty-type-pill.redeem {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.loyalty-type-pill.adjustment,
+.loyalty-type-pill.expired {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.loyalty-empty {
+  color: #64748b;
+  padding: 14px;
+}
+.loyalty-empty strong,
+.loyalty-empty span {
+  display: block;
+}
+body.dark .loyalty-hero,
+body.dark .loyalty-panel,
+body.dark .loyalty-metric-card,
+body.dark .loyalty-table-wrap,
+body.dark .loyalty-offer,
+body.dark .loyalty-tier-row {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: #1f2937;
+}
+body.dark .loyalty-hero h1,
+body.dark .loyalty-panel h2,
+body.dark .loyalty-value,
+body.dark .loyalty-table {
+  color: #e5e7eb;
+}
+body.dark .loyalty-table th {
+  background: #111827;
+  color: #cbd5e1;
+}
+@media (max-width: 900px) {
+  .loyalty-hero,
+  .loyalty-panel-head {
+    flex-direction: column;
+  }
+  .loyalty-hero-actions,
+  .loyalty-smart-btn {
+    width: 100%;
+  }
+  .loyalty-content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function redeemPoints() {
-    const points = document.getElementById('points').value;
-    const description = document.getElementById('description').value;
+function openRedeemModal() {
+  const modalEl = document.getElementById("redeemModal");
+  if (!modalEl || !window.bootstrap) return;
+  window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
 
-    fetch('{% url "accounts:redeem_points" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({
-            points: points,
-            description: description
-        })
-    })
+function redeemPoints() {
+  const pointsEl = document.getElementById("points");
+  const descriptionEl = document.getElementById("description");
+  const points = pointsEl ? pointsEl.value : "";
+  const description = descriptionEl ? descriptionEl.value : "";
+
+  fetch('{% url "accounts:redeem_points" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({ points: points, description: description })
+  })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            alert('Points redeemed successfully!');
-            location.reload();
-        } else {
-            alert('Error: ' + data.error);
-        }
+      if (data.success) {
+        window.dispatchEvent(new CustomEvent("ui:toast", { detail: { type: "success", message: "Points redeemed successfully." } }));
+        setTimeout(() => location.reload(), 600);
+      } else {
+        window.dispatchEvent(new CustomEvent("ui:toast", { detail: { type: "error", message: data.error || "Could not redeem points." } }));
+      }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while redeeming points.');
+    .catch(() => {
+      window.dispatchEvent(new CustomEvent("ui:toast", { detail: { type: "error", message: "An error occurred while redeeming points." } }));
     });
 }
 </script>

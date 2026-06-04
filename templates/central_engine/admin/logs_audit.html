@@ -1,0 +1,47 @@
+{% extends "central_engine/layout.html" %}
+
+{% block ce_title %}Logs & Audit{% endblock %}
+
+{% block ce_content %}
+  <div class="card ce-soft mb-3">
+    <div class="card-body">
+      <form method="get" class="d-flex gap-2 align-items-center">
+        <input class="form-control" name="owner_id" value="{{ owner_id }}" placeholder="Filter by owner_id">
+        <button class="btn btn-outline-primary" type="submit">Filter</button>
+        <a class="btn btn-outline-secondary" href="{% url 'central_engine:admin_logs' %}">Reset</a>
+      </form>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Time</th>
+          <th>Owner</th>
+          <th>Actor</th>
+          <th>Cat</th>
+          <th>Level</th>
+          <th>Key</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in logs %}
+          <tr>
+            <td class="small text-muted">{{ l.created_at }}</td>
+            <td class="small">#{{ l.owner_id }}</td>
+            <td class="small text-muted">{% if l.actor_id %}#{{ l.actor_id }}{% else %}-{% endif %}</td>
+            <td><span class="badge bg-light text-dark">{{ l.category }}</span></td>
+            <td><span class="badge bg-secondary">{{ l.level }}</span></td>
+            <td class="small"><code>{{ l.event_key }}</code></td>
+            <td class="small">{{ l.message }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No logs found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+

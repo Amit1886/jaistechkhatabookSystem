@@ -1,0 +1,45 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Checkout</div>
+        <div class="va-help">Control how customers check out on your storefront.</div>
+      </div>
+    </div>
+  </div>
+
+  <form method="post" class="va-panel p-3">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Customer accounts</div>
+        <label class="form-label va-form-label">Account requirement</label>
+        <select class="form-select" name="customer_accounts">
+          <option value="optional" {% if settings_summary.customer_accounts == "optional" %}selected{% endif %}>Optional</option>
+          <option value="required" {% if settings_summary.customer_accounts == "required" %}selected{% endif %}>Required</option>
+          <option value="off" {% if settings_summary.customer_accounts == "off" %}selected{% endif %}>Off</option>
+        </select>
+        <div class="va-help mt-1">If required, customers must login before checkout.</div>
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Guest checkout</div>
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" value="true" name="guest_checkout_enabled" id="guestCheckout"
+                 {% if settings_summary.guest_checkout_enabled %}checked{% endif %}>
+          <label class="form-check-label va-form-label" for="guestCheckout">
+            Allow guest checkout
+          </label>
+        </div>
+        <div class="va-help mt-1">If disabled, customers must use an account.</div>
+      </div>
+
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Save</button>
+      </div>
+    </div>
+  </form>
+{% endblock %}
+

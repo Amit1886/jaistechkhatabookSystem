@@ -1,0 +1,104 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+{% load core_filters %}
+{% block vendor_content %}
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+      <div class="muted small">Catalog</div>
+      <h3 class="fw-bold m-0">Products</h3>
+      <div class="muted small mt-1">Products synced from billing/warehouse. Publish to show on store.</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'vendor-dashboard-ui' vendor.subdomain %}">Back</a>
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'vendor-products-bulk-import' vendor.subdomain %}">Bulk import</a>
+      <a class="btn btn-outline-primary btn-sm" href="{% url 'store-home' vendor.subdomain %}" target="_blank" rel="noopener">View Store</a>
+    </div>
+  </div>
+
+  <form method="get" class="card product-card shadow-soft mb-3">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-lg-6">
+          <label class="form-label">Search</label>
+          <input class="form-control" name="q" value="{{ q }}" placeholder="Search name / SKU">
+        </div>
+        <div class="col-12 col-lg-3">
+          <label class="form-label">Status</label>
+          <select class="form-select" name="status">
+            <option value="" {% if not status %}selected{% endif %}>All</option>
+            <option value="online" {% if status == "online" %}selected{% endif %}>Online</option>
+            <option value="draft" {% if status == "draft" %}selected{% endif %}>Draft</option>
+          </select>
+        </div>
+        <div class="col-12 col-lg-3 d-flex gap-2">
+          <button class="btn btn-primary flex-fill" type="submit">Apply</button>
+          <a class="btn btn-outline-secondary" href="{% url 'vendor-products' vendor.subdomain %}">Reset</a>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="card product-card shadow-soft">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+          <tr>
+            <th>Product</th>
+            <th>SKU</th>
+            <th>Category</th>
+            <th class="text-end">Price</th>
+            <th class="text-end">Stock</th>
+            <th>Status</th>
+            <th class="text-end">Action</th>
+          </tr>
+          </thead>
+          <tbody>
+          {% for l in listings %}
+            <tr>
+              <td class="fw-semibold">{{ l.product.name }}</td>
+              <td class="muted">{{ l.product.sku }}</td>
+              <td class="muted">{% if l.product.category %}{{ l.product.category.name }}{% else %}-{% endif %}</td>
+              <td class="text-end fw-semibold">&#8377;{{ l.effective_price }}</td>
+              <td class="text-end">
+                {% with s=inv_map|get_item:l.product_id %}
+                  {% if s is not None %}{{ s }}{% else %}-{% endif %}
+                {% endwith %}
+              </td>
+              <td>
+                {% if l.is_online %}
+                  <span class="badge bg-success">Online</span>
+                {% else %}
+                  <span class="badge bg-secondary">Draft</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'vendor-product-edit' vendor.subdomain l.id %}">Edit</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7" class="text-center muted py-4">No products yet.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if page_obj and page_obj.paginator.num_pages > 1 %}
+        <nav class="mt-2">
+          <ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+              <li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&status={{ status|urlencode }}&page={{ page_obj.previous_page_number }}">Prev</a></li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Prev</span></li>
+            {% endif %}
+            <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+              <li class="page-item"><a class="page-link" href="?q={{ q|urlencode }}&status={{ status|urlencode }}&page={{ page_obj.next_page_number }}">Next</a></li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

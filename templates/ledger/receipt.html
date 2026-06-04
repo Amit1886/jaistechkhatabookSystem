@@ -1,0 +1,169 @@
+{% extends "core/pc_universal.html" %}
+{% load static %}
+
+{% block title %}Receipt{% endblock %}
+
+{% block pc_badges %}
+  {% if gst_enabled %}
+    <span class="badge bg-success">GST</span>
+  {% else %}
+    <span class="badge bg-secondary">Non-GST</span>
+  {% endif %}
+{% endblock %}
+
+{% block pc_actions %}
+  <a href="{{ pdf_url }}" class="btn btn-outline-light btn-sm fw-bold">Receipt PDF</a>
+  <button type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="window.print()">Receipt</button>
+{% endblock %}
+
+{% block extra_css %}
+  {{ block.super }}
+  <style>
+    .receipt-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .receipt-meta-card {
+      background: #eef4fb;
+      border: 1px solid #d3deed;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .receipt-meta-card .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #33537d;
+      font-weight: 800;
+    }
+    .receipt-meta-card .value {
+      font-size: 14px;
+      font-weight: 900;
+      color: #0f172a;
+      margin-top: 4px;
+      word-break: break-word;
+    }
+    body.dark .receipt-meta-card { background: #111827; border-color: #1f2937; }
+    body.dark .receipt-meta-card .label { color: #93c5fd; }
+    body.dark .receipt-meta-card .value { color: #e5e7eb; }
+
+    .receipt-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: #fff;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .receipt-table th, .receipt-table td {
+      padding: 10px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: top;
+    }
+    .receipt-table th {
+      background: #f1f5f9;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #475569;
+      text-align: left;
+      font-weight: 900;
+    }
+    .receipt-amount { text-align: right; font-weight: 900; white-space: nowrap; }
+    .receipt-dc { font-weight: 900; width: 64px; }
+    .receipt-narr { color: #475569; }
+    body.dark .receipt-table { background: #0b1220; border-color: rgba(148,163,184,0.22); }
+    body.dark .receipt-table th { background: #111827; color: #cbd5e1; border-color: #1f2937; }
+    body.dark .receipt-table td { border-color: #1f2937; }
+    body.dark .receipt-narr { color: #94a3b8; }
+
+    .receipt-totals {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .receipt-total-pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(255,255,255,0.7);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    body.dark .receipt-total-pill { background: rgba(17,24,39,0.7); border-color: rgba(148,163,184,0.22); }
+
+    @media (max-width: 768px) {
+      .receipt-meta-grid { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      nav.topbar, footer.footer, .locked-modal, .kp-toast-container { display: none !important; }
+      .sidebar { display: none !important; }
+      .main-content { margin-left: 0 !important; }
+      .page-content { padding: 0 !important; }
+      .container-fluid { padding: 0 !important; }
+      .card { box-shadow: none !important; }
+      .card-header .btn { display: none !important; }
+      .receipt-table { border: 1px solid #94a3b8 !important; }
+    }
+  </style>
+{% endblock %}
+
+{% block pc_content %}
+  <div class="receipt-meta-grid">
+    <div class="receipt-meta-card">
+      <div class="label">Voucher Type</div>
+      <div class="value">{{ voucher_type|default:"-" }}</div>
+    </div>
+    <div class="receipt-meta-card">
+      <div class="label">Reference</div>
+      <div class="value">{{ reference_no }}</div>
+    </div>
+    <div class="receipt-meta-card">
+      <div class="label">Date</div>
+      <div class="value">{{ txn.date|date:"d M Y" }}</div>
+    </div>
+  </div>
+
+  <div class="unified-table-wrap" style="background: transparent; border: 0; padding: 0;">
+    <table class="receipt-table">
+      <thead>
+        <tr>
+          <th style="width:70px;">S.No</th>
+          <th style="width:70px;">D/C</th>
+          <th>Party</th>
+          <th style="width:160px;">Debit/Credit</th>
+          <th>Short Narration</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.sno }}</td>
+          <td class="receipt-dc">{{ row.dc }}</td>
+          <td>{{ row.party }}</td>
+          <td class="receipt-amount">{{ row.amount }}</td>
+          <td class="receipt-narr">{{ row.narration }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="receipt-totals">
+    <div class="receipt-total-pill">Total Debit: {{ total_debit }}</div>
+    <div class="receipt-total-pill">Total Credit: {{ total_credit }}</div>
+  </div>
+
+  {% if txn.narration %}
+    <div class="unified-section mt-2">
+      <div class="unified-muted"><strong>Narration:</strong> {{ txn.narration }}</div>
+    </div>
+  {% endif %}
+{% endblock %}
+

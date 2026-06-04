@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<script src="{% static 'js/add_order_pc_busy.js' %}?v=20260302a" defer></script>
+
+<div class="container-fluid py-3 unified-screen busy-unified-add busy-order-pc busy-voucher-single">
+  <div class="card shadow-lg border-0 order-card" id="mainOrderCard">
+    <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <h2 class="mb-0 fw-bold text-shadow">Create Voucher</h2>
+        <span class="badge bg-warning text-dark fw-bold">Busy Grid</span>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-light btn-sm fw-bold" href="{% url 'commerce:order_list' %}">Orders</a>
+        <a class="btn btn-outline-light btn-sm fw-bold" href="{% url 'commerce:voucher_list' %}">Voucher List</a>
+        <a class="btn btn-outline-light btn-sm fw-bold" href="{% url 'commerce:invoice_list' %}">Invoices</a>
+        <a class="btn btn-outline-light btn-sm fw-bold" href="{% url 'commerce:payment_list' %}">Payments</a>
+      </div>
+    </div>
+
+    <form method="POST" id="orderForm" autocomplete="off">
+      {% csrf_token %}
+      <input type="hidden" name="submit_action" id="submitAction" value="">
+
+      <!-- Step 1: Busy top strip -->
+      <div class="card-body" id="step-1">
+        <div class="row g-3 align-items-end">
+          <div class="col">
+            <label class="form-label fw-bold">Party (F2)</label>
+            <input type="text" id="partySearch" class="form-control form-control-lg mb-2 fw-bold" placeholder="🔍 Search Party (Type to search...)" autocomplete="off">
+            <div id="partyDropdown" class="dropdown-menu w-100 dropdown-hidden" role="listbox" aria-label="Party search results"></div>
+            <select id="partySelect" name="party" class="form-select form-select-lg d-none fw-bold" required>
+              <option value="">Select Party</option>
+              {% for p in parties %}
+              <option value="{{ p.id }}" {% if initial_party_id|stringformat:'s' == p.id|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col">
+            <div style="display:grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; align-items:end;">
+              <div>
+                <label class="form-label fw-bold">Voucher Type</label>
+                <select id="orderType" name="voucher_type" class="form-select form-select-lg fw-bold">
+                  <option value="SALE">Sales</option>
+                  <option value="PURCHASE">Purchase</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label fw-bold">Warehouse</label>
+                <select name="warehouse" class="form-select form-select-lg fw-bold">
+                  <option value="">Default</option>
+                  {% for wh in warehouses %}
+                  <option value="{{ wh.id }}">{{ wh.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label fw-bold">Date</label>
+                <input type="date" name="voucher_date" class="form-control form-control-lg fw-bold" value="{% now 'Y-m-d' %}">
+              </div>
+
+              <div>
+                <label class="form-label fw-bold">GST</label>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <label class="d-flex align-items-center gap-2" style="margin:0;">
+                    <input type="checkbox" id="pcGstEnabled" checked>
+                    <span class="fw-bold">On</span>
+                  </label>
+                  <input type="number" id="pcGstRate" class="form-control form-control-lg fw-bold" style="width:110px;" step="0.01" min="0" max="28" value="0" aria-label="GST rate">
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label fw-bold">Payment</label>
+                <div style="display:grid; grid-template-columns: 1fr 140px; gap: 8px; align-items:end;">
+                  <select name="payment_mode" class="form-select form-select-lg fw-bold" aria-label="Payment mode">
+                    <option value="">Unpaid</option>
+                    <option value="cash">Cash</option>
+                    <option value="upi">UPI</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="card">Card</option>
+                    <option value="cheque">Cheque</option>
+                  </select>
+                  <input type="number" name="paid_amount" id="paidAmount" class="form-control form-control-lg fw-bold text-end" step="0.01" min="0" value="0.00" aria-label="Paid amount">
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label fw-bold">Reference / Notes</label>
+                <input type="text" name="payment_reference" class="form-control form-control-lg fw-bold" placeholder="UTR / Ref no.">
+                <input type="text" name="notes" class="form-control form-control-lg fw-bold" placeholder="Notes (optional)" style="margin-top:6px;">
+              </div>
+            </div>
+
+            <div class="mt-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="d-flex gap-3 flex-wrap">
+                <div class="fw-bold">Sub: &#8377; <span id="subTotal">0.00</span></div>
+                <div class="fw-bold" id="pcGstLabel">GST: &#8377; <span id="tax">0.00</span></div>
+                <div class="fw-bold">Total: &#8377; <span id="grandTotal">0.00</span></div>
+                <div class="fw-bold">Bal: &#8377; <span id="balanceAmount">0.00</span></div>
+              </div>
+
+              <div class="d-flex gap-2 flex-wrap align-items-center">
+                <button type="submit" class="btn btn-success fw-bold">Save (F5)</button>
+                <button type="button" class="btn btn-primary fw-bold" id="btnSavePrint">Save & Print</button>
+                <a class="btn btn-outline-secondary fw-bold" href="{% url 'accounts:dashboard' %}">Cancel</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Full-width table -->
+      <div class="card-body" id="step-2">
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle shadow-lg" id="orderTable">
+            <thead class="table-primary text-center fw-bold">
+              <tr>
+                <th class="fw-bold">Product (F3)</th>
+                <th width="100" class="fw-bold">Qty</th>
+                <th width="140" class="fw-bold">Price</th>
+                <th width="160" class="fw-bold">Amount</th>
+                <th width="90" class="fw-bold">Action</th>
+              </tr>
+            </thead>
+            <tbody id="orderBody">
+              <tr class="item-row">
+                <td>
+                  <div class="card border-warning">
+                    <div class="card-body p-2">
+                      <input type="text" class="form-control product-search mb-1 fw-bold" placeholder="🔍 Search Product (F3)" autocomplete="off">
+                      <div class="product-dropdown dropdown-menu dropdown-hidden"></div>
+                      <select name="product[]" class="form-select product d-none fw-bold" title="Select Product (F3)" aria-label="Select Product">
+                        <option value="">Select Product</option>
+                        {% for prod in products %}
+                        <option value="{{ prod.id }}" data-price="{{ prod.price }}" data-unit="{{ prod.unit|default:'pcs' }}" data-stock="{{ prod.stock|default:0 }}" data-barcode="{{ prod.barcode|default:'' }}">
+                          {{ prod.name }}
+                        </option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="card border-info">
+                    <div class="card-body p-2">
+                      <input type="number" name="qty[]" class="form-control qty text-center fw-bold" value="1" min="1" aria-label="Quantity">
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="card border-danger">
+                    <div class="card-body p-2">
+                      <input type="number" name="price[]" class="form-control price text-end fw-bold" step="0.01" aria-label="Price">
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="card border-success">
+                    <div class="card-body p-2">
+                      <input type="number" name="amount[]" class="form-control amount text-end fw-bold" step="0.01" min="0" readonly aria-label="Amount">
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <button type="button" class="btn btn-danger btn-lg remove-btn fw-bold shadow">X</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="alert alert-info mt-2 mb-0 small">
+          Tips: F3 to focus item search, F4 to add rows, F9 discount, F8 sundry, F5 save, F7 print.
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function () {
+    function parseMoney(v) {
+      const n = Number.parseFloat(String(v ?? "").replace(/[^0-9.-]/g, ""));
+      return Number.isFinite(n) ? n : 0;
+    }
+    function recalcBalance() {
+      const grand = parseMoney(document.getElementById("grandTotal")?.textContent);
+      const paid = parseMoney(document.getElementById("paidAmount")?.value);
+      const bal = Math.max(0, grand - paid);
+      const el = document.getElementById("balanceAmount");
+      if (el) el.textContent = bal.toFixed(2);
+    }
+    document.addEventListener("input", (e) => {
+      if (e.target && e.target.id === "paidAmount") recalcBalance();
+    });
+    const observer = new MutationObserver(recalcBalance);
+    const grandEl = document.getElementById("grandTotal");
+    if (grandEl) observer.observe(grandEl, { childList: true, characterData: true, subtree: true });
+    recalcBalance();
+  })();
+
+  document.getElementById("btnSavePrint")?.addEventListener("click", function () {
+    const action = document.getElementById("submitAction");
+    if (action) action.value = "print";
+    const form = document.getElementById("orderForm");
+    if (!form) return;
+    if (form.requestSubmit) form.requestSubmit();
+    else form.submit();
+  });
+</script>
+{% endblock %}

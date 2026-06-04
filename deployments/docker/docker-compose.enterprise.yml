@@ -1,0 +1,70 @@
+services:
+  web:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile
+    environment:
+      DEBUG: "False"
+      DESKTOP_MODE: "False"
+      LIGHTWEIGHT_DEPLOYMENT: "False"
+      DATABASE_URL: "postgresql://billentra:billentra@postgres:5432/billentra"
+      REDIS_URL: "redis://redis:6379/0"
+      ALLOWED_HOSTS: "*"
+      FASTAPI_ALLOWED_HOSTS: "*"
+      FASTAPI_CORS_ORIGINS: "http://localhost,http://127.0.0.1"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - media:/app/media
+      - staticfiles:/app/staticfiles
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             uvicorn khatapro.asgi:application --host 0.0.0.0 --port 8000 --proxy-headers"
+
+  celery:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile
+    environment:
+      DEBUG: "False"
+      DATABASE_URL: "postgresql://billentra:billentra@postgres:5432/billentra"
+      REDIS_URL: "redis://redis:6379/0"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+    depends_on:
+      - postgres
+      - redis
+    command: celery -A khatapro worker -l info
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.enterprise.conf:/etc/nginx/conf.d/default.conf:ro
+      - staticfiles:/staticfiles:ro
+      - media:/media:ro
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: billentra
+      POSTGRES_USER: billentra
+      POSTGRES_PASSWORD: billentra
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+  media:
+  staticfiles:

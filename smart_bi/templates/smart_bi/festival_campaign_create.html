@@ -1,0 +1,87 @@
+{% extends "core/pc_universal.html" %}
+{% load static %}
+
+{% block pc_title %}Create Festival Campaign{% endblock %}
+
+{% block pc_actions %}
+  <a class="btn btn-light fw-semibold" href="{% url 'smart_bi:festival_campaign_list' %}">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+{% endblock %}
+
+{% block pc_content %}
+  {% if suggestions %}
+    <div class="alert alert-info small">
+      <div class="fw-semibold mb-1">Auto Suggestions</div>
+      <div class="text-muted">Based on calendar, you can quickly create a campaign like:</div>
+      <ul class="mb-0">
+        {% for s in suggestions %}
+          <li>{{ s.name }} ({{ s.discount_value }}{% if s.discount_type == "percentage" %}%{% endif %})</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="card border-0 shadow-sm">
+    {% csrf_token %}
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Festival Name</label>
+          {{ form.name }}
+          {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Start Date</label>
+          {{ form.start_date }}
+          {% if form.start_date.errors %}<div class="text-danger small">{{ form.start_date.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">End Date</label>
+          {{ form.end_date }}
+          {% if form.end_date.errors %}<div class="text-danger small">{{ form.end_date.errors }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Discount Type</label>
+          {{ form.discount_type }}
+          {% if form.discount_type.errors %}<div class="text-danger small">{{ form.discount_type.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Discount Value</label>
+          {{ form.discount_value }}
+          {% if form.discount_value.errors %}<div class="text-danger small">{{ form.discount_value.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Theme Style</label>
+          {{ form.theme }}
+          {% if form.theme.errors %}<div class="text-danger small">{{ form.theme.errors }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Applicable Products</label>
+          {{ form.products }}
+          <div class="form-text">{{ form.products.help_text }}</div>
+          {% if form.products.errors %}<div class="text-danger small">{{ form.products.errors }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Status</label>
+          {{ form.status }}
+          {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Banner Image</label>
+          {{ form.banner_image }}
+          {% if form.banner_image.errors %}<div class="text-danger small">{{ form.banner_image.errors }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="card-footer bg-white d-flex justify-content-end gap-2">
+      <a class="btn btn-outline-secondary" href="{% url 'smart_bi:festival_campaign_list' %}">Cancel</a>
+      <button type="submit" class="btn btn-primary">Save Campaign</button>
+    </div>
+  </form>
+{% endblock %}
+

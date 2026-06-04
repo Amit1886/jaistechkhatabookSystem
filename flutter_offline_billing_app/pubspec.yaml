@@ -1,0 +1,47 @@
+name: jaistech_billing_mobile_app
+description: JaisTech Billing Mobile App (offline-first, GetX, SQFlite + sync).
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Core
+  sqflite: ^2.3.3
+  path: ^1.9.0
+  path_provider: ^2.1.4
+  get: ^4.6.6
+  connectivity_plus: ^6.0.5
+  http: ^1.2.2
+  shared_preferences: ^2.3.2
+  flutter_secure_storage: ^9.2.2
+  intl: ^0.19.0
+
+  # UI / Charts
+  fl_chart: ^0.69.0
+
+  # Extras
+  mobile_scanner: ^5.2.3
+  pdf: ^3.10.8
+  printing: ^5.13.4
+  share_plus: ^10.1.2
+  url_launcher: ^6.3.1
+  file_picker: ^8.1.7
+  flutter_local_notifications: ^17.2.4
+
+  # Optional local password hashing (offline PIN). Keeps app fully offline.
+  crypto: ^3.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  # assets:
+  #   - assets/

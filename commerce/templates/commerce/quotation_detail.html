@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-2 unified-screen">
+  <div class="unified-card">
+    <div class="unified-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0">Quotation {% if quotation.quotation_number %}{{ quotation.quotation_number }}{% else %}#{{ quotation.id }}{% endif %}</h3>
+        <div class="unified-subtitle">
+          Party: <span class="fw-semibold">{{ quotation.party.name }}</span>
+          <span class="ms-2 badge bg-secondary">{{ quotation.status|title }}</span>
+          {% if quotation.valid_till %}<span class="ms-2 text-muted">Valid till: {{ quotation.valid_till|date:"d M Y" }}</span>{% endif %}
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'commerce:quotation_list' %}" class="btn unified-btn-outline">Back</a>
+        {% if quotation.status|lower != 'converted' and quotation.status|lower != 'approved' and quotation.status|lower != 'verified' %}
+          <a href="{% url 'commerce:quotation_edit' quotation.id %}" class="btn unified-btn-outline">Edit</a>
+        {% endif %}
+        {% if quotation.status|lower == 'sent' %}
+          <a href="{% url 'commerce:quotation_action' quotation.id 'verify' %}" class="btn unified-btn-outline">Verify</a>
+        {% endif %}
+        {% if quotation.status|lower == 'verified' %}
+          <a href="{% url 'commerce:quotation_action' quotation.id 'approve' %}" class="btn unified-btn-primary">Approve</a>
+        {% endif %}
+        {% if quotation.status|lower == 'approved' %}
+          <a href="{% url 'commerce:quotation_action' quotation.id 'convert' %}" class="btn unified-btn-primary">Convert to Order</a>
+        {% endif %}
+        {% if quotation.status|lower != 'converted' %}
+          <a href="{% url 'commerce:quotation_action' quotation.id 'reject' %}" class="btn unified-btn-outline">Reject</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="unified-body">
+      {% include "core/includes/messages.html" %}
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-3">
+          <div class="card p-3">
+            <div class="text-muted small">Date</div>
+            <div class="fw-bold">{{ quotation.date|date:"d M Y" }}</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card p-3">
+            <div class="text-muted small">Warehouse</div>
+            <div class="fw-bold">{% if quotation.warehouse %}{{ quotation.warehouse.name }}{% else %}-{% endif %}</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card p-3">
+            <div class="text-muted small">Total</div>
+            <div class="fw-bold">{{ quotation.total_amount|default:0 }}</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card p-3">
+            <div class="text-muted small">Converted Order</div>
+            <div class="fw-bold">
+              {% if quotation.converted_order %}
+                <a href="{% url 'commerce:order_detail' quotation.converted_order.id %}">#{{ quotation.converted_order.id }}</a>
+              {% else %}
+                -
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if quotation.remarks %}
+        <div class="card p-3 mb-3">
+          <div class="text-muted small mb-1">Remarks</div>
+          <div class="fw-semibold" style="white-space:pre-line;">{{ quotation.remarks }}</div>
+        </div>
+      {% endif %}
+
+      <div class="card p-3 mb-3">
+        <h5 class="mb-2">Items</h5>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th class="text-end">Qty</th>
+                <th class="text-end">Rate</th>
+                <th class="text-end">Discount</th>
+                <th class="text-end">Tax %</th>
+                <th class="text-end">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for it in quotation.items.all %}
+              <tr>
+                <td class="fw-semibold">{{ it.product.name }}</td>
+                <td class="text-end">{{ it.qty }}</td>
+                <td class="text-end">{{ it.rate }}</td>
+                <td class="text-end">{{ it.discount }}</td>
+                <td class="text-end">{{ it.tax }}</td>
+                <td class="text-end fw-bold">{{ it.total }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-center text-muted py-3">No items.</td></tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5" class="text-end fw-bold">Grand Total</td>
+                <td class="text-end fw-bold">{{ quotation.total_amount|default:0 }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="card p-3">
+        <h5 class="mb-2">Audit</h5>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Action</th>
+                <th>From</th>
+                <th>To</th>
+                <th>By</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for l in quotation.audit_logs.all %}
+              <tr>
+                <td class="text-muted">{{ l.performed_at|date:"d M Y, H:i" }}</td>
+                <td class="fw-semibold">{{ l.action }}</td>
+                <td>{{ l.from_status|default:"-" }}</td>
+                <td>{{ l.to_status|default:"-" }}</td>
+                <td>{{ l.performed_by|default:"-" }}</td>
+                <td>{{ l.note|default:"" }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-center text-muted py-3">No audit logs.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

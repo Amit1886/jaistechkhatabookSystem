@@ -1,0 +1,108 @@
+{% extends "core/pc_universal.html" %}
+{% load static %}
+
+{% block pc_title %}Duplicate Invoice Warning{% endblock %}
+
+{% block pc_content %}
+  <div class="alert alert-warning d-flex align-items-center" role="alert">
+    <div class="me-2"><i class="bi bi-exclamation-triangle"></i></div>
+    <div>
+      <div class="fw-bold">Possible duplicate invoice detected.</div>
+      <div class="small text-muted">Review the comparison below before continuing.</div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light fw-bold">New Invoice (Pending)</div>
+        <div class="card-body">
+          <div class="small text-muted mb-2">Order</div>
+          <div class="fw-semibold">#{{ order.id }}</div>
+
+          <hr class="my-3">
+
+          <div class="small text-muted mb-2">Customer</div>
+          <div class="fw-semibold">{{ order.party.name }}</div>
+
+          <hr class="my-3">
+
+          <div class="small text-muted mb-2">Total Amount</div>
+          <div class="fw-bold">₹{{ new_amount }}</div>
+
+          <div class="mt-3 small text-muted">
+            Products are compared against recent invoices within your configured detection window.
+          </div>
+        </div>
+        <div class="card-footer bg-white d-flex gap-2 flex-wrap justify-content-end">
+          {% if cancel_payload %}
+            <form method="post" action="{{ action_url|default:'' }}" class="d-inline">
+              {% csrf_token %}
+              {% for k,v in cancel_payload.items %}
+                <input type="hidden" name="{{ k }}" value="{{ v }}">
+              {% endfor %}
+              <button type="submit" class="btn btn-outline-secondary">Cancel</button>
+            </form>
+          {% else %}
+            <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Cancel</a>
+          {% endif %}
+          <form method="post" action="{{ action_url|default:'' }}" class="d-inline">
+            {% csrf_token %}
+            {% for k,v in continue_payload.items %}
+              <input type="hidden" name="{{ k }}" value="{{ v }}">
+            {% endfor %}
+            <button type="submit" class="btn btn-warning">Continue Anyway</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light fw-bold">Recent Similar Invoices</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 90px;">Invoice ID</th>
+                  <th>Customer</th>
+                  <th>Products</th>
+                  <th class="text-end" style="width: 140px;">Total</th>
+                  <th style="width: 170px;">Created</th>
+                  <th class="text-end" style="width: 110px;">Similarity</th>
+                  <th style="width: 110px;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in candidates %}
+                  <tr>
+                    <td>{{ c.invoice.id }}</td>
+                    <td>{{ c.invoice.order.party.name }}</td>
+                    <td class="small text-muted">{{ c.product_summary }}</td>
+                    <td class="text-end">₹{{ c.invoice.amount }}</td>
+                    <td class="small text-muted">{{ c.invoice.created_at|date:"d M Y, H:i" }}</td>
+                    <td class="text-end fw-semibold">{{ c.similarity_score }}%</td>
+                    <td>
+                      <a class="btn btn-sm btn-outline-primary" href="{% url 'commerce:invoice_view' c.invoice.id %}" target="_blank" rel="noopener">
+                        View
+                      </a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="7" class="text-center text-muted py-4">No similar invoices found.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3 small text-muted">
+        Tip: You can adjust duplicate detection window and similarity threshold in Duplicate Invoice Settings.
+      </div>
+    </div>
+  </div>
+{% endblock %}

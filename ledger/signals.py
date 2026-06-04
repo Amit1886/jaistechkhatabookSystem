@@ -6,11 +6,12 @@ from django.apps import apps
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-from ledger.models import LedgerTransaction, StockLedger, StockTransfer, JournalVoucher
+from ledger.models import LedgerTransaction, StockLedger, StockTransfer, JournalVoucher, ReturnNote
 from ledger.services.posting import (
     post_expense,
     post_invoice,
     post_journal_voucher,
+    post_return_note,
     post_khata_transaction,
     post_payment,
     post_stock_transfer,
@@ -196,3 +197,30 @@ def gl_void_journal_voucher(sender, instance, **kwargs):
         ).delete()
     except Exception:
         logger.exception("GL void failed for ledger.JournalVoucher id=%s", getattr(instance, "id", None))
+
+
+@receiver(post_save, sender=ReturnNote)
+def gl_post_return_note(sender, instance, **kwargs):
+    try:
+        schedule_on_commit(post_return_note, instance.id)
+    except Exception:
+        logger.exception("GL posting failed for ledger.ReturnNote id=%s", getattr(instance, "id", None))
+
+
+@receiver(post_delete, sender=ReturnNote)
+def gl_void_return_note(sender, instance, **kwargs):
+    try:
+        LedgerTransaction.objects.filter(
+            reference_type="ledger.ReturnNote",
+            reference_id=getattr(instance, "id", None),
+            voucher_type__in=[
+                LedgerTransaction.VoucherType.CREDIT_NOTE,
+                LedgerTransaction.VoucherType.DEBIT_NOTE,
+            ],
+        ).delete()
+        StockLedger.objects.filter(
+            reference_type="ledger.ReturnNote",
+            reference_id=getattr(instance, "id", None),
+        ).delete()
+    except Exception:
+        logger.exception("GL void failed for ledger.ReturnNote id=%s", getattr(instance, "id", None))

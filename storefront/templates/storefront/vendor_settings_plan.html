@@ -1,0 +1,50 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-section-title">Plan</div>
+        <div class="va-help">Your subscription and enabled services for this store.</div>
+      </div>
+      <div class="va-help">
+        Status: <span class="fw-semibold">{{ plan_status|default:"-" }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="va-panel p-3">
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Current plan</div>
+        <div class="va-help">Owner account plan controls access for this demo store.</div>
+        <div class="mt-3">
+          <div class="fw-bold fs-5">{{ plan_name|default:"Free" }}</div>
+          {% if plan_ends_on %}
+            <div class="va-help mt-1">Renews / expires on: {{ plan_ends_on }}</div>
+          {% endif %}
+        </div>
+        {% if can_access_billing %}
+          <div class="mt-3">
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'accounts:dashboard' %}">
+              <i class="bi bi-speedometer2 me-1"></i>Open billing dashboard
+            </a>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <div class="va-section-title mb-2">Enabled services</div>
+        <div class="va-help">These are feature flags synced by admin.</div>
+        <div class="mt-2 d-flex flex-wrap gap-2">
+          {% for f in enabled_features %}
+            <span class="badge text-bg-light border">{{ f }}</span>
+          {% empty %}
+            <span class="va-help">No feature flags found.</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 
 
 class GroupPlanPermissionsConfig(AppConfig):
@@ -7,4 +8,7 @@ class GroupPlanPermissionsConfig(AppConfig):
     verbose_name = "Addons Group Plan Permissions"
 
     def ready(self):
+        if getattr(settings, "LIGHTWEIGHT_DEPLOYMENT", False):
+            return
+
         from . import signals  # noqa: F401

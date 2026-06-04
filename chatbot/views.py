@@ -12,7 +12,7 @@ import json
 try:
     import openai
     from django.conf import settings
-    openai.api_key = settings.OPENAI_API_KEY
+    openai.api_key = getattr(settings, 'OPENAI_API_KEY', None)
 except ImportError:
     openai = None
 

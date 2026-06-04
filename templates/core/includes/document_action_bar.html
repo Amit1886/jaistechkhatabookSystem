@@ -1,6 +1,22 @@
-<div class="doc-action-bar" data-doc-action-bar>
+<div
+  class="doc-action-bar"
+  data-doc-action-bar
+  {% if doc_title %}data-doc-title="{{ doc_title }}"{% endif %}
+  {% if doc_share_text %}data-doc-share-text="{{ doc_share_text }}"{% endif %}
+  {% if doc_pdf_url %}data-doc-pdf-url="{{ doc_pdf_url }}"{% endif %}
+  {% if doc_pdf_inline_url %}data-doc-pdf-inline-url="{{ doc_pdf_inline_url }}"{% endif %}
+>
+  {% if receipt_reference_type and receipt_reference_id %}
+    <a class="doc-btn" href="{% url 'ledger:receipt' %}?reference_type={{ receipt_reference_type|urlencode }}&reference_id={{ receipt_reference_id }}{% if receipt_voucher_type %}&voucher_type={{ receipt_voucher_type|urlencode }}{% endif %}{% if receipt_kind %}&kind={{ receipt_kind|urlencode }}{% endif %}" target="_blank" rel="noopener">
+      <i class="bi bi-receipt"></i> Receipt
+    </a>
+    <a class="doc-btn" href="{% url 'ledger:receipt' %}?reference_type={{ receipt_reference_type|urlencode }}&reference_id={{ receipt_reference_id }}{% if receipt_voucher_type %}&voucher_type={{ receipt_voucher_type|urlencode }}{% endif %}{% if receipt_kind %}&kind={{ receipt_kind|urlencode }}{% endif %}&format=pdf" target="_blank" rel="noopener">
+      <i class="bi bi-filetype-pdf"></i> Receipt PDF
+    </a>
+  {% endif %}
   <button type="button" class="doc-btn" data-doc-act="print"><i class="bi bi-printer"></i> Print</button>
   <button type="button" class="doc-btn" data-doc-act="pdf"><i class="bi bi-filetype-pdf"></i> PDF</button>
+  <button type="button" class="doc-btn" data-doc-act="download"><i class="bi bi-download"></i> Download</button>
   <button type="button" class="doc-btn" data-doc-act="share"><i class="bi bi-share"></i> Share</button>
   <button type="button" class="doc-btn" data-doc-act="email"><i class="bi bi-envelope"></i> Email</button>
   <button type="button" class="doc-btn" data-doc-act="sms"><i class="bi bi-chat-dots"></i> SMS</button>
@@ -23,12 +39,53 @@
         if (!btn) return;
 
         const action = btn.getAttribute('data-doc-act');
+        const bar = btn.closest('[data-doc-action-bar]');
         const pageUrl = window.location.href;
-        const title = document.title || 'Document';
+        const title = (bar && bar.getAttribute('data-doc-title')) || document.title || 'Document';
+        const shareText = (bar && bar.getAttribute('data-doc-share-text')) || '';
+        const pdfUrlRaw = (bar && bar.getAttribute('data-doc-pdf-url')) || '';
+        const pdfInlineRaw = (bar && bar.getAttribute('data-doc-pdf-inline-url')) || '';
 
-        if (action === 'print' || action === 'pdf') {
+        const pdfUrl = pdfUrlRaw ? new URL(pdfUrlRaw, window.location.origin).href : '';
+        const pdfInlineUrl = (pdfInlineRaw || pdfUrlRaw) ? new URL((pdfInlineRaw || pdfUrlRaw), window.location.origin).href : '';
+
+        function buildShareBody() {
+          if (shareText) return shareText;
+          const parts = [title, pageUrl];
+          if (pdfInlineUrl) parts.push('PDF: ' + pdfInlineUrl);
+          return parts.join('\n');
+        }
+
+        if (action === 'print') {
           window.print();
-          notify(action === 'pdf' ? 'Print dialog opened for PDF save.' : 'Print dialog opened.', 'success');
+          notify('Print dialog opened.', 'success');
+          return;
+        }
+
+        if (action === 'pdf') {
+          if (pdfInlineUrl) {
+            window.open(pdfInlineUrl, '_blank', 'noopener');
+            notify('PDF opened.', 'success');
+            return;
+          }
+          window.print();
+          notify('Print dialog opened for PDF save.', 'success');
+          return;
+        }
+
+        if (action === 'download') {
+          if (pdfUrl) {
+            window.open(pdfUrl, '_blank', 'noopener');
+            notify('Download started.', 'success');
+            return;
+          }
+          if (pdfInlineUrl) {
+            window.open(pdfInlineUrl, '_blank', 'noopener');
+            notify('PDF opened.', 'success');
+            return;
+          }
+          window.print();
+          notify('Print dialog opened.', 'success');
           return;
         }
 
@@ -43,7 +100,7 @@
         }
 
         if (action === 'wa') {
-          window.open('https://wa.me/?text=' + encodeURIComponent(title + ' - ' + pageUrl), '_blank');
+          window.open('https://wa.me/?text=' + encodeURIComponent(buildShareBody()), '_blank', 'noopener');
           return;
         }
 
@@ -56,7 +113,7 @@
         if (action === 'share') {
           if (navigator.share) {
             try {
-              await navigator.share({ title: title, url: pageUrl });
+              await navigator.share({ title: title, text: buildShareBody(), url: pageUrl });
             } catch (err) {
               // ignored
             }
@@ -65,8 +122,9 @@
 
           if (navigator.clipboard && navigator.clipboard.writeText) {
             try {
-              await navigator.clipboard.writeText(pageUrl);
-              notify('Link copied to clipboard.', 'success');
+              const body = buildShareBody();
+              await navigator.clipboard.writeText(body);
+              notify('Copied to clipboard.', 'success');
             } catch (err) {
               notify('Unable to copy link.', 'error');
             }

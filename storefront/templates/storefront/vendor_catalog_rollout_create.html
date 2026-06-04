@@ -1,0 +1,69 @@
+{% extends "storefront/vendor_admin_shell.html" %}
+
+{% block vendor_content %}
+  <div class="va-panel p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="va-help">Rollouts</div>
+        <div class="va-section-title">New rollout</div>
+        <div class="va-help mt-1">Schedule a catalog to go live at a specific time.</div>
+      </div>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'vendor-catalog-rollouts' vendor.subdomain %}">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+    </div>
+  </div>
+
+  <form method="post" class="va-panel p-3">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-12 col-lg-8">
+        <label class="form-label va-form-label">Title</label>
+        <input class="form-control" name="title" maxlength="255" placeholder="New price rollout" required>
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Catalog</label>
+        <select class="form-select" name="catalog_id" required>
+          <option value="">-- Select catalog --</option>
+          {% for c in catalogs %}
+            <option value="{{ c.id }}">{{ c.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <label class="form-label va-form-label">Markets (comma separated)</label>
+        <input class="form-control" name="markets" placeholder="India, UAE">
+        <div class="va-help mt-1">Phase A: markets are informational only.</div>
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Starts at</label>
+        <input class="form-control" name="starts_at" placeholder="YYYY-MM-DD HH:MM" required>
+      </div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label va-form-label">Ends at (optional)</label>
+        <input class="form-control" name="ends_at" placeholder="YYYY-MM-DD HH:MM">
+      </div>
+
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Revert on end</label>
+        <select class="form-select" name="revert_on_end">
+          <option value="1" selected>Yes</option>
+          <option value="0">No</option>
+        </select>
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label va-form-label">Status</label>
+        <select class="form-select" name="status">
+          <option value="scheduled" selected>Scheduled</option>
+          <option value="draft">Draft</option>
+        </select>
+      </div>
+
+      <div class="col-12 d-flex justify-content-end gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Create</button>
+      </div>
+    </div>
+  </form>
+{% endblock %}
+

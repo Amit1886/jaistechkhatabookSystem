@@ -1,27 +1,52 @@
-<!-- sidebar.html -->
-{% load feature_tags %}
+﻿<!-- sidebar.html -->
+{% load static feature_tags %}
 
 <div id="sidebar" class="sidebar sidebar-style-2">
-    <div class="logo-header">
-        <button class="btn-toggle" id="togglePin"></button>
-        <div class="logo-text">
-            {{ company.company_name|default:"JaisTech" }}
+    <div class="logo-header" style="display:flex;align-items:center;gap:10px;">
+        <button class="btn-toggle" id="togglePin" type="button" aria-label="Toggle sidebar" aria-expanded="true" title="Toggle sidebar">
+            <i class="bi bi-layout-sidebar-inset"></i>
+        </button>
+        <img src="{% static 'img/billentra-logo.png' %}" alt="Billentra" style="height:28px;width:auto;object-fit:contain;flex:0 0 auto;">
+        <div class="logo-text" style="font-weight:700;letter-spacing:.02em;">
+            Billentra
         </div>
     </div>
 
     <ul class="menu">
         <li>
-            <a href="{% url 'accounts:dashboard' %}">
+            <a href="{% url 'accounts:role_dashboard' %}">
                 <span class="icon"></span>
                 <span class="label">Dashboard</span>
             </a>
         </li>
+        <li>
+            <a href="{% url 'selfcheckout:kiosk' %}">
+                <span class="icon"></span>
+                <span class="label">Self Checkout</span>
+            </a>
+        </li>
+        {% if switch_vendor_dashboard_url %}
+        <li>
+            <a href="{{ switch_vendor_dashboard_url }}">
+                <span class="icon"></span>
+                <span class="label">E-commerce (Vendor)</span>
+            </a>
+        </li>
+        {% endif %}
         <li>
             <a href="{% url 'billing:billing_history' %}">
                 <span class="icon"></span>
                 <span class="label">Billing History</span>
             </a>
         </li>
+        {% if request.user.is_staff or request.user.is_superuser %}
+        <li>
+            <a href="{% url 'auto_discount:settings_page' %}">
+                <span class="icon"></span>
+                <span class="label">Auto Discount</span>
+            </a>
+        </li>
+        {% endif %}
 
         {% feature_allowed 'commerce.suppliers' as parties_allowed %}
         <li>
@@ -38,6 +63,124 @@
             {% endif %}
         </li>
 
+        {% feature_allowed 'commerce.suppliers' as customers_allowed %}
+        <li>
+            {% if customers_allowed %}
+            <a href="{% url 'khataapp:party_list' %}?type=customer">
+                <span class="icon"></span>
+                <span class="label">Customers</span>
+            </a>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Customers</span>
+            </a>
+            {% endif %}
+        </li>
+
+        {% if request.user.is_staff or request.user.is_superuser %}
+        <li>
+            <a href="{% url 'portal:manage_customers' %}">
+                <span class="icon"></span>
+                <span class="label">Customer Portal</span>
+            </a>
+        </li>
+        {% endif %}
+
+        {% feature_allowed 'commerce.suppliers' as suppliers_allowed %}
+        {% feature_allowed 'portal.supplier' as supp_portal_allowed %}
+        {% feature_allowed 'procurement.supplier_compare' as supplier_compare_allowed %}
+        <li class="sidebar-item has-submenu">
+            {% if suppliers_allowed or supp_portal_allowed or supplier_compare_allowed %}
+            <a href="#" class="submenu-toggle" role="button" aria-haspopup="true" aria-expanded="false">
+                <span class="icon"></span>
+                <span class="label">Suppliers</span>
+                <span class="arrow">-</span>
+            </a>
+            <ul class="submenu">
+                {% if suppliers_allowed %}
+                <li><a href="{% url 'khataapp:party_list' %}?type=supplier">Supplier List</a></li>
+                {% else %}
+                <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Supplier List</a></li>
+                {% endif %}
+
+                {% if supp_portal_allowed %}
+                <li><a href="{% url 'portal:manage_suppliers' %}">Supplier Portal</a></li>
+                {% else %}
+                <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Supplier Portal</a></li>
+                {% endif %}
+
+                {% if supplier_compare_allowed %}
+                <li><a href="{% url 'procurement:supplier_price_comparison' %}">Supplier Price Comparison</a></li>
+                <li><a href="{% url 'procurement:supplier_product_mapping' %}">Supplier Product Mapping</a></li>
+                {% else %}
+                <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Supplier Price Comparison</a></li>
+                <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Supplier Product Mapping</a></li>
+                {% endif %}
+            </ul>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="submenu-toggle locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Suppliers</span>
+                <span class="arrow">-</span>
+            </a>
+            {% endif %}
+        </li>
+
+        {% feature_allowed 'portal.customer' as cust_portal_allowed %}
+        <li>
+            {% if cust_portal_allowed %}
+            <a href="{% url 'portal:manage_customers' %}">
+                <span class="icon"></span>
+                <span class="label">Customer Portal</span>
+            </a>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Customer Portal</span>
+            </a>
+            {% endif %}
+        </li>
+
+        {% feature_allowed 'khata.credit_score' as khata_score_allowed %}
+        {% feature_allowed 'khata.reminders' as khata_reminders_allowed %}
+        <li class="sidebar-item has-submenu">
+            {% if khata_score_allowed or khata_reminders_allowed %}
+            <a href="#" class="submenu-toggle" role="button" aria-haspopup="true" aria-expanded="false">
+                <span class="icon"></span>
+                <span class="label">Khata Control</span>
+                <span class="arrow">-</span>
+            </a>
+            <ul class="submenu">
+                {% if khata_score_allowed %}
+                <li><a href="{% url 'smart_khata:credit_score_dashboard' %}">Credit Scores</a></li>
+                <li><a href="{% url 'smart_khata:report_credit_ranking' %}">Credit Ranking Report</a></li>
+                <li><a href="{% url 'smart_khata:report_late_payments' %}">Late Payment Report</a></li>
+                <li><a href="{% url 'smart_khata:report_high_risk_customers' %}">High Risk Customers</a></li>
+                {% else %}
+                <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Credit Scores</a></li>
+                {% endif %}
+
+                {% if khata_reminders_allowed %}
+                <li><a href="{% url 'smart_khata:khata_reminder_settings' %}">Reminder Settings</a></li>
+                <li><a href="{% url 'smart_khata:reminder_logs' %}">Reminder Logs</a></li>
+                <li><a href="{% url 'smart_khata:report_reminder_activity' %}">Reminder Activity</a></li>
+                {% else %}
+                <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Reminder Settings</a></li>
+                <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Reminder Logs</a></li>
+                {% endif %}
+            </ul>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="submenu-toggle locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Khata Control</span>
+                <span class="arrow">-</span>
+            </a>
+            {% endif %}
+        </li>
+
+
+
         {% feature_allowed 'billing.invoices' as transactions_allowed %}
         <li>
             {% if transactions_allowed %}
@@ -49,6 +192,77 @@
             <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
                 <span class="icon">'</span>
                 <span class="label">Transactions</span>
+            </a>
+            {% endif %}
+        </li>
+
+        {% feature_allowed 'billing.invoices' as invoices_allowed %}
+        <li>
+            {% if invoices_allowed %}
+            <a href="{% url 'commerce:invoice_list' %}">
+                <span class="icon"></span>
+                <span class="label">Invoice List</span>
+            </a>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Invoice List</span>
+            </a>
+            {% endif %}
+        </li>
+
+        {% feature_allowed 'billing.credit_notes' as credit_notes_allowed %}
+        <li>
+            {% if credit_notes_allowed %}
+            <a href="{% url 'ledger:credit_note_list' %}">
+                <span class="icon"></span>
+                <span class="label">Credit Notes</span>
+            </a>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Credit Notes</span>
+            </a>
+            {% endif %}
+        </li>
+
+        {% feature_allowed 'billing.debit_notes' as debit_notes_allowed %}
+        <li>
+            {% if debit_notes_allowed %}
+            <a href="{% url 'ledger:debit_note_list' %}">
+                <span class="icon"></span>
+                <span class="label">Debit Notes</span>
+            </a>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Debit Notes</span>
+            </a>
+            {% endif %}
+        </li>
+        <li>
+            {% if invoices_allowed %}
+            <a href="{% url 'commerce:voucher_list' %}">
+                <span class="icon"></span>
+                <span class="label">Voucher List</span>
+            </a>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Voucher List</span>
+            </a>
+            {% endif %}
+        </li>
+        <li>
+            {% if invoices_allowed %}
+            <a href="{% url 'commerce:payment_list' %}">
+                <span class="icon"></span>
+                <span class="label">Payments</span>
+            </a>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Payments</span>
             </a>
             {% endif %}
         </li>
@@ -67,11 +281,26 @@
             </a>
             {% endif %}
         </li>
+        <li>
+            {% if products_allowed %}
+            <a href="{% url 'commerce:add_category' %}">
+                <span class="icon"></span>
+                <span class="label">Categories</span>
+            </a>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Categories</span>
+            </a>
+            {% endif %}
+        </li>
+
+
 
         {% feature_allowed 'commerce.orders' as orders_allowed %}
         <li class="sidebar-item has-submenu">
             {% if orders_allowed %}
-            <a href="javascript:void(0)" class="submenu-toggle">
+            <a href="#" class="submenu-toggle" role="button" aria-haspopup="true" aria-expanded="false">
                 <span class="icon"></span>
                 <span class="label">Order List</span>
                 <span class="arrow">-</span>
@@ -98,6 +327,36 @@
             </a>
             {% endif %}
         </li>
+
+        <!-- Quotations -->
+        <li class="sidebar-item has-submenu">
+            {% if orders_allowed %}
+            <a href="#" class="submenu-toggle" role="button" aria-haspopup="true" aria-expanded="false">
+                <span class="icon"></span>
+                <span class="label">Quotations</span>
+                <span class="arrow">-</span>
+            </a>
+
+            <ul class="submenu">
+                <li>
+                    <a href="{% url 'commerce:quotation_list' %}">
+                         Quotation List
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'commerce:quotation_create' %}">
+                         Add Quotation
+                    </a>
+                </li>
+            </ul>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="submenu-toggle locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Quotations</span>
+                <span class="arrow">-</span>
+            </a>
+            {% endif %}
+        </li>
         {% feature_allowed 'commerce.inventory' as warehouse_allowed %}
         <li>
             {% if warehouse_allowed %}
@@ -109,6 +368,36 @@
             <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
                 <span class="icon"></span>
                 <span class="label">Warehouse</span>
+            </a>
+            {% endif %}
+        </li>
+
+        {% feature_allowed 'inventory.stock_transfer' as stock_transfer_allowed %}
+        <li>
+            {% if stock_transfer_allowed %}
+            <a href="{% url 'ledger:stock_transfer_list' %}">
+                <span class="icon"></span>
+                <span class="label">Stock Transfer</span>
+            </a>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Stock Transfer</span>
+            </a>
+            {% endif %}
+        </li>
+
+        {% feature_allowed 'accounting.journal_vouchers' as jv_allowed %}
+        <li>
+            {% if jv_allowed %}
+            <a href="{% url 'ledger:journal_voucher_list' %}">
+                <span class="icon"></span>
+                <span class="label">Journal Voucher</span>
+            </a>
+            {% else %}
+            <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+                <span class="icon"></span>
+                <span class="label">Journal Voucher</span>
             </a>
             {% endif %}
         </li>
@@ -132,85 +421,387 @@
             {% endif %}
         {% endif %}
 
-        {% if request.user.is_staff or request.user.is_superuser %}
-            {% feature_allowed 'field.agents' as field_agents_allowed %}
-            {% if field_agents_allowed %}
-            <li>
-                <a href="{% url 'khataapp:field_agent_list' %}">
-                    <span class="icon">'</span>
-                    <span class="label">Field Agents</span>
-                </a>
-            </li>
-            {% endif %}
+        {% feature_allowed 'field.agents' as field_agents_allowed %}
+        {% if field_agents_allowed or request.user.is_staff or request.user.is_superuser or request.user.field_agent_profile %}
+        <li>
+            <a href="{% url 'khataapp:agents_home' %}">
+                <span class="icon">'</span>
+                <span class="label">Field Agents</span>
+            </a>
+        </li>
         {% endif %}
 
         <!-- Reports -->
         {% feature_allowed 'reports.advanced' as reports_allowed %}
         <li class="has-submenu">
-            {% if reports_allowed %}
-            <a href="javascript:void(0)" class="submenu-toggle">
+            <a href="#" class="submenu-toggle" role="button" aria-haspopup="true" aria-expanded="false">
                 <span class="icon"></span>
                 <span class="label">Reports</span>
                 <span class="arrow">-</span>
             </a>
             <ul class="submenu">
                 <li class="sidebar-item has-submenu">
-                <a href="javascript:void(0)" class="submenu-toggle">
+                    <a href="#" class="submenu-toggle" role="button" aria-haspopup="true" aria-expanded="false">
+                        <span class="icon"></span>
+                        <span class="label">Transactions</span>
+                        <span class="arrow">-</span>
+                    </a>
+                    <ul class="submenu">
+                        {% if reports_allowed %}
+                            <li><a href="{% url 'reports:all_transactions' %}">All Transactions</a></li>
+                            <li><a href="{% url 'reports:cash_book' %}">Cash Book</a></li>
+                            <li><a href="{% url 'reports:voucher_report' %}">Voucher Report</a></li>
+                        {% else %}
+                            <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">All Transactions</a></li>
+                            <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Cash Book</a></li>
+                            <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Voucher Report</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+
+                <li class="submenu-title">Sales & Purchase</li>
+                {% if reports_allowed %}
+                    <li><a href="{% url 'reports:sales_report' %}">Sales Report</a></li>
+                    <li><a href="{% url 'reports:purchase_report' %}">Purchase Report</a></li>
+                    <li><a href="{% url 'reports:quotation_report' %}">Quotation Report</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Sales Report</a></li>
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Purchase Report</a></li>
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Quotation Report</a></li>
+                {% endif %}
+
+                <li class="submenu-title">Inventory</li>
+                {% if reports_allowed %}
+                    <li><a href="{% url 'reports:stock_summary' %}">Stock Summary</a></li>
+                    <li><a href="{% url 'reports:low_stock' %}">Low Stock</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Stock Summary</a></li>
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Low Stock</a></li>
+                {% endif %}
+
+                <li class="submenu-title">Accounts</li>
+                {% if reports_allowed %}
+                    <li><a href="{% url 'reports:party_ledger' %}">Party Ledger</a></li>
+                    <li><a href="{% url 'reports:outstanding' %}">Outstanding</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Party Ledger</a></li>
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Outstanding</a></li>
+                {% endif %}
+
+                <li class="submenu-title">Financial</li>
+                {% if reports_allowed %}
+                    <li><a href="{% url 'reports:profit_loss' %}">Profit & Loss</a></li>
+                    <li><a href="{% url 'reports:day_book' %}">Day Book</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Profit & Loss</a></li>
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Day Book</a></li>
+                {% endif %}
+
+                <li class="submenu-title">Advanced</li>
+                {% if reports_allowed %}
+                    <li><a href="{% url 'reports:erp_trial_balance' %}">Trial Balance</a></li>
+                    <li><a href="{% url 'reports:audit_trail' %}">Audit Trail</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Trial Balance</a></li>
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Audit Trail</a></li>
+                {% endif %}
+
+                {% feature_allowed 'reports.account_summary' as account_summary_allowed %}
+                {% if account_summary_allowed %}
+                  <li><a href="{% url 'reports:account_summary' %}">Account Summary</a></li>
+                {% else %}
+                  <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Account Summary</a></li>
+                {% endif %}
+
+                {% feature_allowed 'reports.interest_calculation' as interest_allowed %}
+                {% if interest_allowed %}
+                  <li><a href="{% url 'reports:interest_calculation' %}">Interest Calculation</a></li>
+                {% else %}
+                  <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Interest Calculation</a></li>
+                {% endif %}
+
+                {% feature_allowed 'reports.inventory_books' as inventory_books_allowed %}
+                {% if inventory_books_allowed %}
+                  <li><a href="{% url 'reports:inventory_books' %}">Inventory Books</a></li>
+                {% else %}
+                  <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Inventory Books</a></li>
+                {% endif %}
+
+                {% feature_allowed 'reports.inventory_summary' as inventory_summary_allowed %}
+                {% if inventory_summary_allowed %}
+                  <li><a href="{% url 'reports:inventory_summary' %}">Inventory Summary</a></li>
+                {% else %}
+                  <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Inventory Summary</a></li>
+                {% endif %}
+
+                {% feature_allowed 'reports.gst_report' as gst_report_allowed %}
+                {% if gst_report_allowed %}
+                  <li><a href="{% url 'reports:gst_report' %}">GST Report</a></li>
+                {% else %}
+                  <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">GST Report</a></li>
+                {% endif %}
+
+                {% feature_allowed 'reports.mis_report' as mis_report_allowed %}
+                {% if mis_report_allowed %}
+                  <li><a href="{% url 'reports:mis_report' %}">MIS Report</a></li>
+                {% else %}
+                  <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">MIS Report</a></li>
+                {% endif %}
+
+                {% feature_allowed 'system.checklist' as checklist_allowed %}
+                {% if checklist_allowed %}
+                  <li><a href="{% url 'reports:checklist_list' %}">Checklist System</a></li>
+                {% else %}
+                  <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Checklist System</a></li>
+                {% endif %}
+
+                {% feature_allowed 'system.query' as query_allowed %}
+                {% if query_allowed %}
+                  <li><a href="{% url 'reports:query_list' %}">Query System</a></li>
+                {% else %}
+                  <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Query System</a></li>
+                {% endif %}
+
+                <li class="submenu-title">Smart BI</li>
+                {% if reports_allowed %}
+                  <li><a href="{% url 'smart_bi:festival_sales_report' %}">Festival Sales Report</a></li>
+                  <li><a href="{% url 'smart_bi:duplicate_invoice_report' %}">Duplicate Invoice Report</a></li>
+                  <li><a href="{% url 'smart_bi:business_health_dashboard' %}">Business Health Report</a></li>
+                {% else %}
+                  <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Festival Sales Report</a></li>
+                  <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Duplicate Invoice Report</a></li>
+                  <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Business Health Report</a></li>
+                {% endif %}
+            </ul>
+        </li>
+
+        <!-- Analytics -->
+        <li class="has-submenu">
+            <a href="#" class="submenu-toggle" role="button" aria-haspopup="true" aria-expanded="false">
                 <span class="icon"></span>
-                <span class="label">Transactions</span>
+                <span class="label">Analytics</span>
                 <span class="arrow">-</span>
             </a>
             <ul class="submenu">
-                <li><a href="{% url 'reports:all_transactions' %}">All Transactions</a></li>
+                <li><a href="{% url 'smart_bi:business_health_dashboard' %}">Business Health Meter</a></li>
+                <li><a href="{% url 'smart_bi:festival_campaign_list' %}">Festival Campaign</a></li>
+                <li><a href="{% url 'smart_bi:duplicate_invoice_settings' %}">Duplicate Invoice Settings</a></li>
+                <li><a href="{% url 'smart_bi:festival_sales_report' %}">Festival Sales Report</a></li>
+                <li><a href="{% url 'smart_bi:duplicate_invoice_report' %}">Duplicate Invoice Report</a></li>
             </ul>
-                <li><a href="{% url 'reports:cash_book' %}">Cash Book</a></li>
-                <li><a href="#">Voucher Report</a></li>
+        </li>
 
-                <li class="submenu-title">Sales & Purchase</li>
-                <li><a href="{% url 'reports:sales_report' %}">Sales Report</a></li>
-                <li><a href="{% url 'reports:purchase_report' %}">Purchase Report</a></li>
-
-                <li class="submenu-title">Inventory</li>
-                <li><a href="{% url 'reports:stock_summary' %}">Stock Summary</a></li>
-                <li><a href="#">Low Stock</a></li>
-
-                <li class="submenu-title">Accounts</li>
-                <li><a href="{% url 'reports:party_ledger' %}">Party Ledger</a></li>
-                <li><a href="#">Outstanding</a></li>
-
-                <li class="submenu-title">Financial</li>
-                <li><a href="{% url 'reports:profit_loss' %}">Profit & Loss</a></li>
-                <li><a href="{% url 'reports:day_book' %}">Day Book</a></li>
-            </ul>
-            {% else %}
-            <a href="{% url 'billing:upgrade_plan' %}" class="submenu-toggle locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+        <!-- Growth Engine -->
+        <li class="has-submenu">
+            <a href="#" class="submenu-toggle" role="button" aria-haspopup="true" aria-expanded="false">
                 <span class="icon"></span>
-                <span class="label">Reports</span>
+                <span class="label">Growth Engine</span>
                 <span class="arrow">-</span>
             </a>
-            {% endif %}
+            <ul class="submenu">
+                <li><a href="{% url 'central_engine:dashboard' %}">User Growth Dashboard</a></li>
+
+                {% feature_allowed 'engine.rewards' as engine_rewards_allowed %}
+                {% if engine_rewards_allowed %}
+                    <li><a href="{% url 'central_engine:rewards_wallet' %}">Rewards Wallet</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Rewards Wallet</a></li>
+                {% endif %}
+
+                {% feature_allowed 'engine.referrals' as engine_referrals_allowed %}
+                {% if engine_referrals_allowed %}
+                    <li><a href="{% url 'central_engine:referral_center' %}">Referral Center</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Referral Center</a></li>
+                {% endif %}
+
+                {% feature_allowed 'engine.loyalty' as engine_loyalty_allowed %}
+                {% if engine_loyalty_allowed %}
+                    <li><a href="{% url 'central_engine:loyalty_offers' %}">Loyalty & Offers</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Loyalty & Offers</a></li>
+                {% endif %}
+
+                {% feature_allowed 'engine.payment_links' as engine_pay_allowed %}
+                {% if engine_pay_allowed %}
+                    <li><a href="{% url 'central_engine:payment_earnings' %}">Payment Earnings</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Payment Earnings</a></li>
+                {% endif %}
+
+                {% feature_allowed 'engine.daily_tasks' as engine_tasks_allowed %}
+                {% if engine_tasks_allowed %}
+                    <li><a href="{% url 'central_engine:task_center' %}">Task Center</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Task Center</a></li>
+                {% endif %}
+
+                {% feature_allowed 'engine.analytics' as engine_analytics_allowed %}
+                {% if engine_analytics_allowed %}
+                    <li><a href="{% url 'central_engine:analytics_snapshot' %}">Analytics Snapshot</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Analytics Snapshot</a></li>
+                {% endif %}
+
+                <li><a href="{% url 'central_engine:feature_unlock_panel' %}">Feature Unlock Panel</a></li>
+                <li><a href="{% url 'central_engine:profit_preview' %}">Profit Preview</a></li>
+
+                {% if request.user.is_staff or request.user.is_superuser %}
+                    <li class="submenu-title">Admin</li>
+                    <li><a href="{% url 'central_engine:admin_control_center' %}">Control Center</a></li>
+                    <li><a href="{% url 'central_engine:admin_logs' %}">Logs & Audit</a></li>
+                {% endif %}
+            </ul>
+        </li>
+
+        <!-- AI Tools -->
+        <li class="has-submenu">
+            <a href="#" class="submenu-toggle" role="button" aria-haspopup="true" aria-expanded="false">
+                <span class="icon"></span>
+                <span class="label">AI Tools</span>
+                <span class="arrow">-</span>
+            </a>
+            <ul class="submenu">
+                {% feature_allowed 'ai.insights' as ai_insights_allowed %}
+                {% if ai_insights_allowed %}
+                    <li><a href="{% url 'ai_insights:dashboard' %}">AI Insights</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">AI Insights</a></li>
+                {% endif %}
+
+                {% feature_allowed 'ai.ocr' as ai_ocr_allowed %}
+                {% if ai_ocr_allowed %}
+                    <li><a href="{% url 'ai_ocr:dashboard' %}">OCR Invoice Entry</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">OCR Invoice Entry</a></li>
+                {% endif %}
+
+                {% feature_allowed 'ai.voice' as ai_voice_allowed %}
+                {% if ai_voice_allowed %}
+                    <li><a href="{% url 'voice:dashboard' %}">Voice Accounting</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Voice Accounting</a></li>
+                {% endif %}
+
+                {% feature_allowed 'ai.whatsapp' as ai_whatsapp_allowed %}
+                {% if ai_whatsapp_allowed %}
+                    <li><a href="{% url 'whatsapp:dashboard' %}">WhatsApp Accounting</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">WhatsApp Accounting</a></li>
+                {% endif %}
+
+                {% feature_allowed 'ai.smart_alerts' as ai_alerts_allowed %}
+                {% if ai_alerts_allowed %}
+                    <li><a href="{% url 'validation:dashboard' %}">Smart Alerts</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Smart Alerts</a></li>
+                {% endif %}
+            </ul>
+        </li>
+
+        <!-- Automation -->
+        <li class="has-submenu">
+            <a href="#" class="submenu-toggle" role="button" aria-haspopup="true" aria-expanded="false">
+                <span class="icon"></span>
+                <span class="label">Automation</span>
+                <span class="arrow">-</span>
+            </a>
+            <ul class="submenu">
+                {% feature_allowed 'automation.bank_import' as bank_import_allowed %}
+                {% if bank_import_allowed %}
+                    <li><a href="{% url 'bank_import:import' %}">Import Bank Statement</a></li>
+                {% else %}
+                    <li><a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">Import Bank Statement</a></li>
+                {% endif %}
+            </ul>
         </li>
 {% if request.user.is_authenticated %}
     {% feature_allowed 'settings.advanced' as settings_allowed %}
     <li>
         {% if settings_allowed %}
-        <a href="{% url 'core_settings:settings_center' %}" class="sidebar-link">
-             Settings
+        <a href="{% url 'core_settings:settings_center' %}">
+            <span class="icon"></span>
+            <span class="label">Settings</span>
         </a>
         {% else %}
-        <a href="{% url 'billing:upgrade_plan' %}" class="sidebar-link locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
-             Settings
+        <a href="{% url 'billing:upgrade_plan' %}" class="locked-feature" data-upgrade-url="{% url 'billing:upgrade_plan' %}" title="Upgrade to unlock">
+            <span class="icon"></span>
+            <span class="label">Settings</span>
         </a>
         {% endif %}
+        {% comment %}
     <a href="{% url 'core_settings:dashboard' %}" class="sidebar-link">
-        ⚙️ Settings
+        âš™ï¸ Settings
     </a>
+        {% endcomment %}
     </li>
 {% endif %}
 
     </ul>
 </div>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const iconRules = [
+        ["dashboard", "bi-speedometer2"],
+        ["self checkout", "bi-upc-scan"],
+        ["e-commerce", "bi-shop-window"],
+        ["billing history", "bi-clock-history"],
+        ["auto discount", "bi-percent"],
+        ["parties", "bi-people"],
+        ["customers", "bi-person-lines-fill"],
+        ["customer portal", "bi-person-workspace"],
+        ["suppliers", "bi-truck"],
+        ["khata control", "bi-journal-check"],
+        ["transactions", "bi-arrow-left-right"],
+        ["invoice", "bi-receipt"],
+        ["credit notes", "bi-file-earmark-minus"],
+        ["debit notes", "bi-file-earmark-plus"],
+        ["voucher", "bi-journal-text"],
+        ["payments", "bi-cash-coin"],
+        ["orders", "bi-bag-check"],
+        ["products", "bi-box-seam"],
+        ["stock", "bi-boxes"],
+        ["warehouse", "bi-building"],
+        ["reports", "bi-bar-chart-line"],
+        ["analytics", "bi-graph-up-arrow"],
+        ["whatsapp", "bi-whatsapp"],
+        ["ai", "bi-cpu"],
+        ["ocr", "bi-file-earmark-image"],
+        ["voice", "bi-mic"],
+        ["automation", "bi-magic"],
+        ["bank", "bi-bank"],
+        ["settings", "bi-gear"],
+        ["portal", "bi-window-sidebar"],
+        ["supplier", "bi-truck"],
+        ["customer", "bi-person"],
+        ["reminder", "bi-bell"],
+        ["credit score", "bi-clipboard-data"],
+        ["price", "bi-tags"],
+        ["import", "bi-upload"],
+    ];
 
+    function iconFor(text) {
+        const label = (text || "").trim().toLowerCase();
+        const match = iconRules.find(([key]) => label.includes(key));
+        return match ? match[1] : "bi-grid";
+    }
 
+    document.querySelectorAll("#sidebar .menu > li > a").forEach(function (link) {
+        const icon = link.querySelector(".icon");
+        const label = link.querySelector(".label");
+        if (!icon || !label) return;
+        if (!icon.querySelector("i")) {
+            icon.innerHTML = '<i class="bi ' + iconFor(label.textContent) + '" aria-hidden="true"></i>';
+        }
+    });
 
+    document.querySelectorAll("#sidebar .submenu a").forEach(function (link) {
+        if (link.querySelector(".submenu-icon")) return;
+        const span = document.createElement("span");
+        span.className = "submenu-icon";
+        span.innerHTML = '<i class="bi ' + iconFor(link.textContent) + '" aria-hidden="true"></i>';
+        link.prepend(span);
+    });
+});
+</script>
