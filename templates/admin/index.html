@@ -1,47 +1,394 @@
-{% extends "admin/index.html" %}
+{% extends "admin/base_site.html" %}
+{% load quotation_stats %}
+{% load admin_cards %}
+{% load admin_metrics %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
 {% block content %}
-{{ block.super }}
-<div class="ai-admin-module">
-  <h2>AI Reorder Planner</h2>
-  <p>Live purchase recommendations, supplier grouping, and stock-out alerts.</p>
-  {% include "commerce/dashboard_ai_cards.html" %}
-  <div class="ai-admin-grid">
-    <div class="ai-admin-graph">
-      <h3>Budget Usage</h3>
-      <div class="ai-bar">
-        <div class="ai-bar-fill" id="ai-budget-fill"></div>
+{% admin_dashboard_cards as dash %}
+{% admin_dashboard_metrics 14 as m %}
+{% quotation_admin_stats as qstats %}
+
+<div class="be-admin-grid notus-scope">
+  <div class="be-admin-main">
+    <div class="be-live-strip">
+      <div>
+        <strong>Enterprise Realtime Dashboard</strong>
+        <span>Auth, permissions, modules, devices, and revenue synced from the central control layer.</span>
       </div>
-      <div class="ai-graph-meta" id="ai-budget-meta">Loading...</div>
+      <span class="be-live-status" data-be-realtime-status data-state="poll">Connecting</span>
     </div>
-    <div class="ai-admin-table">
-      <h3>Supplier-Wise PO Table</h3>
-      <div class="ai-table-wrap">
-        <table class="ai-table" id="ai-supplier-table">
-          <thead>
-            <tr>
-              <th>Supplier</th>
-              <th>Item</th>
-              <th>SKU</th>
-              <th>Qty</th>
-              <th>Unit Cost</th>
-              <th>Total Cost</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="6">Loading...</td></tr>
-          </tbody>
-        </table>
+
+    <div class="be-error-panel">
+      <div class="be-error-panel-head">
+        <div>
+          <strong>Error Notifications &amp; Q&amp;A Solutions</strong>
+          <span>{{ system_error_count|default:0 }} open issue{{ system_error_count|default:0|pluralize }} found by backend monitoring.</span>
+        </div>
+        <a href="{{ system_error_changelist_url }}" class="be-btn be-btn-ghost">View All Errors</a>
+      </div>
+      {% if latest_system_errors %}
+        <div class="be-error-list">
+          {% for error in latest_system_errors %}
+            <a class="be-error-item" href="{{ system_error_changelist_url }}{{ error.id }}/change/">
+              <div class="be-error-title">
+                <span class="be-error-severity">{{ error.severity }}</span>
+                <strong>{{ error.title }}</strong>
+              </div>
+              <div class="be-error-meta">{{ error.method|default:"-" }} {{ error.endpoint|default:"-" }}{% if error.status_code %} / {{ error.status_code }}{% endif %}</div>
+              <div class="be-error-qa"><b>Problem:</b> {{ error.problem|truncatechars:120 }}</div>
+              <div class="be-error-qa"><b>Solution:</b> {{ error.recommended_fix|truncatechars:140 }}</div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="be-error-empty">No open runtime errors. New API/backend exceptions will appear here with root cause and recommended fix.</div>
+      {% endif %}
+    </div>
+
+    <div class="be-admin-kpis">
+      <div class="be-kpi">
+        <div class="be-kpi-label">Total Quotations</div>
+        <div class="be-kpi-value">{{ qstats.total }}</div>
+      </div>
+      <div class="be-kpi">
+        <div class="be-kpi-label">Pending Approval</div>
+        <div class="be-kpi-value">{{ qstats.pending_approval }}</div>
+      </div>
+      <div class="be-kpi">
+        <div class="be-kpi-label">Converted</div>
+        <div class="be-kpi-value">{{ qstats.converted }}</div>
+      </div>
+      <div class="be-kpi">
+        <div class="be-kpi-label">Rejected</div>
+        <div class="be-kpi-value">{{ qstats.rejected }}</div>
+      </div>
+    </div>
+
+    <div class="notus-row">
+      <div class="notus-card">
+        <div class="notus-card-label">Users</div>
+        <div class="notus-card-value" data-be-live-kpi="total_users">{{ m.users_total }}</div>
+        <div class="notus-card-sub">Active: {{ m.users_active }}</div>
+      </div>
+      <div class="notus-card">
+        <div class="notus-card-label">Online Users</div>
+        <div class="notus-card-value" data-be-live-kpi="online_users">0</div>
+        <div class="notus-card-sub">Live device sessions</div>
+      </div>
+      <div class="notus-card">
+        <div class="notus-card-label">Store Orders</div>
+        <div class="notus-card-value" data-be-live-kpi="orders">{{ m.store_orders_total }}</div>
+        <div class="notus-card-sub">Last 14 days tracked</div>
+      </div>
+      <div class="notus-card">
+        <div class="notus-card-label">Revenue</div>
+        <div class="notus-card-value" data-be-live-kpi="revenue">&#8377;{{ m.store_revenue_total }}</div>
+        <div class="notus-card-sub">Accepted+ delivered</div>
+      </div>
+    </div>
+
+    <div class="notus-split">
+      <div class="notus-panel">
+        <div class="notus-panel-title">Orders Trend (14 days)</div>
+        <canvas id="beOrdersTrend" height="110"></canvas>
+      </div>
+      <div class="notus-panel">
+        <div class="notus-panel-title">Payments</div>
+        <canvas id="bePaymentsPie" height="110"></canvas>
+      </div>
+    </div>
+
+    <div class="be-admin-actions">
+      <a href="{% url 'commerce:quotation_create' %}" class="be-btn">Add Quotation</a>
+      <a href="{% url 'commerce:quotation_list' %}" class="be-btn be-btn-ghost">View Quotations</a>
+      <a href="{% url 'commerce:ai_reorder_plan' %}" class="be-btn be-btn-ghost">AI Planner</a>
+    </div>
+
+    <div class="be-apps">
+      {% for app in dash.apps %}
+      <div class="be-app-card">
+        <div class="be-app-title">
+          <a href="{{ app.app_url }}">{{ app.name }}</a>
+        </div>
+        <div class="be-app-models">
+          {% for m in app.models %}
+          <div class="be-model-row">
+            <div class="be-model-name">
+              {% if m.admin_url %}
+                <a href="{{ m.admin_url }}">{{ m.name }}</a>
+              {% else %}
+                {{ m.name }}
+              {% endif %}
+            </div>
+            <div class="be-model-meta">
+              {% if m.total != None %}<span class="be-badge">{{ m.total }}</span>{% endif %}
+              {% if m.status_field %}
+                <a class="be-pill" href="{{ m.active_url }}">Active: {{ m.active }}</a>
+                <a class="be-pill be-pill-muted" href="{{ m.inactive_url }}">Inactive: {{ m.inactive }}</a>
+              {% endif %}
+              {% if m.add_url %}
+                <a class="be-mini" href="{{ m.add_url }}">Add</a>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="ai-admin-module">
+      <h2>AI Reorder Planner</h2>
+      <p>Live purchase recommendations, supplier grouping, and stock-out alerts.</p>
+      {% include "commerce/dashboard_ai_cards.html" %}
+      <div class="ai-admin-grid">
+        <div class="ai-admin-graph">
+          <h3>Budget Usage</h3>
+          <div class="ai-bar">
+            <div class="ai-bar-fill" id="ai-budget-fill"></div>
+          </div>
+          <div class="ai-graph-meta" id="ai-budget-meta">Loading...</div>
+        </div>
+        <div class="ai-admin-table">
+          <h3>Supplier-Wise PO Table</h3>
+          <div class="ai-table-wrap">
+            <table class="ai-table" id="ai-supplier-table">
+              <thead>
+                <tr>
+                  <th>Supplier</th>
+                  <th>Item</th>
+                  <th>SKU</th>
+                  <th>Qty</th>
+                  <th>Unit Cost</th>
+                  <th>Total Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="6">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="ai-admin-actions">
+        <a href="{% url 'commerce:ai_reorder_plan' %}" class="ai-admin-btn">Open Planner</a>
+        <a href="{% url 'commerce:supplier_po' %}" class="ai-admin-btn ai-admin-btn-ghost">Supplier POs</a>
+        <button class="ai-admin-btn ai-admin-btn-ghost" id="ai-admin-generate">Auto-Generate PO</button>
+      </div>
+    </div>
+
+    <div class="notus-split" style="margin-top:16px;">
+      <div class="notus-panel">
+        <div class="notus-panel-title">Latest Store Orders</div>
+        <div class="notus-table">
+          {% for o in m.latest_orders %}
+            <div class="notus-tr">
+              <div class="notus-td">
+                <a href="/superadmin/storefront/storeorder/{{ o.id }}/change/" style="font-weight:800;color:#0f766e;text-decoration:none;">
+                  {{ o.order_number }}
+                </a>
+                <div class="notus-muted">{{ o.created_at|date:"M j, P" }}</div>
+              </div>
+              <div class="notus-td" style="text-align:right;">
+                <div style="font-weight:800;">₹{{ o.total_amount }}</div>
+                <div class="notus-muted">{{ o.status }} / {{ o.payment_status }}</div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="notus-muted">No orders yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="notus-panel">
+        <div class="notus-panel-title">Latest Users</div>
+        <div class="notus-table">
+          {% for u in m.latest_users %}
+            <div class="notus-tr">
+              <div class="notus-td">
+                <a href="/superadmin/accounts/user/{{ u.id }}/change/" style="font-weight:800;color:#0f766e;text-decoration:none;">
+                  {{ u.email|default:"(no email)" }}
+                </a>
+                <div class="notus-muted">{{ u.mobile|default:"" }}</div>
+              </div>
+              <div class="notus-td" style="text-align:right;">
+                {% if u.is_active %}
+                  <span class="be-pill">Active</span>
+                {% else %}
+                  <span class="be-pill be-pill-muted">Disabled</span>
+                {% endif %}
+              </div>
+            </div>
+          {% empty %}
+            <div class="notus-muted">No users yet.</div>
+          {% endfor %}
+        </div>
       </div>
     </div>
   </div>
-  <div class="ai-admin-actions">
-    <a href="{% url 'commerce:ai_reorder_plan' %}" class="ai-admin-btn">Open Planner</a>
-    <a href="{% url 'commerce:supplier_po' %}" class="ai-admin-btn ai-admin-btn-ghost">Supplier POs</a>
-    <button class="ai-admin-btn ai-admin-btn-ghost" id="ai-admin-generate">Auto-Generate PO</button>
+
+  <div class="be-admin-side">
+    <div class="be-side-card be-live-card">
+      <h3>Live Platform</h3>
+      <div class="be-live-mini-grid">
+        <div><span data-be-live-kpi="companies">0</span><small>Companies</small></div>
+        <div><span data-be-live-kpi="devices">0</span><small>Devices</small></div>
+        <div><span data-be-live-kpi="subscriptions">0</span><small>Subscriptions</small></div>
+        <div><span data-be-live-kpi="active_pos">0</span><small>POS</small></div>
+      </div>
+      <ul class="be-live-activity" data-be-live-activity>
+        <li><strong>Loading activity</strong><span>System</span><small>Now</small></li>
+      </ul>
+    </div>
+    <div class="be-side-card">
+      <h3>Recent Actions</h3>
+      {% load log %}
+      {% get_admin_log 14 as admin_log for_user user %}
+      {% if admin_log %}
+        <div class="be-actions">
+          {% for entry in admin_log %}
+            <div class="be-action">
+              <div class="be-action-title">
+                {% if entry.is_deletion or not entry.get_admin_url %}
+                  {{ entry.object_repr }}
+                {% else %}
+                  <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                {% endif %}
+              </div>
+              <div class="be-action-meta">{{ entry.action_time|date:"M j, Y, P" }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="be-muted">No recent actions.</div>
+      {% endif %}
+    </div>
   </div>
 </div>
 
 <style>
+.notus-scope .be-admin-kpis { display:none; } /* replace with Notus cards above */
+.be-live-strip { display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid #e5e7eb; border-radius:14px; background:#fff; padding:12px 14px; margin-bottom:14px; }
+.be-live-strip strong { display:block; color:#0f172a; font-size:16px; }
+.be-live-strip span { color:#64748b; font-size:12px; }
+.be-live-status { flex:0 0 auto; border:1px solid #bfdbfe; color:#1d4ed8 !important; background:#eff6ff; border-radius:999px; padding:5px 10px; font-weight:900; }
+.be-live-status[data-state="live"] { border-color:#86efac; color:#047857 !important; background:#ecfdf5; }
+.be-error-panel { border:1px solid #fecaca; border-radius:14px; background:#fff7f7; padding:14px; margin-bottom:14px; }
+.be-error-panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.be-error-panel-head strong { display:block; color:#7f1d1d; font-size:15px; }
+.be-error-panel-head span { color:#991b1b; font-size:12px; }
+.be-error-list { display:grid; gap:10px; }
+.be-error-item { display:block; border:1px solid #fee2e2; border-radius:12px; background:#fff; padding:10px; text-decoration:none; }
+.be-error-title { display:flex; align-items:center; gap:8px; color:#111827; }
+.be-error-severity { border-radius:999px; background:#fee2e2; color:#991b1b; padding:2px 8px; font-size:11px; font-weight:900; text-transform:uppercase; }
+.be-error-meta { color:#6b7280; font-size:12px; margin-top:5px; }
+.be-error-qa { color:#374151; font-size:12px; margin-top:5px; }
+.be-error-empty { border:1px dashed #fecaca; border-radius:12px; background:#fff; color:#7f1d1d; padding:10px; font-size:12px; }
+.notus-row { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; margin-bottom: 14px; }
+.notus-card { border: 1px solid #e5e7eb; border-radius: 14px; background:#fff; padding:14px; }
+.notus-card-label { font-size: 12px; color:#6b7280; font-weight:700; }
+.notus-card-value { margin-top:6px; font-size: 26px; font-weight: 900; color:#0f172a; }
+.notus-card-sub { margin-top:6px; font-size:12px; color:#6b7280; }
+.notus-split { display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.notus-panel { border: 1px solid #e5e7eb; border-radius: 14px; background:#fff; padding: 12px; }
+.notus-panel-title { font-weight: 900; color:#0f172a; margin-bottom: 10px; }
+.notus-table { display:flex; flex-direction:column; gap:10px; }
+.notus-tr { display:flex; justify-content:space-between; gap:12px; padding:10px; border:1px solid #f1f5f9; border-radius: 12px; background:#fafafa; }
+.notus-td { min-width: 0; }
+.notus-muted { font-size:12px; color:#6b7280; }
+@media (max-width: 1100px) {
+  .notus-row { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .notus-split { grid-template-columns: 1fr; }
+}
+
+.be-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 14px;
+  margin-top: 10px;
+}
+.be-admin-main { min-width: 0; }
+.be-admin-side { min-width: 0; }
+.be-admin-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.be-kpi {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+}
+.be-kpi-label { font-size: 12px; color: #6b7280; }
+.be-kpi-value { font-size: 22px; font-weight: 800; margin-top: 4px; }
+.be-admin-actions { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.be-btn {
+  background: #111827;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 12px;
+}
+.be-btn-ghost { background: #fff; color: #111827; border: 1px solid #e5e7eb; }
+.be-apps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.be-app-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px;
+}
+.be-app-title a { text-decoration: none; font-weight: 800; color: #111827; }
+.be-app-models { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.be-model-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.be-model-name a { text-decoration: none; color: #0f766e; font-weight: 700; }
+.be-model-meta { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.be-badge { background: #f3f4f6; border: 1px solid #e5e7eb; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+.be-pill { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 999px; font-size: 12px; text-decoration: none; }
+.be-pill-muted { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+.be-mini { font-size: 12px; text-decoration: none; color: #111827; border: 1px solid #e5e7eb; padding: 2px 8px; border-radius: 10px; }
+.be-side-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px;
+  position: sticky;
+  top: 12px;
+}
+.be-live-card { position: static; margin-bottom: 12px; }
+.be-side-card h3 { margin: 0 0 10px; font-size: 14px; }
+.be-live-mini-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; margin-bottom:12px; }
+.be-live-mini-grid div { border:1px solid #f1f5f9; border-radius:12px; padding:10px; background:#fafafa; }
+.be-live-mini-grid span { display:block; font-size:20px; font-weight:900; color:#0f172a; }
+.be-live-mini-grid small { color:#64748b; font-size:11px; font-weight:800; }
+.be-live-activity { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.be-live-activity li { border:1px solid #f1f5f9; border-radius:12px; padding:9px; background:#fff; }
+.be-live-activity strong, .be-live-activity span, .be-live-activity small { display:block; }
+.be-live-activity strong { color:#0f172a; font-size:12px; }
+.be-live-activity span, .be-live-activity small { color:#64748b; font-size:11px; margin-top:2px; }
+.be-actions { display: flex; flex-direction: column; gap: 10px; }
+.be-action { border: 1px solid #f1f5f9; border-radius: 12px; padding: 10px; background: #fafafa; }
+.be-action-title a { text-decoration: none; color: #0f766e; font-weight: 700; }
+.be-action-meta { font-size: 12px; color: #6b7280; margin-top: 4px; }
+.be-muted { color: #6b7280; font-size: 12px; }
+@media (max-width: 1100px) {
+  .be-admin-grid { grid-template-columns: 1fr; }
+  .be-admin-kpis { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+  .be-side-card { position: static; }
+}
+
 .ai-admin-module {
   margin-top: 24px;
   padding: 16px;
@@ -177,6 +524,55 @@
           alert('Unable to generate PO right now.');
           generateBtn.disabled = false;
         });
+    });
+  }
+})();
+</script>
+
+<script>
+(function () {
+  const labels = {{ m.orders_series_labels_json|safe }};
+  const values = {{ m.orders_series_values_json|safe }};
+  const pb = {{ m.payment_breakdown_json|safe }};
+
+  const trend = document.getElementById('beOrdersTrend');
+  if (trend && window.Chart) {
+    const ctx = trend.getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Orders',
+          data: values,
+          tension: 0.35,
+          borderColor: '#0f766e',
+          backgroundColor: 'rgba(15,118,110,0.12)',
+          fill: true,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  }
+
+  const pie = document.getElementById('bePaymentsPie');
+  if (pie && window.Chart) {
+    const ctx2 = pie.getContext('2d');
+    new Chart(ctx2, {
+      type: 'doughnut',
+      data: {
+        labels: ['Unpaid', 'Initiated', 'Paid', 'Failed'],
+        datasets: [{
+          data: [pb.unpaid || 0, pb.initiated || 0, pb.paid || 0, pb.failed || 0],
+          backgroundColor: ['#f59e0b', '#3b82f6', '#22c55e', '#ef4444'],
+          borderWidth: 0,
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
     });
   }
 })();
