@@ -60,7 +60,7 @@ load_dotenv(dotenv_path=str(DESKTOP_DATA_DIR / ".env"), override=True)
 # =========================================================
 DEBUG = os.getenv(
     "DEBUG",
-    "True"
+    "False"
 ).strip().lower() in {"1", "true", "yes", "on"}
 
 SECRET_KEY = (
@@ -72,12 +72,20 @@ OTP_BYPASS = os.getenv("OTP_BYPASS", "True") == "True"
 
 ALLOWED_HOSTS = [
     h.strip()
-    for h in os.getenv("ALLOWED_HOSTS", "*").split(",")
+    for h in os.getenv(
+        "ALLOWED_HOSTS",
+        "jaistechkhatabooksystem-nken.onrender.com",
+    ).split(",")
     if h.strip()
 ]
 
 if os.getenv("RENDER_EXTERNAL_HOSTNAME"):
     ALLOWED_HOSTS.append(os.getenv("RENDER_EXTERNAL_HOSTNAME"))
+
+if (DEBUG or RUNNING_RUNSERVER) and "*" not in ALLOWED_HOSTS:
+    for _h in ("localhost", "127.0.0.1", "127.0.0.2"):
+        if _h not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(_h)
 
 if DESKTOP_MODE and "*" not in ALLOWED_HOSTS:
     for _h in ("localhost", "127.0.0.1", "127.0.0.2"):
@@ -400,7 +408,7 @@ STORAGES = {
     },
     "staticfiles": {
         "BACKEND":
-        "django.contrib.staticfiles.storage.StaticFilesStorage"
+        "whitenoise.storage.CompressedManifestStaticFilesStorage"
     },
 }
 
@@ -537,7 +545,7 @@ CSRF_TRUSTED_ORIGINS = [
     x.strip()
     for x in os.getenv(
         "CSRF_TRUSTED_ORIGINS",
-        ""
+        "https://jaistechkhatabooksystem-nken.onrender.com"
     ).split(",")
     if x.strip()
 ]

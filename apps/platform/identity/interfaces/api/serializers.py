@@ -102,14 +102,14 @@ class AuditLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = AuditLog
         fields = "__all__"
-        read_only_fields = fields
+        read_only_fields = tuple(field.name for field in model._meta.fields)
 
 
 class VersionHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = VersionHistory
         fields = "__all__"
-        read_only_fields = fields
+        read_only_fields = tuple(field.name for field in model._meta.fields)
 
 
 class SmartNotificationSerializer(serializers.ModelSerializer):
@@ -128,4 +128,4 @@ class LoginHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = LoginHistory
         fields = "__all__"
-        read_only_fields = fields
+        read_only_fields = tuple(field.name for field in model._meta.fields)

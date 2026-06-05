@@ -33,7 +33,7 @@ class ReportRunSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReportRun
         fields = "__all__"
-        read_only_fields = fields
+        read_only_fields = tuple(field.name for field in model._meta.fields)
 
 
 class ReportExportSerializer(serializers.ModelSerializer):

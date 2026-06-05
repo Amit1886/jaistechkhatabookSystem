@@ -121,7 +121,7 @@ class FormDefinitionViewSet(TenantScopedViewSet):
     serializer_class = FormDefinitionSerializer
 
     @action(detail=False, methods=["get"], url_path="schema/(?P<key>[^/.]+)")
-    def schema(self, request, key=None):
+    def form_schema(self, request, key=None):
         schema = MetadataService().form_schema(key, request.user, getattr(request, "identity_tenant", None))
         if not schema:
             return Response({"detail": "Form not found."}, status=status.HTTP_404_NOT_FOUND)

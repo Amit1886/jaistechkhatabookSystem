@@ -152,7 +152,7 @@ class EmployeeActivityLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmployeeActivityLog
         fields = "__all__"
-        read_only_fields = fields
+        read_only_fields = tuple(field.name for field in model._meta.fields)
 
 
 class AnnouncementSerializer(serializers.ModelSerializer):
@@ -351,7 +351,7 @@ class HRComplianceLedgerSerializer(serializers.ModelSerializer):
     class Meta:
         model = HRComplianceLedger
         fields = "__all__"
-        read_only_fields = fields
+        read_only_fields = tuple(field.name for field in model._meta.fields)
 
 
 class OrganizationalGraphNodeSerializer(serializers.ModelSerializer):

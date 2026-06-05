@@ -13,10 +13,9 @@ class IntegrationConnectionSerializer(serializers.ModelSerializer):
             "name",
             "is_active",
             "credentials",
-            "settings",
+            "config",
             "created_by",
             "updated_at",
             "created_at",
         ]
         read_only_fields = ["company", "created_by", "updated_at", "created_at"]
-

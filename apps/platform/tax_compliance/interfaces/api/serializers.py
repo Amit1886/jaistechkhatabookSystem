@@ -69,7 +69,7 @@ class TaxAuditLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaxAuditLog
         fields = "__all__"
-        read_only_fields = fields
+        read_only_fields = tuple(field.name for field in model._meta.fields)
 
 
 class GSTReportSnapshotSerializer(serializers.ModelSerializer):

@@ -138,14 +138,14 @@ class AutomationRunSerializer(serializers.ModelSerializer):
     class Meta:
         model = AutomationRun
         fields = "__all__"
-        read_only_fields = fields
+        read_only_fields = tuple(field.name for field in model._meta.fields)
 
 
 class CommandEnvelopeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CommandEnvelope
         fields = "__all__"
-        read_only_fields = fields
+        read_only_fields = tuple(field.name for field in model._meta.fields)
 
 
 class BackgroundJobDefinitionSerializer(serializers.ModelSerializer):
@@ -257,5 +257,5 @@ class ObservabilityEventSerializer(serializers.ModelSerializer):
     class Meta:
         model = ObservabilityEvent
         fields = "__all__"
-        read_only_fields = fields
+        read_only_fields = tuple(field.name for field in model._meta.fields)
     CommandEnvelope,

@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.db import migrations
+from django.utils.text import slugify
 
 
 def seed_default_plans(apps, schema_editor):
@@ -8,9 +9,14 @@ def seed_default_plans(apps, schema_editor):
     PlanPermissions = apps.get_model("billing", "PlanPermissions")
 
     def upsert_plan(name, price_monthly, price_yearly, trial_days, description):
-        plan = Plan.objects.filter(name=name).order_by("id").first()
+        slug = slugify(name)
+        plan = Plan.objects.filter(slug=slug).order_by("id").first()
         if plan is None:
-            plan = Plan(name=name)
+            plan = Plan.objects.filter(name=name).order_by("id").first()
+        if plan is None:
+            plan = Plan()
+        plan.name = name
+        plan.slug = slug
         plan.active = True
         plan.price = Decimal(str(price_monthly or 0))
         plan.price_monthly = Decimal(str(price_monthly or 0))

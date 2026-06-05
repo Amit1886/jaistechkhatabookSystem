@@ -3,43 +3,12 @@ from __future__ import annotations
 from django.db import models
 
 
-# ---------------- Multi-tenancy (django-tenants blueprint) ----------------
-# Phase A (safe): keep multi-tenancy disabled at DB/schema level.
-# Phase B: enable django-tenants + PostgreSQL and then turn these models on.
-try:
-    from django_tenants.models import DomainMixin, TenantMixin  # type: ignore
-except Exception:  # pragma: no cover
-    DomainMixin = None  # type: ignore
-    TenantMixin = None  # type: ignore
-
-
-if TenantMixin is not None and DomainMixin is not None:
-    class SellerTenant(TenantMixin):  # type: ignore[misc]
-        """
-        Seller tenant. Each seller -> separate schema (Postgres).
-        """
-
-        name = models.CharField(max_length=200)
-        subdomain = models.SlugField(max_length=63, unique=True, db_index=True)
-        is_active = models.BooleanField(default=True, db_index=True)
-        created_at = models.DateTimeField(auto_now_add=True)
-
-        auto_create_schema = True
-
-        class Meta:
-            app_label = "saas"
-            verbose_name = "Seller Tenant"
-            verbose_name_plural = "Seller Tenants"
-
-        def __str__(self):
-            return f"{self.name} ({self.subdomain})"
-
-
-    class SellerDomain(DomainMixin):  # type: ignore[misc]
-        class Meta:
-            app_label = "saas"
-            verbose_name = "Seller Domain"
-            verbose_name_plural = "Seller Domains"
+# ---------------- Multi-tenancy blueprint ----------------
+# Phase A is single-database tenancy: vendor/subdomain context is resolved by
+# middleware and records remain in the default schema. Do not import
+# django-tenants here. If Phase B enables PostgreSQL schema tenancy, add real
+# TenantMixin/DomainMixin models together with TENANT_MODEL, TENANT_DOMAIN_MODEL,
+# SHARED_APPS, TENANT_APPS, TenantMainMiddleware, and TenantSyncRouter.
 
 
 # ---------------- RBAC ----------------
