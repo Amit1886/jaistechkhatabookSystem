@@ -23,6 +23,8 @@ local_settings.py
 
 # Generated/runtime artifacts
 build/
+# Exception: vendor font files inside build/ are source assets (not generated)
+!super_admin/static/**/bootstrap-datetimepicker/build/fonts/
 dist/
 dist_builds/
 logs/

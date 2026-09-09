@@ -1,0 +1,100 @@
+{% extends "content_studio/base.html" %}
+{% load static %}
+{% block title %}{{ project.title }} – Editor{% endblock %}
+{% block header_title %}{{ project.title }}{% endblock %}
+{% block extra_css %}
+<link href="{% static 'content_studio/css/studio.css' %}" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div class="studio-editor" id="studioEditor">
+    <input type="hidden" id="projectId" value="{{ project.id }}">
+
+    <header class="editor-topbar">
+        <div class="editor-brand">
+            <a href="{% url 'content_studio:dashboard' %}"><i class="bi bi-arrow-left"></i></a>
+            <span class="editor-title" id="editorTitle">{{ project.title }}</span>
+        </div>
+
+        <nav class="editor-tabs">
+            <button class="tab-btn active" data-tab="elements"><i class="bi bi-apps"></i> Elements</button>
+            <button class="tab-btn" data-tab="text"><i class="bi bi-type"></i> Text</button>
+            <button class="tab-btn" data-tab="templates"><i class="bi bi-layer"></i> Templates</button>
+            <button class="tab-btn" data-tab="brand"><i class="bi bi-droplet"></i> Brand</button>
+        </nav>
+
+        <div class="editor-actions">
+            <button class="btn btn-sm btn-outline-secondary" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i></button>
+            <button class="btn btn-sm btn-outline-secondary" id="redoBtn"><i class="bi bi-arrow-clockwise"></i></button>
+            <button class="btn btn-sm btn-outline-danger" id="deleteBtn"><i class="bi bi-trash"></i></button>
+            <button class="btn btn-sm btn-outline-primary" id="saveBtn"><i class="bi bi-save"></i> Save</button>
+            <span id="saveStatus" class="badge bg-success">Saved</span>
+            <div class="btn-group">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="bi bi-download"></i> Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" id="exportJsonBtn" href="#">Export JSON</a></li>
+                    <li><a class="dropdown-item" id="exportPngBtn" href="#">Export PNG</a></li>
+                </ul>
+            </div>
+            <a href="{% url 'content_studio:design_publish' project.pk %}" class="btn btn-sm btn-success">
+                <i class="bi bi-upload"></i> Publish
+            </a>
+        </div>
+    </header>
+
+    <div class="editor-body">
+        <aside class="editor-panel editor-left" id="leftPanel">
+            <div class="panel-content" id="leftPanelContent"></div>
+        </aside>
+
+        <main class="editor-canvas-area" id="editorCanvasArea">
+            <div class="editor-zoombar">
+                <button class="btn btn-sm btn-outline-secondary" id="zoomOutBtn"><i class="bi bi-dash-lg"></i></button>
+                <span id="zoomValue">100%</span>
+                <button class="btn btn-sm btn-outline-secondary" id="zoomInBtn"><i class="bi bi-plus-lg"></i></button>
+                <button class="btn btn-sm btn-outline-secondary ms-2" id="zoomFitBtn">Fit</button>
+                <button class="btn btn-sm btn-outline-secondary" id="zoomResetBtn">100%</button>
+            </div>
+            <div class="canvas-frame" id="canvasFrame">
+                <div class="stage" id="stage">
+                    <div id="elementStage" class="stage-content"></div>
+                </div>
+                <div class="ui-layer" id="uiLayer"></div>
+            </div>
+        </main>
+
+        <aside class="editor-panel editor-right" id="rightPanel">
+            <div class="panel-content" id="rightPanelContent"></div>
+        </aside>
+    </div>
+</div>
+
+<input type="file" id="imageUpload" accept="image/*" class="d-none">
+
+<script id="scene-data" type="application/json">
+{{ scene_json|safe }}
+</script>
+<script id="fonts-data" type="application/json">
+{{ fonts_json|safe }}
+</script>
+<script id="icons-data" type="application/json">
+{{ icons_json|safe }}
+</script>
+<script id="templates-data" type="application/json">
+{{ templates_json|safe }}
+</script>
+<script>
+window.STUDIO_CONFIG = {
+    projectId: {{ project.id }},
+    title: {{ project.title|safe }},
+    width: {{ project.width }},
+    height: {{ project.height }},
+    background_color: {{ project.background_color|default:"#ffffff"|safe }},
+    status: "{{ project.status }}",
+    csrfToken: "{{ csrf_token }}",
+    staticRoot: "{% static 'content_studio/js/studio.js' %}",
+};
+</script>
+<script src="{% static 'content_studio/js/studio.js' %}"></script>
+{% endblock %}

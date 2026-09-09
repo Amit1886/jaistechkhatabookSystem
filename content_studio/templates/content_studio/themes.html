@@ -1,0 +1,68 @@
+{% extends "content_studio/base.html" %}
+{% block title %}Themes{% endblock %}
+{% block header_title %}Themes &amp; Branding{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4">Themes</h2>
+    <p class="text-muted">Apply consistent color palettes and typography across your designs.</p>
+
+    <div class="row g-4">
+        <div class="col-12">
+            <h4 class="mb-3">Color Palettes</h4>
+            <div class="row g-2">
+                {% for palette in palettes %}
+                <div class="col-2">
+                    <div class="palette-swatch" style="background:{{ palette.primary }};" title="{{ palette.name }}">
+                        <span class="palette-label" style="color:{{ palette.secondary }};">{{ palette.name }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                {% for i in "123456" %}
+                <div class="col-2">
+                    <div class="palette-swatch bg-secondary" title="Theme {{ forloop.counter }}"></div>
+                </div>
+                {% endfor %}
+            {% endfor %}
+            </div>
+        </div>
+        <div class="col-12">
+            <h4 class="mb-3">Font Pairings</h4>
+            <div class="row g-2">
+                <div class="col-md-3"><code class="d-block p-2 bg-light rounded">Inter + Roboto</code></div>
+                <div class="col-md-3"><code class="d-block p-2 bg-light rounded">Playfair + Lato</code></div>
+                <div class="col-md-3"><code class="d-block p-2 bg-light rounded">Montserrat + Open Sans</code></div>
+                <div class="col-md-3"><code class="d-block p-2 bg-light rounded">Poppins + Source Sans</code></div>
+            </div>
+        </div>
+        <div class="col-12">
+            <h4 class="mb-3">Animation Presets</h4>
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h6 class="mb-1">Fade In</h6>
+                            <p class="text-muted mb-0 small">Smooth 500ms fade-in entrance.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h6 class="mb-1">Slide Up</h6>
+                            <p class="text-muted mb-0 small">400ms slide-up with ease-out.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h6 class="mb-1">Zoom In</h6>
+                            <p class="text-muted mb-0 small">600ms zoom-in with ease-in-out.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

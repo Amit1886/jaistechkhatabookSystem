@@ -1,0 +1,58 @@
+{% extends "content_studio/base.html" %}
+{% block title %}Templates{% endblock %}
+{% block header_title %}Templates{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Templates</h2>
+        <a href="{% url 'content_studio:template_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Create Template
+        </a>
+    </div>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-4">
+            <input type="text" name="q" class="form-control" placeholder="Search templates..." value="{{ query }}">
+        </div>
+        <div class="col-md-3">
+            <select name="category" class="form-select" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>
+                    {{ cat|title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+    </form>
+
+    {% if page_obj %}
+    <div class="row g-3">
+        {% for template in page_obj %}
+        <div class="col-sm-6 col-md-3">
+            <div class="card h-100 shadow-sm">
+                <div class="position-relative">
+                    <div class="bg-light rounded-top" style="height:140px;display:flex;align-items:center;justify-content:center;">
+                        <i class="bi bi-image-fill display-6 text-secondary"></i>
+                    </div>
+                    {% if template.is_premium %}<span class="badge bg-warning text-dark position-absolute top-1 end-1 m-1">Pro</span>{% endif %}
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-1">{{ template.title }}</h6>
+                    <small class="text-muted">{{ template.category }}</small>
+                </div>
+                <div class="card-footer bg-white text-center">
+                    <a href="{% url 'content_studio:template_detail' template.pk %}" class="btn btn-sm btn-outline-primary">Use</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted">No templates match your filters.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "content_studio/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block header_title %}Studio Dashboard{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card studio-stat-card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-image display-6 text-primary mb-2"></i>
+                    <h2 class="mb-1">{{ project_count }}</h2>
+                    <p class="text-muted mb-0">My Designs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card studio-stat-card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-upload display-6 text-success mb-2"></i>
+                    <h2 class="mb-1">{{ published_count }}</h2>
+                    <p class="text-muted mb-0">Published</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card studio-stat-card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-palette display-6 text-warning mb-2"></i>
+                    <h2 class="mb-1">{{ brand_kits|length }}</h2>
+                    <p class="text-muted mb-0">Brand Kits</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card studio-stat-card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-layer display-6 text-info mb-2"></i>
+                    <h2 class="mb-1">{{ templates|length }}</h2>
+                    <p class="text-muted mb-0">Templates</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Create New Design</h4>
+                <a href="{% url 'content_studio:design_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i> Create Design
+                </a>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <a href="{% url 'content_studio:design_create' %}" class="card h-100 shadow-sm text-center text-decoration-none">
+                        <div class="card-body">
+                            <i class="bi bi-plus-circle display-5 text-primary"></i>
+                            <p class="mt-2 mb-0">Custom Size</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'content_studio:template_list' %}" class="card h-100 shadow-sm text-center text-decoration-none">
+                        <div class="card-body">
+                            <i class="bi bi-layer display-5 text-primary"></i>
+                            <p class="mt-2 mb-0">From Template</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'content_studio:design_create' %}" class="card h-100 shadow-sm text-center text-decoration-none">
+                        <div class="card-body">
+                            <i class="bi bi-123x"></i>
+                            <p class="mt-2 mb-0">Instagram Post</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'content_studio:design_create' %}" class="card h-100 shadow-sm text-center text-decoration-none">
+                        <div class="card-body">
+                            <i class="bi bi-postcard"></i>
+                            <p class="mt-2 mb-0">A4 Poster</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-12">
+            <h4 class="mb-3">Recent Designs</h4>
+            {% if recent_projects %}
+            <div class="row g-3">
+                {% for project in recent_projects %}
+                <div class="col-md-3">
+                    <a href="{% url 'content_studio:design_editor' project.pk %}" class="card h-100 shadow-sm text-decoration-none">
+                        <div class="card-body text-center py-4">
+                            <i class="bi bi-image-fill display-4 text-secondary"></i>
+                            <p class="mt-2 mb-0">{{ project.title }}</p>
+                            <small class="text-muted">{{ project.get_status_display }}</small>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No designs yet. Create your first design to get started.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

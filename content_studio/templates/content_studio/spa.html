@@ -1,0 +1,46 @@
+{% extends "content_studio/base.html" %}
+{% block title %}AI Creative Assistant{% endblock %}
+{% block header_title %}AI Creative Assistant{% endblock %}
+{% block extra_css %}
+<style>
+.ai-chat-container { height: 70vh; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card shadow-sm h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Ask the AI assistant to design something</h5>
+            <span class="badge bg-info">Beta</span>
+        </div>
+        <div class="card-body p-0 d-flex flex-column ai-chat-container">
+            <div class="p-3 overflow-auto flex-grow-1" id="aiChat">
+                <div class="d-flex mb-3">
+                    <div class="bg-light rounded p-3">
+                        <strong>Studio AI</strong>
+                        <p class="mb-0">Hi! Describe what you'd like to create and I'll suggest a layout.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="border-top p-3">
+                <form id="aiPromptForm" class="d-flex gap-2">
+                    <input type="text" id="aiPrompt" class="form-control" placeholder="e.g. A summer sale Instagram post with beach vibe" autocomplete="off">
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('aiPromptForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const prompt = document.getElementById('aiPrompt').value;
+    if(!prompt){return;}
+    const chat = document.getElementById('aiChat');
+    chat.innerHTML += '<div class="d-flex mb-3"><div class="bg-primary text-white rounded p-3 ms-auto">'+prompt+'</div></div>';
+    chat.innerHTML += '<div class="d-flex mb-3"><div class="bg-light rounded p-3"><strong>Studio AI</strong><p class="mb-0">Creating design based on: "'+prompt+'"...</p></div></div></div>';
+    document.getElementById('aiPrompt').value='';
+    chat.scrollTop = chat.scrollHeight;
+});
+</script>
+{% endblock %}

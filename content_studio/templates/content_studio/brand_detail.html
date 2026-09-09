@@ -1,0 +1,58 @@
+{% extends "content_studio/base.html" %}
+{% block title %}Brand Kit: {{ brand_kit.name }}{% endblock %}
+{% block header_title %}{{ brand_kit.name }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>{{ brand_kit.name }}</h2>
+            <p class="text-muted mb-0">{{ brand_kit.owner.get_username }} · {{ brand_kit.created_at|date:"M d, Y" }}</p>
+        </div>
+        {% if brand_kit.is_default %}<span class="badge bg-success">Default Kit</span>{% endif %}
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">Palette</div>
+                <div class="card-body text-center">
+                    <div class="d-flex justify-content-center gap-2 align-items-center flex-wrap">
+                        <div class="text-center">
+                            <div class="color-swatch-xl" style="background:{{ brand_kit.primary_color }};"></div>
+                            <small class="text-muted d-block">Primary</small>
+                            <code>{{ brand_kit.primary_color }}</code>
+                        </div>
+                        <div class="text-center">
+                            <div class="color-swatch-xl" style="background:{{ brand_kit.secondary_color }};"></div>
+                            <small class="text-muted d-block">Secondary</small>
+                            <code>{{ brand_kit.secondary_color }}</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">Typography</div>
+                <div class="card-body">
+                    <p class="mb-1"><strong>Font Family:</strong> {{ brand_kit.font_family }}</p>
+                    <p class="mb-0" style="font-family:{{ brand_kit.font_family }};">The quick brown fox jumps over the lazy dog.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">Logo</div>
+                <div class="card-body text-center">
+                    {% if brand_kit.logo %}
+                    <img src="{{ brand_kit.logo.url }}" alt="Logo" class="img-fluid rounded" style="max-height:100px;">
+                    {% else %}
+                    <i class="bi bi-image display-5 text-secondary"></i>
+                    <p class="text-muted mt-2">No logo uploaded.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

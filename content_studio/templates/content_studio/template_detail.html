@@ -1,0 +1,24 @@
+{% extends "content_studio/base.html" %}
+{% block title %}{{ template.title }}{% endblock %}
+{% block header_title %}{{ template.title }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2>{{ template.title }}</h2>
+            <p class="text-muted mb-0">
+                Category: {{ template.category }} ·
+                {% if template.is_premium %}<span class="badge bg-warning text-dark">Pro</span>{% else %}Free{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'content_studio:design_create' %}" class="btn btn-primary">Use This Template</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">Template Config</div>
+        <div class="card-body">
+            <pre class="bg-light p-3 rounded mb-0">{{ template.config|safe }}</pre>
+        </div>
+    </div>
+</div>
+{% endblock %}

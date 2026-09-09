@@ -1,0 +1,77 @@
+{% extends "content_studio/base.html" %}
+{% block title %}{{ project.title }}{% endblock %}
+{% block header_title %}{{ project.title }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>{{ project.title }}</h2>
+            <p class="text-muted">
+                {{ project.width }}×{{ project.height }} px ·
+                <span class="badge bg-{{ project.status|yesno:'success,info,warning,danger,secondary' }}">
+                    {{ project.get_status_display }}
+                </span>
+                {% if project.published_at %}· Published {{ project.published_at|date:"M d, Y" }}{% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <div class="btn-group">
+                <a href="{% url 'content_studio:design_editor' project.pk %}" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Open Editor
+                </a>
+                <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="bi bi-download"></i> Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'content_studio:design_export' project.pk %}">Export JSON</a></li>
+                    <li><a class="dropdown-item" href="{% url 'content_studio:design_publish' project.pk %}">Mark Published</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header d-flex justify-content-between">
+            <span>Elements on canvas ({{ elements|length }})</span>
+            <span class="text-muted">{{ pages|length }} page(s)</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th><th>Type</th><th>Position</th><th>Size</th><th>Z</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for el in elements %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ el.element_type }}</td>
+                        <td>{{ el.x|floatformat:0 }}, {{ el.y|floatformat:0 }}</td>
+                        <td>{{ el.width|floatformat:0 }}×{{ el.height|floatformat:0 }}</td>
+                        <td>{{ el.z_index }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted">No elements yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header">Pages</div>
+        <div class="card-body">
+            {% if pages %}
+            <div class="d-flex flex-wrap gap-2">
+                {% for page in pages %}
+                <div class="border rounded p-2">{{ page.name }} ({{ page.width }}×{{ page.height }})</div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No pages.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

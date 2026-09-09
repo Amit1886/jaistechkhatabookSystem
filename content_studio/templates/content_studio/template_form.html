@@ -1,0 +1,34 @@
+{% extends "content_studio/base.html" %}
+{% block title %}Create Template{% endblock %}
+{% block header_title %}Create Template{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header">New Template</div>
+                <form method="post" class="card-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" name="title" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <input type="text" name="category" class="form-control" list="catList" value="social">
+                        <datalist id="catList">
+                            <option value="social"><option value="poster"><option value="banner">
+                            <option value="flyer"><option value="instagram"><option value="story">
+                            <option value="youtube"><option value="menu"><option value="business">
+                        </datalist>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'content_studio:template_list' %}" class="btn btn-light">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "content_studio/base.html" %}
+{% block title %}Create Brand Kit{% endblock %}
+{% block header_title %}Create Brand Kit{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header">New Brand Kit</div>
+                <form method="post" enctype="multipart/form-data" class="card-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Primary Color</label>
+                            <input type="color" name="primary_color" class="form-control form-control-color" value="#000000">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Secondary Color</label>
+                            <input type="color" name="secondary_color" class="form-control form-control-color" value="#FFFFFF">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Font Family</label>
+                        <input type="text" name="font_family" class="form-control" placeholder="e.g. Inter, Arial" value="Inter">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Logo</label>
+                        <input type="file" name="logo" class="form-control">
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'content_studio:brand_list' %}" class="btn btn-light">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

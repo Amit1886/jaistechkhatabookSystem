@@ -1,0 +1,54 @@
+{% extends "content_studio/base.html" %}
+{% block title %}Create Design{% endblock %}
+{% block header_title %}Create New Design{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header">New Design</div>
+                <form method="post" class="card-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g. Summer Sale Poster" required>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Width (px)</label>
+                            <input type="number" name="width" class="form-control" value="1080">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Height (px)</label>
+                            <input type="number" name="height" class="form-control" value="1080">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Preset Sizes</label>
+                        <select class="form-select" id="presetSize" onchange="applyPreset(this.value)">
+                            <option value="1080x1080">Instagram Square (1080×1080)</option>
+                            <option value="1080x1350">Instagram Portrait (1080×1350)</option>
+                            <option value="1080x1920">Stories / Reel (1080×1920)</option>
+                            <option value="1200x630">Facebook Post (1200×630)</option>
+                            <option value="1920x1080">YouTube Thumbnail (1920×1080)</option>
+                            <option value="1080x1350">Poster (1080×1350)</option>
+                        </select>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'content_studio:dashboard' %}" class="btn btn-light">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Create &amp; Edit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function applyPreset(size){
+    if(!size){return;}
+    const [w,h]=size.split('x');
+    document.querySelector('input[name="width"]').value=w;
+    document.querySelector('input[name="height"]').value=h;
+}
+</script>
+{% endblock %}

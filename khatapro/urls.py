@@ -567,6 +567,14 @@ urlpatterns = [
     path("api/reports/", enterprise_views.reports_api, name="enterprise-reports-root"),
     path("api/analytics/", enterprise_views.analytics_api, name="enterprise-analytics-root"),
     path("api/notifications/", enterprise_views.notifications_api, name="enterprise-notifications-root"),
+    # ---------------- Specific API routes (MUST be before generic api/ includes) ----------------
+    path("api/orders/live-feed/", commerce_views.api_orders_live_feed, name="api_orders_live_feed"),
+    path("api/whatsapp/order-inbox/", commerce_views.api_whatsapp_order_inbox, name="api_whatsapp_order_inbox"),
+    path("api/whatsapp/accounting/webhook/", whatsapp_views.whatsapp_accounting_webhook, name="whatsapp_accounting_webhook"),
+    path("api/whatsapp/webhook/", whatsapp_views.whatsapp_unified_webhook, name="whatsapp_unified_webhook"),
+    path("api/whatsapp/meta/<uuid:account_id>/webhook/", whatsapp_meta_webhook, name="whatsapp_meta_webhook"),
+    path("api/whatsapp/gateway/<uuid:account_id>/inbound/", whatsapp_gateway_inbound_webhook, name="whatsapp_gateway_inbound_webhook"),
+    path("api/voice/command/", voice_views.api_voice_command, name="api_voice_command"),
     # ---------------- Mobile APP ----------------
     path("api/", include("mobileapi.urls")),
     # Public Storefront APIs (required: /api/products/, /api/orders/, /api/cart/, ...)
@@ -576,13 +584,6 @@ urlpatterns = [
     path("api/", include("smart_khata.api_urls")),
     path("api/", include("smart_bi.api_urls")),
     path("api/", include("khataapp.core_engine.api_urls")),
-    path("api/whatsapp/order-inbox/", commerce_views.api_whatsapp_order_inbox, name="api_whatsapp_order_inbox"),
-    path("api/whatsapp/accounting/webhook/", whatsapp_views.whatsapp_accounting_webhook, name="whatsapp_accounting_webhook"),
-    path("api/whatsapp/webhook/", whatsapp_views.whatsapp_unified_webhook, name="whatsapp_unified_webhook"),
-    path("api/whatsapp/meta/<uuid:account_id>/webhook/", whatsapp_meta_webhook, name="whatsapp_meta_webhook"),
-    path("api/whatsapp/gateway/<uuid:account_id>/inbound/", whatsapp_gateway_inbound_webhook, name="whatsapp_gateway_inbound_webhook"),
-    path("api/voice/command/", voice_views.api_voice_command, name="api_voice_command"),
-    path("api/orders/live-feed/", commerce_views.api_orders_live_feed, name="api_orders_live_feed"),
 
     # ---------------- API Docs & Auth ----------------
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
@@ -741,6 +742,8 @@ urlpatterns = [
     path("ai-tools/whatsapp/", include(("whatsapp.urls", "whatsapp"), namespace="whatsapp")),
     path("ai-tools/alerts/", include(("validation.urls", "validation"), namespace="validation")),
     path("automation/bank-import/", include(("bank_import.urls", "bank_import"), namespace="bank_import")),
+    path("studio/", include(("content_studio.urls", "content_studio"), namespace="content_studio")),
+    path("api/v1/studio/", include("content_studio.api_urls")),
 
     # Short alias requested: WhatsApp Setup Wizard in Django dashboard
     path("whatsapp/setup/", whatsapp_setup_views.whatsapp_setup_wizard, name="whatsapp_setup_wizard_alias"),
